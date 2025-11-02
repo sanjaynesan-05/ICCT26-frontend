@@ -1,0 +1,94 @@
+/**
+ * Contact & Organization Data
+ * Contains organizer information, social links, and venue details
+ */
+
+import {
+  Instagram,
+  Facebook,
+  Mail,
+  Phone,
+  MessageCircle,
+  MapPin,
+} from 'lucide-react'
+import type { Organizer, SocialLink, Venue } from '../types'
+
+/**
+ * Tournament Organizers
+ */
+export const ORGANIZERS: Organizer[] = [
+  {
+    role: 'Tournament Convenor',
+    name: 'Mr. John Samuel',
+    phone: '+91 98765 43210',
+    whatsapp: '919876543210',
+    email: 'convenor@icct26.org',
+  },
+  {
+    role: 'Secretary',
+    name: 'Mr. David Kumar',
+    phone: '+91 98765 43211',
+    whatsapp: '919876543211',
+    email: 'secretary@icct26.org',
+  },
+  {
+    role: 'Treasurer',
+    name: 'Mr. Joseph Raj',
+    phone: '+91 98765 43212',
+    whatsapp: '919876543212',
+    email: 'treasurer@icct26.org',
+  },
+]
+
+/**
+ * Social Media Links
+ */
+export const SOCIAL_LINKS: SocialLink[] = [
+  {
+    name: 'Instagram',
+    icon: Instagram,
+    url: 'https://instagram.com/icct26',
+    color: 'from-purple-500 to-pink-500',
+  },
+  {
+    name: 'Facebook',
+    icon: Facebook,
+    url: 'https://facebook.com/icct26',
+    color: 'from-blue-600 to-blue-400',
+  },
+]
+
+/**
+ * Venue Information
+ */
+export const VENUE: Venue = {
+  name: 'CSI St. Peter\'s Church',
+  address: '1234 Church Street, R.S. Puram',
+  city: 'Coimbatore',
+  state: 'Tamil Nadu',
+  zipCode: '641002',
+  country: 'India',
+  mapEmbedUrl:
+    'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3916.3384789234567!2d76.9558!3d11.0168!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTHCsDAxJzAwLjUiTiA3NsKwNTcnMjAuOSJF!5e0!3m2!1sen!2sin!4v1234567890123!5m2!1sen!2sin',
+}
+
+/**
+ * Get organizer by role
+ */
+export const getOrganizerByRole = (role: string): Organizer | undefined => {
+  return ORGANIZERS.find(org => org.role === role)
+}
+
+/**
+ * Get social link by name
+ */
+export const getSocialLinkByName = (name: string): SocialLink | undefined => {
+  return SOCIAL_LINKS.find(link => link.name === name)
+}
+
+/**
+ * Format venue address
+ */
+export const getFormattedVenueAddress = (): string => {
+  return `${VENUE.address}, ${VENUE.city}, ${VENUE.state} ${VENUE.zipCode}, ${VENUE.country}`
+}

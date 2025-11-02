@@ -1,0 +1,536 @@
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
+import { Upload, Plus, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react'
+import PlayerFormCard from '../components/PlayerFormCard'
+
+interface FormData {
+  paymentReceipt: File | null
+  teamName: string
+  teamLogo: File | null
+  captainName: string
+  captainPhone: string
+  captainEmail: string
+  viceCaptainName: string
+  viceCaptainPhone: string
+  viceCaptainEmail: string
+}
+
+const Registration = () => {
+  const [currentStep, setCurrentStep] = useState(1)
+  const [playerCount, setPlayerCount] = useState(11)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [formData, setFormData] = useState<FormData>({
+    paymentReceipt: null,
+    teamName: '',
+    teamLogo: null,
+    captainName: '',
+    captainPhone: '',
+    captainEmail: '',
+    viceCaptainName: '',
+    viceCaptainPhone: '',
+    viceCaptainEmail: '',
+  })
+
+  const totalSteps = 5
+  const progress = (currentStep / totalSteps) * 100
+
+  const steps = [
+    { number: 1, title: 'Payment' },
+    { number: 2, title: 'Team Details' },
+    { number: 3, title: 'Captain & Vice-Captain' },
+    { number: 4, title: 'Players' },
+    { number: 5, title: 'Review' },
+  ]
+
+  const handleNext = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1)
+    } else {
+      handleSubmit()
+    }
+  }
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const handleSubmit = () => {
+    setShowSuccess(true)
+  }
+
+  const handleFileChange = (field: 'paymentReceipt' | 'teamLogo', file: File | null) => {
+    setFormData({ ...formData, [field]: file })
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
+    >
+      <div className="container mx-auto max-w-6xl">
+        {/* Header */}
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="text-center mb-12"
+        >
+          <h1 className="font-heading text-6xl md:text-7xl text-accent mb-4">
+            Team Registration
+          </h1>
+          <p className="font-subheading text-xl text-gray-300">
+            Complete all steps to register your team
+          </p>
+        </motion.div>
+
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="h-3 bg-secondary/50 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-primary via-accent to-accent"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+          <div className="flex justify-between mt-4">
+            {steps.map((step) => (
+              <div
+                key={step.number}
+                className={`flex flex-col items-center transition-all duration-300 ${
+                  currentStep >= step.number ? 'opacity-100' : 'opacity-40'
+                }`}
+              >
+                <div
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold mb-2 transition-all duration-300 ${
+                    currentStep >= step.number
+                      ? 'bg-gradient-gold text-primary shadow-[0_0_20px_rgba(255,204,41,0.5)]'
+                      : 'bg-secondary text-gray-500'
+                  }`}
+                >
+                  {currentStep > step.number ? (
+                    <CheckCircle className="w-6 h-6" />
+                  ) : (
+                    step.number
+                  )}
+                </div>
+                <span className="text-xs md:text-sm font-subheading font-semibold text-white text-center hidden md:block">
+                  {step.title}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Form Container */}
+        <div className="max-w-3xl mx-auto">
+          {/* Right Side - Form Steps */}
+          <motion.div
+            initial={{ x: 30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="glass-card rounded-2xl p-6 md:p-8"
+          >
+            <AnimatePresence mode="wait">
+              {/* Step 1: Payment Upload */}
+              {currentStep === 1 && (
+                <motion.div
+                  key="step1"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="font-heading text-3xl text-primary mb-6">
+                    Payment Details
+                  </h3>
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 border-l-4 border-primary p-4 rounded">
+                      <p className="font-subheading text-primary font-semibold mb-2">
+                        Registration Fee: ₹2,000
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        Scan the QR code below to make payment
+                      </p>
+                    </div>
+
+                    {/* QR Code Section */}
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="bg-white p-4 rounded-xl shadow-lg mb-4">
+                        <img 
+                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=icct26@upi&pn=ICCT26&am=2000&tn=ICCT26%20Registration%20Fee" 
+                          alt="Payment QR Code" 
+                          className="w-64 h-64 object-cover rounded-lg"
+                        />
+                      </div>
+                      <p className="text-center font-subheading text-gray-600 mb-4">
+                        Scan with any UPI app to pay ₹2,000
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                        Upload Payment Receipt *
+                      </label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-accent transition-colors cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileChange('paymentReceipt', e.target.files?.[0] || null)}
+                          className="hidden"
+                          id="payment-receipt"
+                        />
+                        <label htmlFor="payment-receipt" className="cursor-pointer">
+                          <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                          <p className="text-gray-600 font-subheading">
+                            {formData.paymentReceipt
+                              ? formData.paymentReceipt.name
+                              : 'Click to upload or drag and drop'}
+                          </p>
+                          <p className="text-sm text-gray-400 mt-2">
+                            PNG, JPG up to 5MB
+                          </p>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 2: Team Details */}
+              {currentStep === 2 && (
+                <motion.div
+                  key="step2"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="font-heading text-3xl text-primary mb-6">
+                    Team Information
+                  </h3>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                        Team Name *
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                        placeholder="Enter team name"
+                        value={formData.teamName}
+                        onChange={(e) => setFormData({ ...formData, teamName: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                        Team Logo (Optional)
+                      </label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-accent transition-colors cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileChange('teamLogo', e.target.files?.[0] || null)}
+                          className="hidden"
+                          id="team-logo"
+                        />
+                        <label htmlFor="team-logo" className="cursor-pointer">
+                          <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                          <p className="text-gray-600 font-subheading">
+                            {formData.teamLogo
+                              ? formData.teamLogo.name
+                              : 'Click to upload team logo'}
+                          </p>
+                          <p className="text-sm text-gray-400 mt-2">
+                            PNG, JPG up to 2MB
+                          </p>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                        Home Ground/City *
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                        placeholder="Enter city name"
+                        required
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 3: Captain & Vice-Captain */}
+              {currentStep === 3 && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="font-heading text-3xl text-primary mb-6">
+                    Captain & Vice-Captain
+                  </h3>
+                  <div className="space-y-8">
+                    {/* Captain Details */}
+                    <div className="bg-blue-50 rounded-xl p-6">
+                      <h4 className="font-subheading font-bold text-primary text-xl mb-4">
+                        Captain Details
+                      </h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                            Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                            placeholder="Captain's name"
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                              Phone Number *
+                            </label>
+                            <input
+                              type="tel"
+                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                              placeholder="+91 XXXXX XXXXX"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                              Email *
+                            </label>
+                            <input
+                              type="email"
+                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                              placeholder="email@example.com"
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Vice-Captain Details */}
+                    <div className="bg-green-50 rounded-xl p-6">
+                      <h4 className="font-subheading font-bold text-green-700 text-xl mb-4">
+                        Vice-Captain Details
+                      </h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                            Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                            placeholder="Vice-Captain's name"
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                              Phone Number *
+                            </label>
+                            <input
+                              type="tel"
+                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                              placeholder="+91 XXXXX XXXXX"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                              Email *
+                            </label>
+                            <input
+                              type="email"
+                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                              placeholder="email@example.com"
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 4: Player Details */}
+              {currentStep === 4 && (
+                <motion.div
+                  key="step4"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                  className="max-h-[600px] overflow-y-auto pr-2"
+                >
+                  <div className="sticky top-0 bg-white pb-4 mb-4 z-10">
+                    <h3 className="font-heading text-3xl text-primary mb-2">
+                      Player Details
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Add 11-15 players (Captain & Vice-Captain included)
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {Array.from({ length: playerCount }).map((_, index) => (
+                      <PlayerFormCard
+                        key={index}
+                        playerNumber={index + 1}
+                        onRemove={playerCount > 11 ? () => setPlayerCount(playerCount - 1) : undefined}
+                        canRemove={playerCount > 11 && index === playerCount - 1}
+                      />
+                    ))}
+                  </div>
+
+                  {playerCount < 15 && (
+                    <button
+                      onClick={() => setPlayerCount(playerCount + 1)}
+                      className="w-full mt-6 btn-outline flex items-center justify-center gap-2"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Add Player
+                    </button>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Step 5: Review */}
+              {currentStep === 5 && (
+                <motion.div
+                  key="step5"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="font-heading text-3xl text-primary mb-6">
+                    Review & Submit
+                  </h3>
+                  <div className="space-y-6">
+                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                      <p className="font-subheading text-green-700 font-semibold">
+                        ✓ All information has been filled
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 text-gray-700">
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Team Name:</span>
+                        <span>{formData.teamName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Total Players:</span>
+                        <span>{playerCount}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Registration Fee:</span>
+                        <span className="text-green-600 font-bold">₹2,000</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                      <p className="text-sm text-yellow-800">
+                        <strong>Note:</strong> By submitting this form, you agree to the tournament 
+                        rules and regulations. All information provided must be accurate.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+              <button
+                onClick={handlePrevious}
+                disabled={currentStep === 1}
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-subheading font-semibold transition-all ${
+                  currentStep === 1
+                    ? 'opacity-50 cursor-not-allowed bg-gray-200 text-gray-500'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                <ChevronLeft className="w-5 h-5" />
+                Previous
+              </button>
+
+              <button
+                onClick={handleNext}
+                className="flex items-center gap-2 btn-gold"
+              >
+                {currentStep === totalSteps ? 'Submit' : 'Next'}
+                {currentStep < totalSteps && <ChevronRight className="w-5 h-5" />}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Success Modal */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="glass-card rounded-2xl p-8 max-w-md w-full text-center"
+            >
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-12 h-12 text-green-600" />
+              </div>
+              <h2 className="font-heading text-4xl text-primary mb-4">
+                Registration Successful!
+              </h2>
+              <p className="font-subheading text-gray-700 mb-6">
+                Your team has been successfully registered for ICCT26
+              </p>
+              <div className="bg-accent/20 rounded-lg p-4 mb-6">
+                <p className="text-sm text-gray-600 mb-2">Your Team ID</p>
+                <p className="font-heading text-3xl text-primary">
+                  ICCT26-{Math.floor(Math.random() * 10000).toString().padStart(4, '0')}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowSuccess(false)
+                  setCurrentStep(1)
+                }}
+                className="btn-gold w-full"
+              >
+                Close
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+export default Registration

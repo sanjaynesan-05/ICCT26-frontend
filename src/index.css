@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-primary font-body text-white;
+  }
+}
+
+@layer utilities {
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  
+  .btn-gold {
+    @apply bg-gradient-gold text-primary font-bold py-3 px-8 rounded-xl uppercase tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(255,204,41,0.6)];
+  }
+  
+  .btn-outline {
+    @apply border-2 border-white text-white font-bold py-3 px-8 rounded-xl uppercase tracking-wider transition-all duration-300 hover:bg-white hover:text-primary hover:scale-105;
+  }
+  
+  .glow-border {
+    @apply border border-accent/30 shadow-[0_0_15px_rgba(255,204,41,0.3)] transition-all duration-300 hover:shadow-[0_0_25px_rgba(255,204,41,0.6)];
+  }
+  
+  .input-focus {
+    @apply focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all duration-300;
+  }
+}
