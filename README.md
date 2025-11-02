@@ -162,6 +162,7 @@ const primaryColor = COLOR_PALETTE.primary  // #002B5C
 
 ## 📚 Documentation
 
+
 Comprehensive documentation is available in the [`docs/`](./docs/) folder:
 
 - **[START_HERE.md](./docs/START_HERE.md)** - Quick overview and entry point
@@ -173,6 +174,11 @@ Comprehensive documentation is available in the [`docs/`](./docs/) folder:
 - **[FILE_LISTING.md](./docs/FILE_LISTING.md)** - Complete file reference
 - **[INDEX.md](./docs/INDEX.md)** - Documentation index
 
+**Loader Documentation:**
+- **[LOADER_IMPLEMENTATION.md](./docs/LOADER_IMPLEMENTATION.md)** – Full loader setup & animation guide
+- **[LOADER_CUSTOMIZATION.md](./docs/LOADER_CUSTOMIZATION.md)** – Quick customization reference
+- **[LOADER_COMPLETE.md](./docs/LOADER_COMPLETE.md)** – Implementation summary & checklist
+
 **Also check:**
 - `src/DATA_STRUCTURE.md` - Detailed data structure reference
 - `src/INTEGRATION_GUIDE.ts` - Code integration examples
@@ -181,6 +187,9 @@ Comprehensive documentation is available in the [`docs/`](./docs/) folder:
 - 🚀 [Getting Started](./docs/START_HERE.md)
 - 📖 [Quick Reference](./docs/QUICK_REFERENCE.md)
 - 🏗️ [Architecture Guide](./docs/ARCHITECTURE.md)
+- 🏏 [Loader Implementation](./docs/LOADER_IMPLEMENTATION.md)
+- ⚡ [Loader Customization](./docs/LOADER_CUSTOMIZATION.md)
+- ✅ [Loader Complete Summary](./docs/LOADER_COMPLETE.md)
 - 📂 [All Documentation](./docs/)
 
 ## 🎨 Color Palette

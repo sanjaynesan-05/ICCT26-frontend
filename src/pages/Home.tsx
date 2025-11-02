@@ -21,7 +21,7 @@ const Home = () => {
     {
       icon: Calendar,
       title: 'Start Date',
-      value: 'July 12, 2026',
+      value: 'January 24, 2026',
       color: 'text-green-400',
     },
     {

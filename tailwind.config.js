@@ -17,6 +17,9 @@ export default {
         heading: ['Bebas Neue', 'sans-serif'],
         subheading: ['Quicksand', 'sans-serif'],
         body: ['Manrope', 'sans-serif'],
+        bebas: ['Bebas Neue', 'sans-serif'],
+        quicksand: ['Quicksand', 'sans-serif'],
+        manrope: ['Manrope', 'sans-serif'],
       },
       animation: {
         'float': 'float 3s ease-in-out infinite',
