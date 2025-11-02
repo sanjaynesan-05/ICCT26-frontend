@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
-import { Upload, Plus, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react'
+import { Upload, Plus, CheckCircle, ChevronRight, ChevronLeft, X } from 'lucide-react'
 import PlayerFormCard from '../components/PlayerFormCard'
 
 interface FormData {
@@ -19,6 +19,10 @@ const Registration = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [playerCount, setPlayerCount] = useState(11)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [paymentFileName, setPaymentFileName] = useState('')
+  const [teamLogoFileName, setTeamLogoFileName] = useState('')
+  const [paymentDragActive, setPaymentDragActive] = useState(false)
+  const [logoDragActive, setLogoDragActive] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     paymentReceipt: null,
     teamName: '',
@@ -62,6 +66,55 @@ const Registration = () => {
 
   const handleFileChange = (field: 'paymentReceipt' | 'teamLogo', file: File | null) => {
     setFormData({ ...formData, [field]: file })
+    if (field === 'paymentReceipt') {
+      setPaymentFileName(file ? file.name : '')
+    } else {
+      setTeamLogoFileName(file ? file.name : '')
+    }
+  }
+
+  const handlePaymentDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setPaymentDragActive(true)
+  }
+
+  const handlePaymentDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setPaymentDragActive(false)
+  }
+
+  const handlePaymentDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setPaymentDragActive(false)
+    const files = e.dataTransfer.files
+    if (files && files[0]) {
+      handleFileChange('paymentReceipt', files[0])
+    }
+  }
+
+  const handleLogoDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setLogoDragActive(true)
+  }
+
+  const handleLogoDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setLogoDragActive(false)
+  }
+
+  const handleLogoDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setLogoDragActive(false)
+    const files = e.dataTransfer.files
+    if (files && files[0]) {
+      handleFileChange('teamLogo', files[0])
+    }
   }
 
   return (
@@ -175,25 +228,36 @@ const Registration = () => {
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
                         Upload Payment Receipt *
                       </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-accent transition-colors cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileChange('paymentReceipt', e.target.files?.[0] || null)}
-                          className="hidden"
-                          id="payment-receipt"
-                        />
-                        <label htmlFor="payment-receipt" className="cursor-pointer">
-                          <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                          <p className="text-gray-600 font-subheading">
-                            {formData.paymentReceipt
-                              ? formData.paymentReceipt.name
-                              : 'Click to upload or drag and drop'}
-                          </p>
-                          <p className="text-sm text-gray-400 mt-2">
-                            PNG, JPG up to 5MB
-                          </p>
+                      <div className="relative">
+                        <label
+                          className={`flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer bg-white hover:shadow-md transition text-sm ${paymentDragActive ? "border-gray-700 bg-gray-100" : "border-gray-300"}`}
+                          onDragOver={handlePaymentDragOver}
+                          onDragLeave={handlePaymentDragLeave}
+                          onDrop={handlePaymentDrop}
+                        >
+                          <Upload className="w-5 h-5 text-gray-600" />
+                          <span className="truncate max-w-[180px] text-gray-700 font-subheading">
+                            {paymentFileName ? paymentFileName : "Upload Receipt"}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileChange('paymentReceipt', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
                         </label>
+                        {paymentFileName && (
+                          <button
+                            type="button"
+                            className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
+                            style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={(e) => { e.stopPropagation(); handleFileChange('paymentReceipt', null) }}
+                            tabIndex={-1}
+                            aria-label="Cancel file upload"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -231,25 +295,36 @@ const Registration = () => {
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
                         Team Logo (Optional)
                       </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-accent transition-colors cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileChange('teamLogo', e.target.files?.[0] || null)}
-                          className="hidden"
-                          id="team-logo"
-                        />
-                        <label htmlFor="team-logo" className="cursor-pointer">
-                          <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                          <p className="text-gray-600 font-subheading">
-                            {formData.teamLogo
-                              ? formData.teamLogo.name
-                              : 'Click to upload team logo'}
-                          </p>
-                          <p className="text-sm text-gray-400 mt-2">
-                            PNG, JPG up to 2MB
-                          </p>
+                      <div className="relative">
+                        <label
+                          className={`flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer bg-white hover:shadow-md transition text-sm ${logoDragActive ? "border-gray-700 bg-gray-100" : "border-gray-300"}`}
+                          onDragOver={handleLogoDragOver}
+                          onDragLeave={handleLogoDragLeave}
+                          onDrop={handleLogoDrop}
+                        >
+                          <Upload className="w-5 h-5 text-gray-600" />
+                          <span className="truncate max-w-[180px] text-gray-700 font-subheading">
+                            {teamLogoFileName ? teamLogoFileName : "Upload Logo"}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileChange('teamLogo', e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
                         </label>
+                        {teamLogoFileName && (
+                          <button
+                            type="button"
+                            className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
+                            style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={(e) => { e.stopPropagation(); handleFileChange('teamLogo', null) }}
+                            tabIndex={-1}
+                            aria-label="Cancel file upload"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                     </div>
 

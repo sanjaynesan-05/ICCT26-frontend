@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap } from "lucide-react";
 
@@ -40,8 +40,17 @@ export default function CricketLoader() {
     return () => clearInterval(taglineTimer);
   }, []);
 
-  // Generate floating sparks
-  const sparks = Array.from({ length: 12 }, (_, i) => i);
+  // Generate floating sparks with stable keys and random properties
+  const sparks = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => ({
+        key: `spark-${i}-${Math.random().toString(36).slice(2, 10)}`,
+        x: Math.random() * window.innerWidth,
+        delay: Math.random() * 3,
+        duration: 3 + Math.random() * 2,
+      })),
+    []
+  );
 
   return (
     <AnimatePresence>
@@ -70,11 +79,11 @@ export default function CricketLoader() {
           />
 
           {/* Floating golden sparks */}
-          {sparks.map((i) => (
+          {sparks.map((spark) => (
             <motion.div
-              key={i}
+              key={spark.key}
               initial={{ 
-                x: Math.random() * window.innerWidth, 
+                x: spark.x, 
                 y: window.innerHeight + 50,
                 opacity: 0 
               }}
@@ -83,9 +92,9 @@ export default function CricketLoader() {
                 opacity: [0, 1, 1, 0],
               }}
               transition={{
-                duration: 3 + Math.random() * 2,
+                duration: spark.duration,
                 repeat: Infinity,
-                delay: Math.random() * 3,
+                delay: spark.delay,
                 ease: "linear"
               }}
               className="absolute w-1 h-1 bg-[#FFCC29] rounded-full shadow-[0_0_8px_#FFCC29]"
