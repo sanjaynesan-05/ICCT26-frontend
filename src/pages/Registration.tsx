@@ -446,8 +446,9 @@ const Registration = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
+                  className="max-h-[600px] overflow-y-auto overflow-x-hidden"
                 >
-                  <div className="pb-4 mb-4">
+                  <div className="sticky top-0 bg-white pb-4 mb-4 z-10">
                     <h3 className="font-heading text-3xl text-primary mb-2">
                       Player Details
                     </h3>
