@@ -81,7 +81,7 @@ const Home = () => {
             transition={{ delay: 0.2 }}
           >
             <h1 className="font-heading text-6xl md:text-8xl lg:text-9xl text-accent tracking-wider mb-6">
-              ICCT26
+              ICCT'26
             </h1>
             <h2 className="font-heading text-3xl md:text-5xl lg:text-6xl text-white mb-4">
               CRICKET TOURNAMENT
