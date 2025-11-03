@@ -66,7 +66,8 @@ const Navbar = () => {
           {/* CTA Button */}
           <Link
             to="/registration"
-            className="hidden md:block btn-gold text-sm"
+            className="hidden md:block btn-gold text-sm transition-shadow"
+            style={{ boxShadow: '0 0 18px rgba(255,214,92,0.32)' }}
           >
             Register Now
           </Link>
@@ -109,7 +110,8 @@ const Navbar = () => {
               <Link
                 to="/registration"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="block btn-gold text-center text-sm mt-4"
+                className="block btn-gold text-center text-sm mt-4 transition-shadow"
+                style={{ boxShadow: '0 0 14px rgba(255,214,92,0.28)' }}
               >
                 Register Now
               </Link>

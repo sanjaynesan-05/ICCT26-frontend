@@ -1,16 +1,10 @@
 import { motion } from 'framer-motion'
 
-const AnnouncementTicker = () => {
-  const announcements = [
-    'Registrations Open Now',
-    '15 Teams Registered',
-    'Tournament Starts July 12',
-    'CSI St. Peter\'s Church, Coimbatore',
-    'Prize Money ₹50,000',
-    'Red Tennis Ball Match',
-    'Register Your Team Today',
-  ]
+interface AnnouncementTickerProps {
+  announcements: string[]
+}
 
+const AnnouncementTicker = ({ announcements }: AnnouncementTickerProps) => {
   const duplicatedAnnouncements = [...announcements, ...announcements]
 
   return (
@@ -18,7 +12,7 @@ const AnnouncementTicker = () => {
       <motion.div
         className="flex space-x-12 whitespace-nowrap"
         animate={{
-          x: [0, -50 + '%'],
+          x: [0, '-50%'],
         }}
         transition={{
           x: {

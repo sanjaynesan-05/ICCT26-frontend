@@ -4,46 +4,67 @@ import { Upload, Plus, CheckCircle, ChevronRight, ChevronLeft, X } from 'lucide-
 import PlayerFormCard from '../components/PlayerFormCard'
 
 interface FormData {
-  paymentReceipt: File | null
+  churchName: string
   teamName: string
-  teamLogo: File | null
+  pastorLetter: File | null
   captainName: string
   captainPhone: string
+  captainWhatsapp: string
   captainEmail: string
   viceCaptainName: string
   viceCaptainPhone: string
+  viceCaptainWhatsapp: string
   viceCaptainEmail: string
+  paymentReceipt: File | null
 }
+
+const CHURCH_NAMES = [
+  'CSI St. Peter\'s Church',
+  'CSI Christ Church',
+  'CSI Grace Church',
+  'CSI Zion Church',
+  'CSI Emmanuel Church',
+  'CSI Trinity Church',
+  'CSI Holy Cross Church',
+  'CSI Bethel Church',
+  'CSI Calvary Church',
+  'CSI Vision Church',
+]
 
 const Registration = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [playerCount, setPlayerCount] = useState(11)
   const [showSuccess, setShowSuccess] = useState(false)
   const [paymentFileName, setPaymentFileName] = useState('')
-  const [teamLogoFileName, setTeamLogoFileName] = useState('')
   const [paymentDragActive, setPaymentDragActive] = useState(false)
-  const [logoDragActive, setLogoDragActive] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [pastorLetterFileName, setPastorLetterFileName] = useState('')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [pastorLetterDragActive, setPastorLetterDragActive] = useState(false)
   const [formData, setFormData] = useState<FormData>({
-    paymentReceipt: null,
+    churchName: '',
     teamName: '',
-    teamLogo: null,
+    pastorLetter: null,
     captainName: '',
     captainPhone: '',
+    captainWhatsapp: '',
     captainEmail: '',
     viceCaptainName: '',
     viceCaptainPhone: '',
+    viceCaptainWhatsapp: '',
     viceCaptainEmail: '',
+    paymentReceipt: null,
   })
 
   const totalSteps = 5
   const progress = (currentStep / totalSteps) * 100
 
   const steps = [
-    { number: 1, title: 'Payment' },
-    { number: 2, title: 'Team Details' },
-    { number: 3, title: 'Captain & Vice-Captain' },
-    { number: 4, title: 'Players' },
-    { number: 5, title: 'Review' },
+    { number: 1, title: 'Team Details' },
+    { number: 2, title: 'Captain & Vice-Captain' },
+    { number: 3, title: 'Players' },
+    { number: 4, title: 'Review' },
+    { number: 5, title: 'Payment Upload' },
   ]
 
   const handleNext = () => {
@@ -64,13 +85,14 @@ const Registration = () => {
     setShowSuccess(true)
   }
 
-  const handleFileChange = (field: 'paymentReceipt' | 'teamLogo', file: File | null) => {
-    setFormData({ ...formData, [field]: file })
-    if (field === 'paymentReceipt') {
-      setPaymentFileName(file ? file.name : '')
-    } else {
-      setTeamLogoFileName(file ? file.name : '')
-    }
+  const handleFileChange = (file: File | null) => {
+    setFormData({ ...formData, paymentReceipt: file })
+    setPaymentFileName(file ? file.name : '')
+  }
+
+  const handlePastorLetterChange = (file: File | null) => {
+    setFormData({ ...formData, pastorLetter: file })
+    setPastorLetterFileName(file ? file.name : '')
   }
 
   const handlePaymentDragOver = (e: React.DragEvent) => {
@@ -91,29 +113,29 @@ const Registration = () => {
     setPaymentDragActive(false)
     const files = e.dataTransfer.files
     if (files && files[0]) {
-      handleFileChange('paymentReceipt', files[0])
+      handleFileChange(files[0])
     }
   }
 
-  const handleLogoDragOver = (e: React.DragEvent) => {
+  const handlePastorLetterDragOver = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setLogoDragActive(true)
+    setPastorLetterDragActive(true)
   }
 
-  const handleLogoDragLeave = (e: React.DragEvent) => {
+  const handlePastorLetterDragLeave = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setLogoDragActive(false)
+    setPastorLetterDragActive(false)
   }
 
-  const handleLogoDrop = (e: React.DragEvent) => {
+  const handlePastorLetterDrop = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setLogoDragActive(false)
+    setPastorLetterDragActive(false)
     const files = e.dataTransfer.files
     if (files && files[0]) {
-      handleFileChange('teamLogo', files[0])
+      handlePastorLetterChange(files[0])
     }
   }
 
@@ -188,7 +210,7 @@ const Registration = () => {
             className="glass-card rounded-2xl p-6 md:p-8"
           >
             <AnimatePresence mode="wait">
-              {/* Step 1: Payment Upload */}
+              {/* Step 1: Team Details */}
               {currentStep === 1 && (
                 <motion.div
                   key="step1"
@@ -198,7 +220,333 @@ const Registration = () => {
                   transition={{ duration: 0.3 }}
                 >
                   <h3 className="font-heading text-3xl text-primary mb-6">
-                    Payment Details
+                    Team Information
+                  </h3>
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                        Church Name *
+                      </label>
+                      <select
+                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                        value={formData.churchName}
+                        onChange={(e) => setFormData({ ...formData, churchName: e.target.value })}
+                        required
+                      >
+                        <option value="">Select your church...</option>
+                        {CHURCH_NAMES.map((church) => (
+                          <option key={church} value={church}>{church}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                        Team Name *
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                        placeholder="Enter team name"
+                        value={formData.teamName}
+                        onChange={(e) => setFormData({ ...formData, teamName: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                        Church Letter *
+                      </label>
+                      <div className="relative">
+                        <label
+                          className={`flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer bg-white hover:shadow-md transition text-sm ${pastorLetterDragActive ? "border-gray-700 bg-gray-100" : "border-gray-300"}`}
+                          onDragOver={handlePastorLetterDragOver}
+                          onDragLeave={handlePastorLetterDragLeave}
+                          onDrop={handlePastorLetterDrop}
+                        >
+                          <Upload className="w-5 h-5 text-gray-600" />
+                          <span className="truncate max-w-[180px] text-gray-700 font-subheading">
+                            {pastorLetterFileName ? pastorLetterFileName : "Upload Church Letter"}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*,.pdf,.doc,.docx"
+                            onChange={(e) => handlePastorLetterChange(e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {pastorLetterFileName && (
+                          <button
+                            type="button"
+                            className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
+                            style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={(e) => { e.stopPropagation(); handlePastorLetterChange(null) }}
+                            tabIndex={-1}
+                            aria-label="Cancel file upload"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 2: Captain & Vice-Captain */}
+              {currentStep === 2 && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="font-heading text-3xl text-primary mb-6">
+                    Captain & Vice-Captain
+                  </h3>
+                  <div className="space-y-8">
+                    {/* Captain Details */}
+                    <div className="bg-blue-50 rounded-xl p-6">
+                      <h4 className="font-subheading font-bold text-primary text-xl mb-4">
+                        Captain Details
+                      </h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                            Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                            placeholder="Captain's name"
+                            value={formData.captainName}
+                            onChange={(e) => setFormData({ ...formData, captainName: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                              Phone Number *
+                            </label>
+                            <input
+                              type="tel"
+                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                              placeholder="+91 XXXXX XXXXX"
+                              value={formData.captainPhone}
+                              onChange={(e) => setFormData({ ...formData, captainPhone: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                              WhatsApp Number (10 digits) *
+                            </label>
+                            <input
+                              type="tel"
+                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                              placeholder="Enter 10-digit number"
+                              maxLength={10}
+                              value={formData.captainWhatsapp}
+                              onChange={(e) => setFormData({ ...formData, captainWhatsapp: e.target.value })}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                            Email *
+                          </label>
+                          <input
+                            type="email"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                            placeholder="email@example.com"
+                            value={formData.captainEmail}
+                            onChange={(e) => setFormData({ ...formData, captainEmail: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Vice-Captain Details */}
+                    <div className="bg-green-50 rounded-xl p-6">
+                      <h4 className="font-subheading font-bold text-green-700 text-xl mb-4">
+                        Vice-Captain Details
+                      </h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                            Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                            placeholder="Vice-Captain's name"
+                            value={formData.viceCaptainName}
+                            onChange={(e) => setFormData({ ...formData, viceCaptainName: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                              Phone Number *
+                            </label>
+                            <input
+                              type="tel"
+                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                              placeholder="+91 XXXXX XXXXX"
+                              value={formData.viceCaptainPhone}
+                              onChange={(e) => setFormData({ ...formData, viceCaptainPhone: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                              WhatsApp Number (10 digits) *
+                            </label>
+                            <input
+                              type="tel"
+                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                              placeholder="Enter 10-digit number"
+                              maxLength={10}
+                              value={formData.viceCaptainWhatsapp}
+                              onChange={(e) => setFormData({ ...formData, viceCaptainWhatsapp: e.target.value })}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                            Email *
+                          </label>
+                          <input
+                            type="email"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                            placeholder="email@example.com"
+                            value={formData.viceCaptainEmail}
+                            onChange={(e) => setFormData({ ...formData, viceCaptainEmail: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 3: Player Details */}
+              {currentStep === 3 && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                  className="max-h-[600px] overflow-y-auto overflow-x-hidden"
+                >
+                  <div className="sticky top-0 bg-white pb-4 mb-4 z-10">
+                    <h3 className="font-heading text-3xl text-primary mb-2">
+                      Player Details
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Add 11-15 players (Captain & Vice-Captain included)
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {Array.from({ length: playerCount }).map((_, index) => (
+                      <PlayerFormCard
+                        key={index}
+                        playerNumber={index + 1}
+                        onRemove={playerCount > 11 ? () => setPlayerCount(playerCount - 1) : undefined}
+                        canRemove={playerCount > 11 && index === playerCount - 1}
+                      />
+                    ))}
+                  </div>
+
+                  {playerCount < 15 && (
+                    <button
+                      onClick={() => setPlayerCount(playerCount + 1)}
+                      className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary hover:shadow-lg hover:shadow-primary/50 text-white font-subheading font-semibold rounded-lg transition-all duration-300 hover:scale-105"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Add Player
+                    </button>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Step 4: Review & Submit */}
+              {currentStep === 4 && (
+                <motion.div
+                  key="step4"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="font-heading text-3xl text-primary mb-6">
+                    Review Information
+                  </h3>
+                  <div className="space-y-6">
+                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                      <p className="font-subheading text-green-700 font-semibold">
+                        ✓ Please review all information before final submission
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 text-gray-700">
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Church Name:</span>
+                        <span>{formData.churchName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Team Name:</span>
+                        <span>{formData.teamName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Captain:</span>
+                        <span>{formData.captainName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Vice-Captain:</span>
+                        <span>{formData.viceCaptainName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Total Players:</span>
+                        <span>{playerCount}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Registration Fee:</span>
+                        <span className="text-green-600 font-bold">₹2,000</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                      <p className="text-sm text-yellow-800">
+                        <strong>Note:</strong> By submitting this form, you agree to the tournament 
+                        rules and regulations. All information provided must be accurate.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 5: Payment Upload */}
+              {currentStep === 5 && (
+                <motion.div
+                  key="step5"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="font-heading text-3xl text-primary mb-6">
+                    Payment Upload
                   </h3>
                   <div className="space-y-6">
                     <div className="bg-blue-50 border-l-4 border-primary p-4 rounded">
@@ -226,7 +574,7 @@ const Registration = () => {
 
                     <div>
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Upload Payment Receipt *
+                        Upload Payment Receipt * (Required)
                       </label>
                       <div className="relative">
                         <label
@@ -242,7 +590,7 @@ const Registration = () => {
                           <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => handleFileChange('paymentReceipt', e.target.files?.[0] || null)}
+                            onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
                             className="hidden"
                           />
                         </label>
@@ -251,7 +599,7 @@ const Registration = () => {
                             type="button"
                             className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
                             style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={(e) => { e.stopPropagation(); handleFileChange('paymentReceipt', null) }}
+                            onClick={(e) => { e.stopPropagation(); handleFileChange(null) }}
                             tabIndex={-1}
                             aria-label="Cancel file upload"
                           >
@@ -259,275 +607,6 @@ const Registration = () => {
                           </button>
                         )}
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 2: Team Details */}
-              {currentStep === 2 && (
-                <motion.div
-                  key="step2"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">
-                    Team Information
-                  </h3>
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Team Name *
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                        placeholder="Enter team name"
-                        value={formData.teamName}
-                        onChange={(e) => setFormData({ ...formData, teamName: e.target.value })}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Team Logo (Optional)
-                      </label>
-                      <div className="relative">
-                        <label
-                          className={`flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer bg-white hover:shadow-md transition text-sm ${logoDragActive ? "border-gray-700 bg-gray-100" : "border-gray-300"}`}
-                          onDragOver={handleLogoDragOver}
-                          onDragLeave={handleLogoDragLeave}
-                          onDrop={handleLogoDrop}
-                        >
-                          <Upload className="w-5 h-5 text-gray-600" />
-                          <span className="truncate max-w-[180px] text-gray-700 font-subheading">
-                            {teamLogoFileName ? teamLogoFileName : "Upload Logo"}
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange('teamLogo', e.target.files?.[0] || null)}
-                            className="hidden"
-                          />
-                        </label>
-                        {teamLogoFileName && (
-                          <button
-                            type="button"
-                            className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
-                            style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={(e) => { e.stopPropagation(); handleFileChange('teamLogo', null) }}
-                            tabIndex={-1}
-                            aria-label="Cancel file upload"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Home Ground/City *
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                        placeholder="Enter city name"
-                        required
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 3: Captain & Vice-Captain */}
-              {currentStep === 3 && (
-                <motion.div
-                  key="step3"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">
-                    Captain & Vice-Captain
-                  </h3>
-                  <div className="space-y-8">
-                    {/* Captain Details */}
-                    <div className="bg-blue-50 rounded-xl p-6">
-                      <h4 className="font-subheading font-bold text-primary text-xl mb-4">
-                        Captain Details
-                      </h4>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                            placeholder="Captain's name"
-                            required
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Phone Number *
-                            </label>
-                            <input
-                              type="tel"
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                              placeholder="+91 XXXXX XXXXX"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Email *
-                            </label>
-                            <input
-                              type="email"
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                              placeholder="email@example.com"
-                              required
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Vice-Captain Details */}
-                    <div className="bg-green-50 rounded-xl p-6">
-                      <h4 className="font-subheading font-bold text-green-700 text-xl mb-4">
-                        Vice-Captain Details
-                      </h4>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                            placeholder="Vice-Captain's name"
-                            required
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Phone Number *
-                            </label>
-                            <input
-                              type="tel"
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                              placeholder="+91 XXXXX XXXXX"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Email *
-                            </label>
-                            <input
-                              type="email"
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                              placeholder="email@example.com"
-                              required
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 4: Player Details */}
-              {currentStep === 4 && (
-                <motion.div
-                  key="step4"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                  className="max-h-[600px] overflow-y-auto pr-2"
-                >
-                  <div className="sticky top-0 bg-white pb-4 mb-4 z-10">
-                    <h3 className="font-heading text-3xl text-primary mb-2">
-                      Player Details
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Add 11-15 players (Captain & Vice-Captain included)
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    {Array.from({ length: playerCount }).map((_, index) => (
-                      <PlayerFormCard
-                        key={index}
-                        playerNumber={index + 1}
-                        onRemove={playerCount > 11 ? () => setPlayerCount(playerCount - 1) : undefined}
-                        canRemove={playerCount > 11 && index === playerCount - 1}
-                      />
-                    ))}
-                  </div>
-
-                  {playerCount < 15 && (
-                    <button
-                      onClick={() => setPlayerCount(playerCount + 1)}
-                      className="w-full mt-6 btn-outline flex items-center justify-center gap-2"
-                    >
-                      <Plus className="w-5 h-5" />
-                      Add Player
-                    </button>
-                  )}
-                </motion.div>
-              )}
-
-              {/* Step 5: Review */}
-              {currentStep === 5 && (
-                <motion.div
-                  key="step5"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">
-                    Review & Submit
-                  </h3>
-                  <div className="space-y-6">
-                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                      <p className="font-subheading text-green-700 font-semibold">
-                        ✓ All information has been filled
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 text-gray-700">
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Team Name:</span>
-                        <span>{formData.teamName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Total Players:</span>
-                        <span>{playerCount}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Registration Fee:</span>
-                        <span className="text-green-600 font-bold">₹2,000</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-                      <p className="text-sm text-yellow-800">
-                        <strong>Note:</strong> By submitting this form, you agree to the tournament 
-                        rules and regulations. All information provided must be accurate.
-                      </p>
                     </div>
                   </div>
                 </motion.div>

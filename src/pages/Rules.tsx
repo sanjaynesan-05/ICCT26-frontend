@@ -1,109 +1,23 @@
+import React from 'react'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
-import { ChevronDown, Download } from 'lucide-react'
+import { ChevronDown, Download, ClipboardList, Users, FileText, Gavel, Flame, Target, Flag, AlertTriangle } from 'lucide-react'
+import { TOURNAMENT_RULES } from '../data/rules'
 
-interface Rule {
-  id: number
-  title: string
-  icon: string
-  content: string[]
+const iconMap = {
+  ClipboardList,
+  Users,
+  FileText,
+  Gavel,
+  Flame,
+  Target,
+  Flag,
+  AlertTriangle,
 }
 
 const Rules = () => {
   const [openAccordion, setOpenAccordion] = useState<number | null>(1)
-
-  const rules: Rule[] = [
-    {
-      id: 1,
-      title: 'Red Tennis Ball Match',
-      icon: '⚾',
-      content: [
-        'All matches will be played with red tennis balls',
-        'Standard cricket rules apply with tennis ball modifications',
-        'No bouncers above shoulder height',
-        'Wide and no-ball rules as per standard cricket',
-      ],
-    },
-    {
-      id: 2,
-      title: 'Team Composition',
-      icon: '👥',
-      content: [
-        'Minimum 11 players, maximum 15 players per team',
-        'All players must be registered before the tournament starts',
-        'No player substitution between matches',
-        'Captain and vice-captain must be clearly designated',
-      ],
-    },
-    {
-      id: 3,
-      title: 'Powerplay Rules',
-      icon: '🔥',
-      content: [
-        'First 4 overs are powerplay overs',
-        'Maximum 3 fielders allowed outside the 30-yard circle during powerplay',
-        'After powerplay, maximum 5 fielders allowed outside the circle',
-        'Mandatory powerplay cannot be delayed or split',
-      ],
-    },
-    {
-      id: 4,
-      title: 'Bowling Restrictions',
-      icon: '🕒',
-      content: [
-        'Each bowler can bowl a maximum of 3 overs',
-        'No bowler can bowl more than 2 consecutive overs',
-        'Minimum 5 bowlers must be used in a match',
-        'Wide balls will be re-bowled and count as extra runs',
-      ],
-    },
-    {
-      id: 5,
-      title: 'Super Over for Tie',
-      icon: '🏁',
-      content: [
-        'In case of a tie, a super over will be played',
-        'Each team will face 6 balls',
-        'Same batting order as in the main match',
-        'If super over is also tied, team with more boundaries wins',
-      ],
-    },
-    {
-      id: 6,
-      title: 'Umpire Decision',
-      icon: '⚖️',
-      content: [
-        'Umpire\'s decision is final and binding',
-        'No DRS (Decision Review System) available',
-        'Players must maintain discipline and sportsmanship',
-        'Any form of dissent will result in penalties',
-        'Severe cases may lead to team disqualification',
-      ],
-    },
-    {
-      id: 7,
-      title: 'Match Duration',
-      icon: '⏱️',
-      content: [
-        '15 overs per side',
-        'Maximum 60 minutes per innings',
-        'Break between innings: 10 minutes',
-        'Penalty overs for slow over rate',
-      ],
-    },
-    {
-      id: 8,
-      title: 'Fair Play & Conduct',
-      icon: '🤝',
-      content: [
-        'Spirit of cricket must be upheld at all times',
-        'No verbal or physical abuse tolerated',
-        'Teams must arrive 30 minutes before match time',
-        'Proper cricket attire mandatory',
-        'Points deduction for code of conduct violations',
-      ],
-    },
-  ]
+  const rules = TOURNAMENT_RULES
 
   return (
     <motion.div
@@ -134,7 +48,7 @@ const Rules = () => {
 
         {/* Rules Accordion */}
         <div className="space-y-4">
-          {rules.map((rule, index) => (
+          {rules.map((rule: any, index: number) => (
             <motion.div
               key={rule.id}
               initial={{ opacity: 0, y: 20 }}
@@ -147,7 +61,12 @@ const Rules = () => {
                 className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/10 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-4xl">{rule.icon}</span>
+                  {/* Render Lucide icon dynamically */}
+                  {iconMap[rule.icon] ? (
+                    React.createElement(iconMap[rule.icon], { className: "w-8 h-8 text-accent" })
+                  ) : (
+                    <span className="text-4xl">?</span>
+                  )}
                   <h3 className="font-heading text-2xl md:text-3xl text-white">
                     {rule.title}
                   </h3>
@@ -171,7 +90,7 @@ const Rules = () => {
               >
                 <div className="px-6 pb-6 pl-20">
                   <ul className="space-y-3">
-                    {rule.content.map((item, idx) => (
+                    {rule.content.map((item: string, idx: number) => (
                       <li
                         key={idx}
                         className="flex items-start gap-3 text-gray-300 font-subheading"

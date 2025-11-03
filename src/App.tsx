@@ -41,7 +41,7 @@ function App() {
             <Route path="/contact" element={<Contact />} />
           </Routes>
         </AnimatePresence>
-        <Footer />
+        
       </motion.div>
     </Router>
   )

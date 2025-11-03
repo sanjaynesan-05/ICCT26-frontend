@@ -44,8 +44,8 @@ export default function CricketLoader() {
   const sparks = useMemo(
     () =>
       Array.from({ length: 12 }, (_, i) => ({
-        key: `spark-${i}-${Math.random().toString(36).slice(2, 10)}`,
-        x: Math.random() * window.innerWidth,
+        key: `spark-${i}`,
+        x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920),
         delay: Math.random() * 3,
         duration: 3 + Math.random() * 2,
       })),
@@ -56,6 +56,7 @@ export default function CricketLoader() {
     <AnimatePresence>
       {progress < 100 || !showFlash ? (
         <motion.div
+          key="loader-content"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
@@ -293,6 +294,7 @@ export default function CricketLoader() {
       <AnimatePresence>
         {showFlash && (
           <motion.div
+            key="flash-transition"
             initial={{ opacity: 0 }}
             animate={{ opacity: [0, 1, 0] }}
             exit={{ opacity: 0 }}

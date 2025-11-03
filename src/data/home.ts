@@ -4,6 +4,7 @@
  */
 
 import type { Announcement } from '../types'
+import { Trophy, MapPin, Calendar, Users } from 'lucide-react'
 
 /**
  * Announcements for the ticker
@@ -45,11 +46,11 @@ export const ANNOUNCEMENTS: Announcement[] = [
  * Hero Section Information
  */
 export const HERO_SECTION = {
-  mainTitle: 'ICCT26',
+  mainTitle: "ICCT'26",
   subTitle: 'Cricket Tournament',
   tagline: 'Experience the Ultimate Cricket Championship',
   description:
-    'Join us for an exciting 3-day cricket tournament featuring red tennis ball format cricket with teams competing for glory and prizes.',
+    '',
 }
 
 /**
@@ -57,24 +58,28 @@ export const HERO_SECTION = {
  */
 export const TOURNAMENT_HIGHLIGHTS = [
   {
-    icon: '🏏',
-    title: 'Red Tennis Ball Cricket',
-    description: 'Exciting and inclusive cricket format for all skill levels',
+    icon: Trophy,
+    title: 'Prize Money',
+    value: '₹50,000',
+    color: 'text-accent',
   },
   {
-    icon: '🏆',
-    title: 'Prize Pool',
-    description: 'Compete for amazing prizes and trophies',
+    icon: MapPin,
+    title: 'Venue',
+    value: 'CSI St. Peter\'s Church',
+    color: 'text-blue-400',
   },
   {
-    icon: '👥',
-    title: 'Team Based',
-    description: '11-15 players per team with flexible squad sizes',
+    icon: Calendar,
+    title: 'Start Date',
+    value: 'January 24, 2026',
+    color: 'text-green-400',
   },
   {
-    icon: '📅',
-    title: '3 Days of Action',
-    description: 'January 24-26, 2026 - Back-to-back matches',
+    icon: Users,
+    title: 'Teams Registered',
+    value: '15',
+    color: 'text-purple-400',
   },
 ]
 
