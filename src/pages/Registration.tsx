@@ -4,46 +4,61 @@ import { Upload, Plus, CheckCircle, ChevronRight, ChevronLeft, X } from 'lucide-
 import PlayerFormCard from '../components/PlayerFormCard'
 
 interface FormData {
-  paymentReceipt: File | null
+  churchName: string
   teamName: string
-  teamLogo: File | null
   captainName: string
   captainPhone: string
+  captainWhatsapp: string
   captainEmail: string
   viceCaptainName: string
   viceCaptainPhone: string
+  viceCaptainWhatsapp: string
   viceCaptainEmail: string
+  paymentReceipt: File | null
 }
+
+const CHURCH_NAMES = [
+  'CSI St. Peter\'s Church',
+  'CSI Christ Church',
+  'CSI Grace Church',
+  'CSI Zion Church',
+  'CSI Emmanuel Church',
+  'CSI Trinity Church',
+  'CSI Holy Cross Church',
+  'CSI Bethel Church',
+  'CSI Calvary Church',
+  'CSI Vision Church',
+]
 
 const Registration = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [playerCount, setPlayerCount] = useState(11)
   const [showSuccess, setShowSuccess] = useState(false)
   const [paymentFileName, setPaymentFileName] = useState('')
-  const [teamLogoFileName, setTeamLogoFileName] = useState('')
   const [paymentDragActive, setPaymentDragActive] = useState(false)
-  const [logoDragActive, setLogoDragActive] = useState(false)
   const [formData, setFormData] = useState<FormData>({
-    paymentReceipt: null,
+    churchName: '',
     teamName: '',
-    teamLogo: null,
     captainName: '',
     captainPhone: '',
+    captainWhatsapp: '',
     captainEmail: '',
     viceCaptainName: '',
     viceCaptainPhone: '',
+    viceCaptainWhatsapp: '',
     viceCaptainEmail: '',
+    paymentReceipt: null,
   })
 
   const totalSteps = 5
   const progress = (currentStep / totalSteps) * 100
 
   const steps = [
-    { number: 1, title: 'Payment' },
-    { number: 2, title: 'Team Details' },
-    { number: 3, title: 'Captain & Vice-Captain' },
-    { number: 4, title: 'Players' },
-    { number: 5, title: 'Review' },
+    { number: 1, title: 'Team Details' },
+    { number: 2, title: 'Captain & Vice-Captain' },
+    { number: 3, title: 'Players' },
+    { number: 4, title: 'Review' },
+    { number: 5, title: 'Payment' },
   ]
 
   const handleNext = () => {
@@ -64,13 +79,9 @@ const Registration = () => {
     setShowSuccess(true)
   }
 
-  const handleFileChange = (field: 'paymentReceipt' | 'teamLogo', file: File | null) => {
-    setFormData({ ...formData, [field]: file })
-    if (field === 'paymentReceipt') {
-      setPaymentFileName(file ? file.name : '')
-    } else {
-      setTeamLogoFileName(file ? file.name : '')
-    }
+  const handleFileChange = (file: File | null) => {
+    setFormData({ ...formData, paymentReceipt: file })
+    setPaymentFileName(file ? file.name : '')
   }
 
   const handlePaymentDragOver = (e: React.DragEvent) => {
@@ -91,30 +102,13 @@ const Registration = () => {
     setPaymentDragActive(false)
     const files = e.dataTransfer.files
     if (files && files[0]) {
-      handleFileChange('paymentReceipt', files[0])
+      handleFileChange(files[0])
     }
   }
 
-  const handleLogoDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setLogoDragActive(true)
-  }
-
-  const handleLogoDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setLogoDragActive(false)
-  }
-
-  const handleLogoDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setLogoDragActive(false)
-    const files = e.dataTransfer.files
-    if (files && files[0]) {
-      handleFileChange('teamLogo', files[0])
-    }
+  const validateWhatsapp = (phone: string): boolean => {
+    const phoneRegex = /^[0-9]{10}$/
+    return phoneRegex.test(phone.replace(/[^0-9]/g, ''))
   }
 
   return (
@@ -242,7 +236,7 @@ const Registration = () => {
                           <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => handleFileChange('paymentReceipt', e.target.files?.[0] || null)}
+                            onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
                             className="hidden"
                           />
                         </label>
@@ -251,7 +245,7 @@ const Registration = () => {
                             type="button"
                             className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
                             style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={(e) => { e.stopPropagation(); handleFileChange('paymentReceipt', null) }}
+                            onClick={(e) => { e.stopPropagation(); handleFileChange(null) }}
                             tabIndex={-1}
                             aria-label="Cancel file upload"
                           >
@@ -264,10 +258,10 @@ const Registration = () => {
                 </motion.div>
               )}
 
-              {/* Step 2: Team Details */}
-              {currentStep === 2 && (
+              {/* Step 1: Team Details */}
+              {currentStep === 1 && (
                 <motion.div
-                  key="step2"
+                  key="step1"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
@@ -277,6 +271,23 @@ const Registration = () => {
                     Team Information
                   </h3>
                   <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                        Church Name *
+                      </label>
+                      <select
+                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                        value={formData.churchName}
+                        onChange={(e) => setFormData({ ...formData, churchName: e.target.value })}
+                        required
+                      >
+                        <option value="">Select your church...</option>
+                        {CHURCH_NAMES.map((church) => (
+                          <option key={church} value={church}>{church}</option>
+                        ))}
+                      </select>
+                    </div>
+
                     <div>
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
                         Team Name *
@@ -290,61 +301,12 @@ const Registration = () => {
                         required
                       />
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Team Logo (Optional)
-                      </label>
-                      <div className="relative">
-                        <label
-                          className={`flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer bg-white hover:shadow-md transition text-sm ${logoDragActive ? "border-gray-700 bg-gray-100" : "border-gray-300"}`}
-                          onDragOver={handleLogoDragOver}
-                          onDragLeave={handleLogoDragLeave}
-                          onDrop={handleLogoDrop}
-                        >
-                          <Upload className="w-5 h-5 text-gray-600" />
-                          <span className="truncate max-w-[180px] text-gray-700 font-subheading">
-                            {teamLogoFileName ? teamLogoFileName : "Upload Logo"}
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange('teamLogo', e.target.files?.[0] || null)}
-                            className="hidden"
-                          />
-                        </label>
-                        {teamLogoFileName && (
-                          <button
-                            type="button"
-                            className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
-                            style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={(e) => { e.stopPropagation(); handleFileChange('teamLogo', null) }}
-                            tabIndex={-1}
-                            aria-label="Cancel file upload"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Home Ground/City *
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                        placeholder="Enter city name"
-                        required
-                      />
-                    </div>
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 3: Captain & Vice-Captain */}
-              {currentStep === 3 && (
+              {/* Step 2: Captain & Vice-Captain */}
+              {currentStep === 2 && (
                 <motion.div
                   key="step3"
                   initial={{ opacity: 0, x: 50 }}
@@ -370,6 +332,8 @@ const Registration = () => {
                             type="text"
                             className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
                             placeholder="Captain's name"
+                            value={formData.captainName}
+                            onChange={(e) => setFormData({ ...formData, captainName: e.target.value })}
                             required
                           />
                         </div>
@@ -382,20 +346,38 @@ const Registration = () => {
                               type="tel"
                               className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
                               placeholder="+91 XXXXX XXXXX"
+                              value={formData.captainPhone}
+                              onChange={(e) => setFormData({ ...formData, captainPhone: e.target.value })}
                               required
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Email *
+                              WhatsApp Number (10 digits) *
                             </label>
                             <input
-                              type="email"
+                              type="tel"
                               className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                              placeholder="email@example.com"
+                              placeholder="Enter 10-digit number"
+                              maxLength={10}
+                              value={formData.captainWhatsapp}
+                              onChange={(e) => setFormData({ ...formData, captainWhatsapp: e.target.value })}
                               required
                             />
                           </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                            Email *
+                          </label>
+                          <input
+                            type="email"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                            placeholder="email@example.com"
+                            value={formData.captainEmail}
+                            onChange={(e) => setFormData({ ...formData, captainEmail: e.target.value })}
+                            required
+                          />
                         </div>
                       </div>
                     </div>
@@ -414,6 +396,8 @@ const Registration = () => {
                             type="text"
                             className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
                             placeholder="Vice-Captain's name"
+                            value={formData.viceCaptainName}
+                            onChange={(e) => setFormData({ ...formData, viceCaptainName: e.target.value })}
                             required
                           />
                         </div>
@@ -426,20 +410,38 @@ const Registration = () => {
                               type="tel"
                               className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
                               placeholder="+91 XXXXX XXXXX"
+                              value={formData.viceCaptainPhone}
+                              onChange={(e) => setFormData({ ...formData, viceCaptainPhone: e.target.value })}
                               required
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Email *
+                              WhatsApp Number (10 digits) *
                             </label>
                             <input
-                              type="email"
+                              type="tel"
                               className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                              placeholder="email@example.com"
+                              placeholder="Enter 10-digit number"
+                              maxLength={10}
+                              value={formData.viceCaptainWhatsapp}
+                              onChange={(e) => setFormData({ ...formData, viceCaptainWhatsapp: e.target.value })}
                               required
                             />
                           </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                            Email *
+                          </label>
+                          <input
+                            type="email"
+                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                            placeholder="email@example.com"
+                            value={formData.viceCaptainEmail}
+                            onChange={(e) => setFormData({ ...formData, viceCaptainEmail: e.target.value })}
+                            required
+                          />
                         </div>
                       </div>
                     </div>
@@ -447,8 +449,8 @@ const Registration = () => {
                 </motion.div>
               )}
 
-              {/* Step 4: Player Details */}
-              {currentStep === 4 && (
+              {/* Step 3: Player Details */}
+              {currentStep === 3 && (
                 <motion.div
                   key="step4"
                   initial={{ opacity: 0, x: 50 }}
@@ -489,29 +491,41 @@ const Registration = () => {
                 </motion.div>
               )}
 
-              {/* Step 5: Review */}
-              {currentStep === 5 && (
+              {/* Step 4: Review & Submit */}
+              {currentStep === 4 && (
                 <motion.div
-                  key="step5"
+                  key="step4"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
                 >
                   <h3 className="font-heading text-3xl text-primary mb-6">
-                    Review & Submit
+                    Review Information
                   </h3>
                   <div className="space-y-6">
                     <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
                       <p className="font-subheading text-green-700 font-semibold">
-                        ✓ All information has been filled
+                        ✓ Please review all information before final submission
                       </p>
                     </div>
 
                     <div className="space-y-3 text-gray-700">
                       <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Church Name:</span>
+                        <span>{formData.churchName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
                         <span className="font-subheading font-semibold">Team Name:</span>
                         <span>{formData.teamName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Captain:</span>
+                        <span>{formData.captainName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Vice-Captain:</span>
+                        <span>{formData.viceCaptainName || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b">
                         <span className="font-subheading font-semibold">Total Players:</span>
@@ -528,6 +542,82 @@ const Registration = () => {
                         <strong>Note:</strong> By submitting this form, you agree to the tournament 
                         rules and regulations. All information provided must be accurate.
                       </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 5: Payment Receipt */}
+              {currentStep === 5 && (
+                <motion.div
+                  key="step5"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="font-heading text-3xl text-primary mb-6">
+                    Payment Confirmation
+                  </h3>
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 border-l-4 border-primary p-4 rounded">
+                      <p className="font-subheading text-primary font-semibold mb-2">
+                        Registration Fee: ₹2,000
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        Scan the QR code below to make payment
+                      </p>
+                    </div>
+
+                    {/* QR Code Section */}
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="bg-white p-4 rounded-xl shadow-lg mb-4">
+                        <img 
+                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=icct26@upi&pn=ICCT26&am=2000&tn=ICCT26%20Registration%20Fee" 
+                          alt="Payment QR Code" 
+                          className="w-64 h-64 object-cover rounded-lg"
+                        />
+                      </div>
+                      <p className="text-center font-subheading text-gray-600 mb-4">
+                        Scan with any UPI app to pay ₹2,000
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                        Upload Payment Receipt * (Required)
+                      </label>
+                      <div className="relative">
+                        <label
+                          className={`flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer bg-white hover:shadow-md transition text-sm ${paymentDragActive ? "border-gray-700 bg-gray-100" : "border-gray-300"}`}
+                          onDragOver={handlePaymentDragOver}
+                          onDragLeave={handlePaymentDragLeave}
+                          onDrop={handlePaymentDrop}
+                        >
+                          <Upload className="w-5 h-5 text-gray-600" />
+                          <span className="truncate max-w-[180px] text-gray-700 font-subheading">
+                            {paymentFileName ? paymentFileName : "Upload Receipt"}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {paymentFileName && (
+                          <button
+                            type="button"
+                            className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
+                            style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={(e) => { e.stopPropagation(); handleFileChange(null) }}
+                            tabIndex={-1}
+                            aria-label="Cancel file upload"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>

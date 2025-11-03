@@ -56,7 +56,7 @@ const PlayerFormCard = ({ playerNumber, onRemove, canRemove }: PlayerFormCardPro
           />
         </div>
 
-        <div>
+        <div className="md:col-span-2">
           <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
             Phone Number *
           </label>
@@ -66,36 +66,6 @@ const PlayerFormCard = ({ playerNumber, onRemove, canRemove }: PlayerFormCardPro
             placeholder="+91 XXXXX XXXXX"
             required
           />
-        </div>
-
-        <div>
-          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-            Jersey Number *
-          </label>
-          <input
-            type="number"
-            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-            placeholder="00"
-            min="0"
-            max="99"
-            required
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-            Role *
-          </label>
-          <select
-            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-            required
-          >
-            <option value="">Select Role</option>
-            <option value="batsman">Batsman</option>
-            <option value="bowler">Bowler</option>
-            <option value="all-rounder">All-Rounder</option>
-            <option value="wicket-keeper">Wicket Keeper</option>
-          </select>
         </div>
       </div>
     </motion.div>

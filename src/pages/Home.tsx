@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Trophy, MapPin, Calendar, Users } from 'lucide-react'
+import { Trophy, MapPin, Calendar, Users, Facebook, Instagram, Youtube } from 'lucide-react'
 import Countdown from '../components/Countdown'
+import RegistrationCountdown from '../components/RegistrationCountdown'
 import AnnouncementTicker from '../components/AnnouncementTicker'
 
 const Home = () => {
@@ -91,14 +92,30 @@ const Home = () => {
             </p>
           </motion.div>
 
-          {/* Countdown */}
+          {/* Countdowns */}
           <motion.div
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
             className="mb-12"
           >
-            <Countdown />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-8">
+              {/* Match Countdown */}
+              <div className="flex flex-col items-center">
+                <h3 className="font-subheading text-lg md:text-xl text-accent mb-6 uppercase tracking-wider">
+                  Match Countdown
+                </h3>
+                <Countdown />
+              </div>
+              
+              {/* Registration Countdown */}
+              <div className="flex flex-col items-center">
+                <h3 className="font-subheading text-lg md:text-xl text-blue-400 mb-6 uppercase tracking-wider">
+                  Registration Countdown
+                </h3>
+                <RegistrationCountdown />
+              </div>
+            </div>
           </motion.div>
 
           {/* CTA Buttons */}
@@ -110,9 +127,6 @@ const Home = () => {
           >
             <Link to="/registration" className="btn-gold">
               Register Now
-            </Link>
-            <Link to="/schedule" className="btn-outline">
-              View Schedule
             </Link>
           </motion.div>
         </div>
@@ -203,6 +217,79 @@ const Home = () => {
           >
             With exciting matches, talented teams, and amazing prizes, ICCT26 promises to be the cricket event of the year!
           </motion.p>
+        </div>
+      </section>
+
+      {/* Follow Us Section */}
+      <section className="py-20 px-4 lg:px-8">
+        <div className="container mx-auto max-w-4xl text-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="font-heading text-5xl md:text-6xl text-accent mb-12"
+          >
+            Follow Us
+          </motion.h2>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="flex justify-center gap-8 md:gap-12"
+          >
+            {/* Facebook */}
+            <motion.a
+              href="https://facebook.com/icct26"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.1, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex flex-col items-center group"
+            >
+              <div className="glass-effect glow-border rounded-2xl p-6 group-hover:shadow-lg transition-all duration-300">
+                <Facebook className="w-12 h-12 text-blue-500 group-hover:text-blue-400 transition-colors" />
+              </div>
+              <span className="text-gray-300 font-subheading text-sm mt-4 group-hover:text-accent transition-colors">
+                Facebook
+              </span>
+            </motion.a>
+
+            {/* Instagram */}
+            <motion.a
+              href="https://instagram.com/icct26"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.1, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex flex-col items-center group"
+            >
+              <div className="glass-effect glow-border rounded-2xl p-6 group-hover:shadow-lg transition-all duration-300">
+                <Instagram className="w-12 h-12 text-pink-500 group-hover:text-pink-400 transition-colors" />
+              </div>
+              <span className="text-gray-300 font-subheading text-sm mt-4 group-hover:text-accent transition-colors">
+                Instagram
+              </span>
+            </motion.a>
+
+            {/* YouTube */}
+            <motion.a
+              href="https://youtube.com/icct26"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.1, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex flex-col items-center group"
+            >
+              <div className="glass-effect glow-border rounded-2xl p-6 group-hover:shadow-lg transition-all duration-300">
+                <Youtube className="w-12 h-12 text-red-500 group-hover:text-red-400 transition-colors" />
+              </div>
+              <span className="text-gray-300 font-subheading text-sm mt-4 group-hover:text-accent transition-colors">
+                YouTube
+              </span>
+            </motion.a>
+          </motion.div>
         </div>
       </section>
     </motion.div>
