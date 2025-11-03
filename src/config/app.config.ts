@@ -93,7 +93,7 @@ export const ANIMATIONS = {
  * API Configuration (for future use)
  */
 export const API_CONFIG = {
-  baseUrl: process.env.REACT_APP_API_URL || 'https://api.icct26.org',
+  baseUrl: import.meta.env.VITE_API_URL || 'https://api.icct26.org',
   timeout: 30000,
   retries: 3,
 }

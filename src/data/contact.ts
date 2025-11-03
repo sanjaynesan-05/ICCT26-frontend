@@ -6,10 +6,6 @@
 import {
   Instagram,
   Facebook,
-  Mail,
-  Phone,
-  MessageCircle,
-  MapPin,
 } from 'lucide-react'
 import type { Organizer, SocialLink, Venue } from '../types'
 
