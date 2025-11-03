@@ -63,8 +63,8 @@ const Registration = () => {
     { number: 1, title: 'Team Details' },
     { number: 2, title: 'Captain & Vice-Captain' },
     { number: 3, title: 'Players' },
-    { number: 4, title: 'Payment Upload' },
-    { number: 5, title: 'Review' },
+    { number: 4, title: 'Review' },
+    { number: 5, title: 'Payment Upload' },
   ]
 
   const handleNext = () => {
@@ -256,7 +256,7 @@ const Registration = () => {
 
                     <div>
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Pastor Letter *
+                        Church Letter *
                       </label>
                       <div className="relative">
                         <label
@@ -267,7 +267,7 @@ const Registration = () => {
                         >
                           <Upload className="w-5 h-5 text-gray-600" />
                           <span className="truncate max-w-[180px] text-gray-700 font-subheading">
-                            {pastorLetterFileName ? pastorLetterFileName : "Upload Pastor Letter"}
+                            {pastorLetterFileName ? pastorLetterFileName : "Upload Church Letter"}
                           </span>
                           <input
                             type="file"
@@ -446,9 +446,8 @@ const Registration = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
-                  className="max-h-[600px] overflow-y-auto pr-2"
                 >
-                  <div className="sticky top-0 bg-white pb-4 mb-4 z-10">
+                  <div className="pb-4 mb-4">
                     <h3 className="font-heading text-3xl text-primary mb-2">
                       Player Details
                     </h3>
@@ -471,7 +470,7 @@ const Registration = () => {
                   {playerCount < 15 && (
                     <button
                       onClick={() => setPlayerCount(playerCount + 1)}
-                      className="w-full mt-6 btn-outline flex items-center justify-center gap-2"
+                      className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary hover:shadow-lg hover:shadow-primary/50 text-white font-subheading font-semibold rounded-lg transition-all duration-300 hover:scale-105"
                     >
                       <Plus className="w-5 h-5" />
                       Add Player
@@ -480,10 +479,66 @@ const Registration = () => {
                 </motion.div>
               )}
 
-              {/* Step 4: Payment Upload */}
+              {/* Step 4: Review & Submit */}
               {currentStep === 4 && (
                 <motion.div
                   key="step4"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="font-heading text-3xl text-primary mb-6">
+                    Review Information
+                  </h3>
+                  <div className="space-y-6">
+                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                      <p className="font-subheading text-green-700 font-semibold">
+                        ✓ Please review all information before final submission
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 text-gray-700">
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Church Name:</span>
+                        <span>{formData.churchName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Team Name:</span>
+                        <span>{formData.teamName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Captain:</span>
+                        <span>{formData.captainName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Vice-Captain:</span>
+                        <span>{formData.viceCaptainName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Total Players:</span>
+                        <span>{playerCount}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Registration Fee:</span>
+                        <span className="text-green-600 font-bold">₹2,000</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                      <p className="text-sm text-yellow-800">
+                        <strong>Note:</strong> By submitting this form, you agree to the tournament 
+                        rules and regulations. All information provided must be accurate.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 5: Payment Upload */}
+              {currentStep === 5 && (
+                <motion.div
+                  key="step5"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
@@ -551,118 +606,6 @@ const Registration = () => {
                           </button>
                         )}
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 5: Review & Submit */}
-              {currentStep === 5 && (
-                <motion.div
-                  key="step5"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">
-                    Review Information
-                  </h3>
-                  <div className="space-y-6">
-                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                      <p className="font-subheading text-green-700 font-semibold">
-                        ✓ Please review all information before final submission
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 text-gray-700">
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Church Name:</span>
-                        <span>{formData.churchName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Team Name:</span>
-                        <span>{formData.teamName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Captain:</span>
-                        <span>{formData.captainName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Vice-Captain:</span>
-                        <span>{formData.viceCaptainName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Total Players:</span>
-                        <span>{playerCount}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Registration Fee:</span>
-                        <span className="text-green-600 font-bold">₹2,000</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-                      <p className="text-sm text-yellow-800">
-                        <strong>Note:</strong> By submitting this form, you agree to the tournament 
-                        rules and regulations. All information provided must be accurate.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 5: Review & Submit */}
-              {currentStep === 5 && (
-                <motion.div
-                  key="step5"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">
-                    Review Information
-                  </h3>
-                  <div className="space-y-6">
-                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                      <p className="font-subheading text-green-700 font-semibold">
-                        ✓ Please review all information before final submission
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 text-gray-700">
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Church Name:</span>
-                        <span>{formData.churchName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Team Name:</span>
-                        <span>{formData.teamName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Captain:</span>
-                        <span>{formData.captainName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Vice-Captain:</span>
-                        <span>{formData.viceCaptainName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Total Players:</span>
-                        <span>{playerCount}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Registration Fee:</span>
-                        <span className="text-green-600 font-bold">₹2,000</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-                      <p className="text-sm text-yellow-800">
-                        <strong>Note:</strong> By submitting this form, you agree to the tournament 
-                        rules and regulations. All information provided must be accurate.
-                      </p>
                     </div>
                   </div>
                 </motion.div>

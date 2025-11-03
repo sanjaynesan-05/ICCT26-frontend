@@ -32,7 +32,7 @@ const Schedule = () => {
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="glass-card rounded-2xl p-12 md:p-16 text-center"
+          className="glass-card rounded-2xl p-12 md:p-16 text-center border-2 border-accent/20 shadow-lg shadow-accent/10"
         >
           <motion.div
             animate={{ y: [0, -10, 0] }}
@@ -59,7 +59,7 @@ const Schedule = () => {
             transition={{ delay: 0.4 }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
-            <div className="glass-effect glow-border rounded-xl px-8 py-4">
+            <div className="glass-effect glow-border rounded-xl px-8 py-4 border-2 border-accent/30">
               <p className="font-subheading text-accent font-semibold">
                 Tournament Start: January 24, 2026
               </p>
