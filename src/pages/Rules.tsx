@@ -40,10 +40,10 @@ const Rules = () => {
           <p className="font-subheading text-2xl text-gray-300 mb-8">
             Know the Game. Play Fair.
           </p>
-          <button className="btn-gold inline-flex items-center gap-2">
+          <a href="/rulebook.pdf" download className="btn-gold inline-flex items-center gap-2">
             <Download className="w-5 h-5" />
             Download Rulebook PDF
-          </button>
+          </a>
         </motion.div>
 
         {/* Rules Accordion */}
