@@ -14,12 +14,12 @@ export default {
         'bg-end': '#002B5C',
       },
       fontFamily: {
-        heading: ['Bebas Neue', 'sans-serif'],
-        subheading: ['Quicksand', 'sans-serif'],
-        body: ['Manrope', 'sans-serif'],
-        bebas: ['Bebas Neue', 'sans-serif'],
-        quicksand: ['Quicksand', 'sans-serif'],
-        manrope: ['Manrope', 'sans-serif'],
+        heading: ['Bebas Neue', 'Impact', 'Arial Black', 'sans-serif'],
+        subheading: ['Quicksand', 'Verdana', 'Geneva', 'sans-serif'],
+        body: ['Manrope', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
+        bebas: ['Bebas Neue', 'Impact', 'Arial Black', 'sans-serif'],
+        quicksand: ['Quicksand', 'Verdana', 'Geneva', 'sans-serif'],
+        manrope: ['Manrope', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Arial', 'sans-serif'],
       },
       animation: {
         'float': 'float 3s ease-in-out infinite',
