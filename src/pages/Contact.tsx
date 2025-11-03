@@ -1,54 +1,8 @@
 import { motion } from 'framer-motion'
-import { Phone, MapPin, MessageCircle, Instagram, Facebook } from 'lucide-react'
+import { Phone, MapPin, MessageCircle } from 'lucide-react'
+import { ORGANIZERS, SOCIAL_LINKS, VENUE } from '../data/contact'
 
 const Contact = () => {
-  const organizers = [
-    {
-      role: 'Youth Convenor',
-      name: 'Mr. Robinson Charly',
-      phone: '+91 9677940308',
-      whatsapp: '919677940308',
-    
-    },
-    {
-      role: 'Head Co-Ordinator',
-      name: 'Mr. Sam Richard',
-      phone: '+91 9543656533',
-      whatsapp: '919543656533',
-      
-    },
-    {
-      role: 'Co-Ordinator',
-      name: 'Mr. Jeba',
-      phone: '+91 7806965812',
-      whatsapp: '917806965812',
-      
-    },
-
-    {
-      role: 'Co-Ordinator',
-      name: 'Mr. Jerald',
-      phone: '+91 7871541469',
-      whatsapp: '917871541469',
-      
-    },
-  ]
-
-  const socialLinks = [
-    {
-      name: 'Instagram',
-      icon: Instagram,
-      url: 'https://instagram.com/icct26',
-      color: 'from-purple-500 to-pink-500',
-    },
-    {
-      name: 'Facebook',
-      icon: Facebook,
-      url: 'https://facebook.com/icct26',
-      color: 'from-blue-600 to-blue-400',
-    },
-  ]
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -73,7 +27,7 @@ const Contact = () => {
         </motion.div>
 
         <div className="max-w-5xl mx-auto">
-          {/* Organizers Cards */}
+          {/* Organizers Grid */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -84,36 +38,36 @@ const Contact = () => {
               Tournament Organizers
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {organizers.map((organizer, index) => (
+              {ORGANIZERS.map((organizer, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 + index * 0.1 }}
-                  className="glass-effect rounded-xl p-6 glow-border"
+                  className="flex flex-col items-start bg-gradient-to-r from-primary/60 to-secondary/60 rounded-xl p-6 shadow-lg border border-accent/30"
                 >
-                  <h3 className="font-heading text-xl text-accent mb-3">
+                  <h3 className="font-heading text-lg text-accent mb-1">
                     {organizer.role}
                   </h3>
-                  <p className="font-subheading font-bold text-white text-lg mb-4">
+                  <p className="font-subheading font-bold text-white text-base mb-2">
                     {organizer.name}
                   </p>
-                  <div className="space-y-3">
+                  <div className="flex gap-4 mt-2">
                     <a
                       href={`tel:${organizer.phone}`}
-                      className="flex items-center gap-3 text-gray-300 hover:text-accent transition-colors group"
+                      className="flex items-center gap-2 text-gray-300 hover:text-accent transition-colors group"
                     >
-                      <Phone className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                      <span className="font-subheading">{organizer.phone}</span>
+                      <Phone className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      <span className="font-subheading text-sm">{organizer.phone}</span>
                     </a>
                     <a
                       href={`https://wa.me/${organizer.whatsapp}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-gray-300 hover:text-green-400 transition-colors group"
+                      className="flex items-center gap-2 text-gray-300 hover:text-green-400 transition-colors group"
                     >
-                      <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                      <span className="font-subheading">WhatsApp</span>
+                      <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      <span className="font-subheading text-sm">WhatsApp</span>
                     </a>
                   </div>
                 </motion.div>
@@ -126,36 +80,10 @@ const Contact = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-16"
+            className="flex flex-col md:flex-row gap-8 mt-16"
           >
-            {/* Social Media Links */}
-            <div className="glass-effect rounded-xl p-8 glow-border h-full">
-              <h3 className="font-heading text-3xl text-accent mb-8 text-center">
-                Follow Us
-              </h3>
-              <div className="flex justify-center gap-8 mb-8">
-                {socialLinks.map((link) => (
-                  <motion.a
-                    key={link.name}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.15, rotate: 5 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`w-20 h-20 rounded-full bg-gradient-to-br ${link.color} flex items-center justify-center shadow-lg hover:shadow-2xl transition-all group`}
-                    aria-label={link.name}
-                  >
-                    <link.icon className="w-10 h-10 text-white group-hover:scale-125 transition-transform" />
-                  </motion.a>
-                ))}
-              </div>
-              <p className="text-center text-gray-300 font-subheading">
-                Connect with us on social media for updates and announcements
-              </p>
-            </div>
-
-            {/* Venue Information */}
-            <div className="glass-effect rounded-xl p-6 glow-border">
+            {/* Venue Information - comes first on mobile */}
+            <div className="glass-effect rounded-xl p-6 glow-border order-1 md:order-none w-full md:w-1/2 flex flex-col justify-between">
               <h3 className="font-heading text-2xl text-accent mb-4">
                 Venue Location
               </h3>
@@ -163,12 +91,12 @@ const Contact = () => {
                 <MapPin className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
                 <div>
                   <p className="font-subheading font-semibold text-white mb-1">
-                    CSI St. Peter's Church
+                    {VENUE.name}
                   </p>
                   <p className="font-subheading">
-                    1234 Church Street, R.S. Puram<br />
-                    Coimbatore, Tamil Nadu 641002<br />
-                    India
+                    {VENUE.address}<br />
+                    {VENUE.city}, {VENUE.state} {VENUE.zipCode}<br />
+                    {VENUE.country}
                   </p>
                 </div>
               </div>
@@ -176,16 +104,62 @@ const Contact = () => {
               {/* Google Map Embed */}
               <div className="w-full h-64 rounded-lg overflow-hidden mt-4 border-2 border-accent/30">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3916.3384789234567!2d76.9558!3d11.0168!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTHCsDAxJzAwLjUiTiA3NsKwNTcnMjAuOSJF!5e0!3m2!1sen!2sin!4v1234567890123!5m2!1sen!2sin"
+                  src={VENUE.mapEmbedUrl}
                   width="100%"
                   height="100%"
                   style={{ border: 0, filter: 'invert(90%) hue-rotate(180deg)' }}
                   allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="CSI St. Peter's Church Location"
+                  title={VENUE.name + ' Location'}
                 ></iframe>
               </div>
+            </div>
+
+            {/* Social Media Links - comes after map on mobile */}
+            <div className="glass-effect rounded-xl p-8 glow-border order-2 md:order-none w-full md:w-1/2 flex flex-col justify-between relative overflow-hidden">
+              {/* Animated background effect */}
+              <div className="absolute inset-0 pointer-events-none z-0">
+                <div className="w-full h-full bg-gradient-to-br from-pink-500/10 via-blue-500/10 to-purple-500/10 animate-pulse"></div>
+              </div>
+              <motion.h3
+                className="font-heading text-3xl text-accent mb-8 text-center relative z-10"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 120 }}
+              >
+                <span className="inline-block bg-gradient-to-r from-pink-500 via-blue-500 to-purple-500 bg-clip-text text-transparent drop-shadow-lg animate-gradient-x">Follow Us</span>
+              </motion.h3>
+              <div className="flex justify-center gap-8 mb-8 flex-1 items-center h-64 relative z-10">
+                {SOCIAL_LINKS.map((link, idx) => (
+                  <motion.a
+                    key={link.name}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.2, rotate: 8, y: -8 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`w-20 h-20 rounded-full bg-gradient-to-br ${link.color} flex items-center justify-center shadow-lg hover:shadow-2xl transition-all group border-4 border-accent/30 animate-bounce-slow`}
+                    aria-label={link.name}
+                    style={{ boxShadow: '0 0 24px 4px rgba(236,72,153,0.15)' }}
+                  >
+                    <motion.div
+                      whileHover={{ y: -6, scale: 1.25 }}
+                      transition={{ type: 'spring', stiffness: 300 }}
+                    >
+                      <link.icon className="w-10 h-10 text-white group-hover:scale-125 transition-transform" />
+                    </motion.div>
+                  </motion.a>
+                ))}
+              </div>
+              <motion.p
+                className="text-center text-gray-300 font-subheading mt-auto relative z-10"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                Connect with us on social media for updates and announcements
+              </motion.p>
             </div>
           </motion.div>
         </div>

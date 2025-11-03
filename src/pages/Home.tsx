@@ -1,37 +1,14 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Trophy, MapPin, Calendar, Users, Facebook, Instagram, Youtube } from 'lucide-react'
+import { Facebook, Instagram, Youtube } from 'lucide-react'
 import Countdown from '../components/Countdown'
 import RegistrationCountdown from '../components/RegistrationCountdown'
 import AnnouncementTicker from '../components/AnnouncementTicker'
+import { ANNOUNCEMENTS, HERO_SECTION, TOURNAMENT_HIGHLIGHTS } from '../data/home'
 
 const Home = () => {
-  const highlights = [
-    {
-      icon: Trophy,
-      title: 'Prize Money',
-      value: '₹10,000',
-      color: 'text-accent',
-    },
-    {
-      icon: MapPin, 
-      title: 'Venue',
-      value: 'CSI St. Peter\'s Church',
-      color: 'text-blue-400',
-    },
-    {
-      icon: Calendar,
-      title: 'Start Date',
-      value: 'January 24, 2026',
-      color: 'text-green-400',
-    },
-    {
-      icon: Users,
-      title: 'Teams Registered',
-      value: '15',
-      color: 'text-purple-400',
-    },
-  ]
+  // Convert ANNOUNCEMENTS to array of strings for ticker
+  const announcementTexts = ANNOUNCEMENTS.map(a => a.text)
 
   return (
     <motion.div
@@ -82,13 +59,16 @@ const Home = () => {
             transition={{ delay: 0.2 }}
           >
             <h1 className="font-heading text-6xl md:text-8xl lg:text-9xl text-accent tracking-wider mb-6">
-              ICCT'26
+              {HERO_SECTION.mainTitle}
             </h1>
             <h2 className="font-heading text-3xl md:text-5xl lg:text-6xl text-white mb-4">
-              CRICKET TOURNAMENT
+              {HERO_SECTION.subTitle}
             </h2>
             <p className="font-subheading text-xl md:text-2xl lg:text-3xl text-gray-300 mb-12">
-              The Spirit. The Skill. The Glory.
+              {HERO_SECTION.tagline}
+            </p>
+            <p className="font-body text-lg md:text-xl text-gray-300 mb-8">
+              {HERO_SECTION.description}
             </p>
           </motion.div>
 
@@ -117,17 +97,11 @@ const Home = () => {
               </div>
             </div>
           </motion.div>
-
-          {/* CTA Buttons */}
-
         </div>
-
-        {/* Scroll Indicator */}
-  
       </section>
 
       {/* Announcement Ticker */}
-      <AnnouncementTicker />
+      <AnnouncementTicker announcements={announcementTexts} />
 
       {/* Highlights Section */}
       <section className="py-20 px-4 lg:px-8">
@@ -142,25 +116,28 @@ const Home = () => {
           </motion.h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {highlights.map((highlight, index) => (
-              <motion.div
-                key={highlight.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="glass-effect glow-border rounded-2xl p-8 text-center group cursor-pointer"
-              >
-                <highlight.icon className={`w-16 h-16 mx-auto mb-6 ${highlight.color} group-hover:scale-110 transition-transform duration-300`} />
-                <h3 className="font-subheading text-lg text-gray-300 mb-3">
-                  {highlight.title}
-                </h3>
-                <p className="font-heading text-3xl text-white">
-                  {highlight.value}
-                </p>
-              </motion.div>
-            ))}
+            {TOURNAMENT_HIGHLIGHTS.map((highlight, index) => {
+              const Icon = highlight.icon;
+              return (
+                <motion.div
+                  key={highlight.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  className="glass-effect glow-border rounded-2xl p-8 text-center group cursor-pointer"
+                >
+                  <Icon className={`mb-6 block w-12 h-12 mx-auto ${highlight.color}`} />
+                  <h3 className="font-subheading text-lg text-gray-300 mb-3">
+                    {highlight.title}
+                  </h3>
+                  <p className="font-body text-xl text-white font-bold">
+                    {highlight.value}
+                  </p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -210,7 +187,6 @@ const Home = () => {
           >
             Follow Us
           </motion.h2>
-          
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -234,7 +210,6 @@ const Home = () => {
                 Facebook
               </span>
             </motion.a>
-
             {/* Instagram */}
             <motion.a
               href="https://www.instagram.com/st_peters_youth_fellowship?igsh=MWZtZDd3MWc3ZHYxOQ=="
@@ -251,7 +226,6 @@ const Home = () => {
                 Instagram
               </span>
             </motion.a>
-
             {/* YouTube */}
             <motion.a
               href="https://youtube.com/icct26"

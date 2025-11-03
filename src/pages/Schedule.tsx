@@ -46,7 +46,7 @@ const Schedule = () => {
             </div>
           </motion.div>
 
-          <h2 className="font-heading text-4xl md:text-5xl bg-gradient-to-r from-accent via-accent to-primary bg-clip-text text-transparent mb-6">
+          <h2 className="font-heading text-4xl md:text-5xl text-accent mb-6">
             Schedule Coming Soon
           </h2>
           <p className="font-body text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl mx-auto">
@@ -59,8 +59,8 @@ const Schedule = () => {
             transition={{ delay: 0.4 }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
-            <div className="rounded-xl px-8 py-4 border-2 border-accent/60 bg-gradient-to-r from-accent/30 to-primary/30 backdrop-blur-lg shadow-lg shadow-accent/50 glass-effect hover:shadow-xl hover:shadow-accent/60 transition-all">
-              <p className="font-subheading font-bold bg-gradient-to-r from-accent via-accent to-primary bg-clip-text text-transparent">
+            <div className="rounded-xl px-8 py-4 border-2 border-accent/60 bg-accent/10 backdrop-blur-lg shadow-lg shadow-accent/20 glass-effect hover:shadow-xl transition-all">
+              <p className="font-subheading font-bold text-accent">
                 🏏 Tournament Start: January 24, 2026
               </p>
             </div>

@@ -14,26 +14,34 @@ import type { Organizer, SocialLink, Venue } from '../types'
  */
 export const ORGANIZERS: Organizer[] = [
   {
-    role: 'Tournament Convenor',
-    name: 'Mr. John Samuel',
-    phone: '+91 98765 43210',
-    whatsapp: '919876543210',
-    email: 'convenor@icct26.org',
-  },
-  {
-    role: 'Secretary',
-    name: 'Mr. David Kumar',
-    phone: '+91 98765 43211',
-    whatsapp: '919876543211',
-    email: 'secretary@icct26.org',
-  },
-  {
-    role: 'Treasurer',
-    name: 'Mr. Joseph Raj',
-    phone: '+91 98765 43212',
-    whatsapp: '919876543212',
-    email: 'treasurer@icct26.org',
-  },
+      role: 'Youth Convenor',
+      name: 'Mr. Robinson Charly',
+      phone: '+91 9677940308',
+      whatsapp: '919677940308',
+    
+    },
+    {
+      role: 'Head Co-Ordinator',
+      name: 'Mr. Sam Richard',
+      phone: '+91 9543656533',
+      whatsapp: '919543656533',
+      
+    },
+    {
+      role: 'Co-Ordinator',
+      name: 'Mr. Jeba',
+      phone: '+91 7806965812',
+      whatsapp: '917806965812',
+      
+    },
+
+    {
+      role: 'Co-Ordinator',
+      name: 'Mr. Jerald',
+      phone: '+91 7871541469',
+      whatsapp: '917871541469',
+      
+    },
 ]
 
 /**
@@ -43,7 +51,7 @@ export const SOCIAL_LINKS: SocialLink[] = [
   {
     name: 'Instagram',
     icon: Instagram,
-    url: 'https://instagram.com/icct26',
+    url: 'https://www.instagram.com/st_peters_youth_fellowship?igsh=MWZtZDd3MWc3ZHYxOQ==',
     color: 'from-purple-500 to-pink-500',
   },
   {
