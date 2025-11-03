@@ -10,11 +10,11 @@ const Home = () => {
     {
       icon: Trophy,
       title: 'Prize Money',
-      value: '₹50,000',
+      value: '₹10,000',
       color: 'text-accent',
     },
     {
-      icon: MapPin,
+      icon: MapPin, 
       title: 'Venue',
       value: 'CSI St. Peter\'s Church',
       color: 'text-blue-400',
@@ -119,32 +119,11 @@ const Home = () => {
           </motion.div>
 
           {/* CTA Buttons */}
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center"
-          >
-            <Link to="/registration" className="btn-gold">
-              Register Now
-            </Link>
-          </motion.div>
+
         </div>
 
         {/* Scroll Indicator */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <div className="w-6 h-10 border-2 border-accent rounded-full flex justify-center pt-2">
-            <motion.div
-              className="w-1.5 h-1.5 bg-accent rounded-full"
-              animate={{ y: [0, 16, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </div>
-        </motion.div>
+  
       </section>
 
       {/* Announcement Ticker */}
@@ -258,7 +237,7 @@ const Home = () => {
 
             {/* Instagram */}
             <motion.a
-              href="https://instagram.com/icct26"
+              href="https://www.instagram.com/st_peters_youth_fellowship?igsh=MWZtZDd3MWc3ZHYxOQ=="
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.1, y: -5 }}

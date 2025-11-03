@@ -57,8 +57,8 @@ const Registration = () => {
     { number: 1, title: 'Team Details' },
     { number: 2, title: 'Captain & Vice-Captain' },
     { number: 3, title: 'Players' },
-    { number: 4, title: 'Review' },
-    { number: 5, title: 'Payment' },
+    { number: 4, title: 'Payment Upload' },
+    { number: 5, title: 'Review' },
   ]
 
   const handleNext = () => {
@@ -182,82 +182,6 @@ const Registration = () => {
             className="glass-card rounded-2xl p-6 md:p-8"
           >
             <AnimatePresence mode="wait">
-              {/* Step 1: Payment Upload */}
-              {currentStep === 1 && (
-                <motion.div
-                  key="step1"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">
-                    Payment Details
-                  </h3>
-                  <div className="space-y-6">
-                    <div className="bg-blue-50 border-l-4 border-primary p-4 rounded">
-                      <p className="font-subheading text-primary font-semibold mb-2">
-                        Registration Fee: ₹2,000
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        Scan the QR code below to make payment
-                      </p>
-                    </div>
-
-                    {/* QR Code Section */}
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="bg-white p-4 rounded-xl shadow-lg mb-4">
-                        <img 
-                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=icct26@upi&pn=ICCT26&am=2000&tn=ICCT26%20Registration%20Fee" 
-                          alt="Payment QR Code" 
-                          className="w-64 h-64 object-cover rounded-lg"
-                        />
-                      </div>
-                      <p className="text-center font-subheading text-gray-600 mb-4">
-                        Scan with any UPI app to pay ₹2,000
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Upload Payment Receipt *
-                      </label>
-                      <div className="relative">
-                        <label
-                          className={`flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer bg-white hover:shadow-md transition text-sm ${paymentDragActive ? "border-gray-700 bg-gray-100" : "border-gray-300"}`}
-                          onDragOver={handlePaymentDragOver}
-                          onDragLeave={handlePaymentDragLeave}
-                          onDrop={handlePaymentDrop}
-                        >
-                          <Upload className="w-5 h-5 text-gray-600" />
-                          <span className="truncate max-w-[180px] text-gray-700 font-subheading">
-                            {paymentFileName ? paymentFileName : "Upload Receipt"}
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
-                            className="hidden"
-                          />
-                        </label>
-                        {paymentFileName && (
-                          <button
-                            type="button"
-                            className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
-                            style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={(e) => { e.stopPropagation(); handleFileChange(null) }}
-                            tabIndex={-1}
-                            aria-label="Cancel file upload"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
               {/* Step 1: Team Details */}
               {currentStep === 1 && (
                 <motion.div
@@ -452,7 +376,7 @@ const Registration = () => {
               {/* Step 3: Player Details */}
               {currentStep === 3 && (
                 <motion.div
-                  key="step4"
+                  key="step3"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
@@ -491,7 +415,7 @@ const Registration = () => {
                 </motion.div>
               )}
 
-              {/* Step 4: Review & Submit */}
+              {/* Step 4: Payment Upload */}
               {currentStep === 4 && (
                 <motion.div
                   key="step4"
@@ -501,63 +425,7 @@ const Registration = () => {
                   transition={{ duration: 0.3 }}
                 >
                   <h3 className="font-heading text-3xl text-primary mb-6">
-                    Review Information
-                  </h3>
-                  <div className="space-y-6">
-                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                      <p className="font-subheading text-green-700 font-semibold">
-                        ✓ Please review all information before final submission
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 text-gray-700">
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Church Name:</span>
-                        <span>{formData.churchName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Team Name:</span>
-                        <span>{formData.teamName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Captain:</span>
-                        <span>{formData.captainName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Vice-Captain:</span>
-                        <span>{formData.viceCaptainName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Total Players:</span>
-                        <span>{playerCount}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Registration Fee:</span>
-                        <span className="text-green-600 font-bold">₹2,000</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-                      <p className="text-sm text-yellow-800">
-                        <strong>Note:</strong> By submitting this form, you agree to the tournament 
-                        rules and regulations. All information provided must be accurate.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 5: Payment Receipt */}
-              {currentStep === 5 && (
-                <motion.div
-                  key="step5"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">
-                    Payment Confirmation
+                    Payment Upload
                   </h3>
                   <div className="space-y-6">
                     <div className="bg-blue-50 border-l-4 border-primary p-4 rounded">
@@ -618,6 +486,118 @@ const Registration = () => {
                           </button>
                         )}
                       </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 5: Review & Submit */}
+              {currentStep === 5 && (
+                <motion.div
+                  key="step5"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="font-heading text-3xl text-primary mb-6">
+                    Review Information
+                  </h3>
+                  <div className="space-y-6">
+                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                      <p className="font-subheading text-green-700 font-semibold">
+                        ✓ Please review all information before final submission
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 text-gray-700">
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Church Name:</span>
+                        <span>{formData.churchName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Team Name:</span>
+                        <span>{formData.teamName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Captain:</span>
+                        <span>{formData.captainName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Vice-Captain:</span>
+                        <span>{formData.viceCaptainName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Total Players:</span>
+                        <span>{playerCount}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Registration Fee:</span>
+                        <span className="text-green-600 font-bold">₹2,000</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                      <p className="text-sm text-yellow-800">
+                        <strong>Note:</strong> By submitting this form, you agree to the tournament 
+                        rules and regulations. All information provided must be accurate.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 5: Review & Submit */}
+              {currentStep === 5 && (
+                <motion.div
+                  key="step5"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h3 className="font-heading text-3xl text-primary mb-6">
+                    Review Information
+                  </h3>
+                  <div className="space-y-6">
+                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                      <p className="font-subheading text-green-700 font-semibold">
+                        ✓ Please review all information before final submission
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 text-gray-700">
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Church Name:</span>
+                        <span>{formData.churchName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Team Name:</span>
+                        <span>{formData.teamName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Captain:</span>
+                        <span>{formData.captainName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Vice-Captain:</span>
+                        <span>{formData.viceCaptainName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Total Players:</span>
+                        <span>{playerCount}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Registration Fee:</span>
+                        <span className="text-green-600 font-bold">₹2,000</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                      <p className="text-sm text-yellow-800">
+                        <strong>Note:</strong> By submitting this form, you agree to the tournament 
+                        rules and regulations. All information provided must be accurate.
+                      </p>
                     </div>
                   </div>
                 </motion.div>
