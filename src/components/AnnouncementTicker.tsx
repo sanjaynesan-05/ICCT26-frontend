@@ -6,7 +6,7 @@ const AnnouncementTicker = () => {
     '15 Teams Registered',
     'Tournament Starts July 12',
     'CSI St. Peter\'s Church, Coimbatore',
-    'Prize Money ₹50,000',
+    'Prize Money ₹10,000',
     'Red Tennis Ball Match',
     'Register Your Team Today',
   ]

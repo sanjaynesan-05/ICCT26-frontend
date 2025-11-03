@@ -1,28 +1,36 @@
 import { motion } from 'framer-motion'
-import { Mail, Phone, MapPin, MessageCircle, Instagram, Facebook } from 'lucide-react'
+import { Phone, MapPin, MessageCircle, Instagram, Facebook } from 'lucide-react'
 
 const Contact = () => {
   const organizers = [
     {
-      role: 'Tournament Convenor',
-      name: 'Mr. John Samuel',
-      phone: '+91 98765 43210',
-      whatsapp: '919876543210',
-      email: 'convenor@icct26.org',
+      role: 'Youth Convenor',
+      name: 'Mr. Robinson Charly',
+      phone: '+91 9677940308',
+      whatsapp: '919677940308',
+    
     },
     {
-      role: 'Secretary',
-      name: 'Mr. David Kumar',
-      phone: '+91 98765 43211',
-      whatsapp: '919876543211',
-      email: 'secretary@icct26.org',
+      role: 'Head Co-Ordinator',
+      name: 'Mr. Sam Richard',
+      phone: '+91 9543656533',
+      whatsapp: '919543656533',
+      
     },
     {
-      role: 'Treasurer',
-      name: 'Mr. Joseph Raj',
-      phone: '+91 98765 43212',
-      whatsapp: '919876543212',
-      email: 'treasurer@icct26.org',
+      role: 'Co-Ordinator',
+      name: 'Mr. Jeba',
+      phone: '+91 7806965812',
+      whatsapp: '917806965812',
+      
+    },
+
+    {
+      role: 'Co-Ordinator',
+      name: 'Mr. Jerald',
+      phone: '+91 7871541469',
+      whatsapp: '917871541469',
+      
     },
   ]
 
@@ -75,7 +83,7 @@ const Contact = () => {
             <h2 className="font-heading text-4xl text-accent mb-8 text-center">
               Tournament Organizers
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {organizers.map((organizer, index) => (
                 <motion.div
                   key={index}
@@ -106,13 +114,6 @@ const Contact = () => {
                     >
                       <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
                       <span className="font-subheading">WhatsApp</span>
-                    </a>
-                    <a
-                      href={`mailto:${organizer.email}`}
-                      className="flex items-center gap-3 text-gray-300 hover:text-accent transition-colors group"
-                    >
-                      <Mail className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                      <span className="font-subheading text-sm">{organizer.email}</span>
                     </a>
                   </div>
                 </motion.div>
