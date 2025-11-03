@@ -6,6 +6,7 @@ import PlayerFormCard from '../components/PlayerFormCard'
 interface FormData {
   churchName: string
   teamName: string
+  pastorLetter: File | null
   captainName: string
   captainPhone: string
   captainWhatsapp: string
@@ -36,9 +37,14 @@ const Registration = () => {
   const [showSuccess, setShowSuccess] = useState(false)
   const [paymentFileName, setPaymentFileName] = useState('')
   const [paymentDragActive, setPaymentDragActive] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [pastorLetterFileName, setPastorLetterFileName] = useState('')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [pastorLetterDragActive, setPastorLetterDragActive] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     churchName: '',
     teamName: '',
+    pastorLetter: null,
     captainName: '',
     captainPhone: '',
     captainWhatsapp: '',
@@ -84,6 +90,11 @@ const Registration = () => {
     setPaymentFileName(file ? file.name : '')
   }
 
+  const handlePastorLetterChange = (file: File | null) => {
+    setFormData({ ...formData, pastorLetter: file })
+    setPastorLetterFileName(file ? file.name : '')
+  }
+
   const handlePaymentDragOver = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -106,9 +117,26 @@ const Registration = () => {
     }
   }
 
-  const validateWhatsapp = (phone: string): boolean => {
-    const phoneRegex = /^[0-9]{10}$/
-    return phoneRegex.test(phone.replace(/[^0-9]/g, ''))
+  const handlePastorLetterDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setPastorLetterDragActive(true)
+  }
+
+  const handlePastorLetterDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setPastorLetterDragActive(false)
+  }
+
+  const handlePastorLetterDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setPastorLetterDragActive(false)
+    const files = e.dataTransfer.files
+    if (files && files[0]) {
+      handlePastorLetterChange(files[0])
+    }
   }
 
   return (
@@ -224,6 +252,43 @@ const Registration = () => {
                         onChange={(e) => setFormData({ ...formData, teamName: e.target.value })}
                         required
                       />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                        Pastor Letter *
+                      </label>
+                      <div className="relative">
+                        <label
+                          className={`flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer bg-white hover:shadow-md transition text-sm ${pastorLetterDragActive ? "border-gray-700 bg-gray-100" : "border-gray-300"}`}
+                          onDragOver={handlePastorLetterDragOver}
+                          onDragLeave={handlePastorLetterDragLeave}
+                          onDrop={handlePastorLetterDrop}
+                        >
+                          <Upload className="w-5 h-5 text-gray-600" />
+                          <span className="truncate max-w-[180px] text-gray-700 font-subheading">
+                            {pastorLetterFileName ? pastorLetterFileName : "Upload Pastor Letter"}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*,.pdf,.doc,.docx"
+                            onChange={(e) => handlePastorLetterChange(e.target.files?.[0] || null)}
+                            className="hidden"
+                          />
+                        </label>
+                        {pastorLetterFileName && (
+                          <button
+                            type="button"
+                            className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
+                            style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            onClick={(e) => { e.stopPropagation(); handlePastorLetterChange(null) }}
+                            tabIndex={-1}
+                            aria-label="Cancel file upload"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
