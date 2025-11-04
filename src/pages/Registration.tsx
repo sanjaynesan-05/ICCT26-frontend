@@ -79,7 +79,64 @@ const Registration = () => {
     { number: 5, title: 'Payment Upload' },
   ]
 
+  const validateCurrentStep = (): string | null => {
+    switch (currentStep) {
+      case 1:
+        // Step 1: Team Details validation
+        if (!formData.churchName.trim()) return 'Please select a church name'
+        if (!formData.teamName.trim()) return 'Please enter a team name'
+        if (!formData.pastorLetter) return 'Please upload a church letter'
+        break
+
+      case 2:
+        // Step 2: Captain & Vice-Captain validation
+        if (!formData.captain.name.trim()) return 'Please enter captain name'
+        if (!formData.captain.phone.trim()) return 'Please enter captain phone number'
+        if (!formData.captain.whatsapp.trim() || formData.captain.whatsapp.length !== 10) return 'Please enter valid 10-digit WhatsApp number for captain'
+        if (!formData.captain.email.trim() || !formData.captain.email.includes('@')) return 'Please enter valid email for captain'
+
+        if (!formData.viceCaptain.name.trim()) return 'Please enter vice-captain name'
+        if (!formData.viceCaptain.phone.trim()) return 'Please enter vice-captain phone number'
+        if (!formData.viceCaptain.whatsapp.trim() || formData.viceCaptain.whatsapp.length !== 10) return 'Please enter valid 10-digit WhatsApp number for vice-captain'
+        if (!formData.viceCaptain.email.trim() || !formData.viceCaptain.email.includes('@')) return 'Please enter valid email for vice-captain'
+        break
+
+      case 3:
+        // Step 3: Players validation
+        for (let i = 0; i < formData.players.length; i++) {
+          const player = formData.players[i]
+          if (!player.name.trim()) return `Player ${i + 1}: Please enter name`
+          if (player.age < 15 || player.age > 60) return `Player ${i + 1}: Age must be between 15 and 60`
+          if (!player.phone.trim()) return `Player ${i + 1}: Please enter phone number`
+          if (!player.role) return `Player ${i + 1}: Please select a role`
+          if (!player.aadharFile) return `Player ${i + 1}: Please upload Aadhar/ID`
+          if (!player.subscriptionFile) return `Player ${i + 1}: Please upload subscription/consent`
+        }
+        break
+
+      case 4:
+        // Step 4: Review - no validation needed, just review
+        break
+
+      case 5:
+        // Step 5: Payment Upload validation
+        if (!formData.paymentReceipt) return 'Please upload payment receipt'
+        break
+
+      default:
+        break
+    }
+    return null
+  }
+
   const handleNext = () => {
+    // Validate current step before proceeding
+    const validationError = validateCurrentStep()
+    if (validationError) {
+      alert(validationError)
+      return
+    }
+
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1)
     } else {
