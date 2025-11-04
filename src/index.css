@@ -44,4 +44,21 @@
   .input-focus {
     @apply focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all duration-300;
   }
+  
+  /* Ensure input and select visibility */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  select,
+  textarea {
+    @apply text-gray-900 !important;
+    color: #111827 !important;
+  }
+  
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-gray-500;
+    color: #6b7280 !important;
+  }
 }
