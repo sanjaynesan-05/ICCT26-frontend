@@ -1,17 +1,31 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Quicksand:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue:wght@400;700&family=Quicksand:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=block');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* Define font-face declarations with proper fallbacks */
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
   * {
     font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
   
   body {
     @apply bg-gradient-primary font-body text-white;
-    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    font-weight: 400;
+  }
+
+  /* Ensure heading fonts are properly applied */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Bebas Neue', 'Impact', 'Arial Black', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.05em;
   }
 }
 

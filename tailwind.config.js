@@ -16,10 +16,10 @@ export default {
       fontFamily: {
         heading: ['Bebas Neue', 'Impact', 'Arial Black', 'sans-serif'],
         subheading: ['Quicksand', 'Verdana', 'Geneva', 'sans-serif'],
-        body: ['Manrope', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
+        body: ['Manrope', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Arial', 'sans-serif'],
         bebas: ['Bebas Neue', 'Impact', 'Arial Black', 'sans-serif'],
         quicksand: ['Quicksand', 'Verdana', 'Geneva', 'sans-serif'],
-        manrope: ['Manrope', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Arial', 'sans-serif'],
+        manrope: ['Manrope', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Arial', 'sans-serif'],
       },
       animation: {
         'float': 'float 3s ease-in-out infinite',
