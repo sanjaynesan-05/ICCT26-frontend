@@ -1,20 +1,32 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
-import { Upload, Plus, CheckCircle, ChevronRight, ChevronLeft, X } from 'lucide-react'
+import { Plus, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react'
 import PlayerFormCard from '../components/PlayerFormCard'
+import FileUpload from '../components/FileUpload'
+
+interface CaptainInfo {
+  name: string
+  phone: string
+  whatsapp: string
+  email: string
+}
+
+interface PlayerData {
+  name: string
+  age: number
+  phone: string
+  role: string
+  aadharFile: File | null
+  subscriptionFile: File | null
+}
 
 interface FormData {
   churchName: string
   teamName: string
   pastorLetter: File | null
-  captainName: string
-  captainPhone: string
-  captainWhatsapp: string
-  captainEmail: string
-  viceCaptainName: string
-  viceCaptainPhone: string
-  viceCaptainWhatsapp: string
-  viceCaptainEmail: string
+  captain: CaptainInfo
+  viceCaptain: CaptainInfo
+  players: PlayerData[]
   paymentReceipt: File | null
 }
 
@@ -33,26 +45,25 @@ const CHURCH_NAMES = [
 
 const Registration = () => {
   const [currentStep, setCurrentStep] = useState(1)
-  const [playerCount, setPlayerCount] = useState(11)
+  // playerCount is derived from formData.players length
   const [showSuccess, setShowSuccess] = useState(false)
-  const [paymentFileName, setPaymentFileName] = useState('')
-  const [paymentDragActive, setPaymentDragActive] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [pastorLetterFileName, setPastorLetterFileName] = useState('')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [pastorLetterDragActive, setPastorLetterDragActive] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const emptyPlayer = (): PlayerData => ({
+    name: '',
+    age: 18,
+    phone: '',
+    role: '',
+    aadharFile: null,
+    subscriptionFile: null,
+  })
+
   const [formData, setFormData] = useState<FormData>({
     churchName: '',
     teamName: '',
     pastorLetter: null,
-    captainName: '',
-    captainPhone: '',
-    captainWhatsapp: '',
-    captainEmail: '',
-    viceCaptainName: '',
-    viceCaptainPhone: '',
-    viceCaptainWhatsapp: '',
-    viceCaptainEmail: '',
+    captain: { name: '', phone: '', whatsapp: '', email: '' },
+    viceCaptain: { name: '', phone: '', whatsapp: '', email: '' },
+    players: Array.from({ length: 11 }).map(() => emptyPlayer()),
     paymentReceipt: null,
   })
 
@@ -81,62 +92,86 @@ const Registration = () => {
     }
   }
 
-  const handleSubmit = () => {
-    setShowSuccess(true)
+  // Base64 helper for files
+  const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = (err) => reject(err)
+  })
+
+  const updatePlayer = (index: number, data: Partial<PlayerData>) => {
+    const players = [...formData.players]
+    players[index] = { ...players[index], ...data }
+    setFormData({ ...formData, players })
+  }
+
+  const addPlayer = () => {
+    if (formData.players.length < 15) {
+      setFormData({ ...formData, players: [...formData.players, emptyPlayer()] })
+    }
+  }
+
+  const removeLastPlayer = () => {
+    if (formData.players.length > 11) {
+      setFormData({ ...formData, players: formData.players.slice(0, -1) })
+    }
+  }
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true)
+    try {
+      // Convert files to base64
+      const pastorLetterBase64 = formData.pastorLetter ? await toBase64(formData.pastorLetter) : ''
+      const paymentReceiptBase64 = formData.paymentReceipt ? await toBase64(formData.paymentReceipt) : ''
+
+      const playersWithBase64 = await Promise.all(
+        formData.players.map(async (player) => ({
+          name: player.name,
+          age: player.age,
+          phone: player.phone,
+          role: player.role,
+          aadharFile: player.aadharFile ? await toBase64(player.aadharFile) : '',
+          subscriptionFile: player.subscriptionFile ? await toBase64(player.subscriptionFile) : '',
+        }))
+      )
+
+      const payload = {
+        churchName: formData.churchName,
+        teamName: formData.teamName,
+        pastorLetter: pastorLetterBase64,
+        captain: { ...formData.captain },
+        viceCaptain: { ...formData.viceCaptain },
+        players: playersWithBase64,
+        paymentReceipt: paymentReceiptBase64,
+      }
+
+      const response = await fetch('http://localhost:8000/register/team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (response.ok) {
+        setShowSuccess(true)
+      } else {
+        const err = await response.json()
+        alert(`Error: ${err.detail || 'Registration failed'}`)
+      }
+    } catch (err) {
+      console.error('Submit error', err)
+      alert('Failed to submit registration')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleFileChange = (file: File | null) => {
     setFormData({ ...formData, paymentReceipt: file })
-    setPaymentFileName(file ? file.name : '')
   }
 
   const handlePastorLetterChange = (file: File | null) => {
     setFormData({ ...formData, pastorLetter: file })
-    setPastorLetterFileName(file ? file.name : '')
-  }
-
-  const handlePaymentDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setPaymentDragActive(true)
-  }
-
-  const handlePaymentDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setPaymentDragActive(false)
-  }
-
-  const handlePaymentDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setPaymentDragActive(false)
-    const files = e.dataTransfer.files
-    if (files && files[0]) {
-      handleFileChange(files[0])
-    }
-  }
-
-  const handlePastorLetterDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setPastorLetterDragActive(true)
-  }
-
-  const handlePastorLetterDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setPastorLetterDragActive(false)
-  }
-
-  const handlePastorLetterDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setPastorLetterDragActive(false)
-    const files = e.dataTransfer.files
-    if (files && files[0]) {
-      handlePastorLetterChange(files[0])
-    }
   }
 
   return (
@@ -258,36 +293,8 @@ const Registration = () => {
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
                         Church Letter *
                       </label>
-                      <div className="relative">
-                        <label
-                          className={`flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer bg-white hover:shadow-md transition text-sm ${pastorLetterDragActive ? "border-gray-700 bg-gray-100" : "border-gray-300"}`}
-                          onDragOver={handlePastorLetterDragOver}
-                          onDragLeave={handlePastorLetterDragLeave}
-                          onDrop={handlePastorLetterDrop}
-                        >
-                          <Upload className="w-5 h-5 text-gray-600" />
-                          <span className="truncate max-w-[180px] text-gray-700 font-subheading">
-                            {pastorLetterFileName ? pastorLetterFileName : "Upload Church Letter"}
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*,.pdf,.doc,.docx"
-                            onChange={(e) => handlePastorLetterChange(e.target.files?.[0] || null)}
-                            className="hidden"
-                          />
-                        </label>
-                        {pastorLetterFileName && (
-                          <button
-                            type="button"
-                            className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
-                            style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={(e) => { e.stopPropagation(); handlePastorLetterChange(null) }}
-                            tabIndex={-1}
-                            aria-label="Cancel file upload"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
+                      <div>
+                        <FileUpload file={formData.pastorLetter} onFileChange={handlePastorLetterChange} accept="image/*,.pdf,.doc,.docx" placeholder="Upload Church Letter" />
                       </div>
                     </div>
                   </div>
@@ -295,142 +302,70 @@ const Registration = () => {
               )}
 
               {/* Step 2: Captain & Vice-Captain */}
+              
               {currentStep === 2 && (
                 <motion.div
-                  key="step3"
+                  key="step2"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <h3 className="font-heading text-3xl text-primary mb-6">
-                    Captain & Vice-Captain
-                  </h3>
+                  <h3 className="font-heading text-3xl text-primary mb-6">Captain & Vice-Captain</h3>
+
                   <div className="space-y-8">
                     {/* Captain Details */}
                     <div className="bg-blue-50 rounded-xl p-6">
-                      <h4 className="font-subheading font-bold text-primary text-xl mb-4">
-                        Captain Details
-                      </h4>
+                      <h4 className="font-subheading font-bold text-primary text-xl mb-4">Captain Details</h4>
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                            placeholder="Captain's name"
-                            value={formData.captainName}
-                            onChange={(e) => setFormData({ ...formData, captainName: e.target.value })}
-                            required
-                          />
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Full Name *</label>
+                          <input type="text" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="Captain's name" value={formData.captain.name} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, name: e.target.value } })} required />
                         </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Phone Number *
-                            </label>
-                            <input
-                              type="tel"
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                              placeholder="+91 XXXXX XXXXX"
-                              value={formData.captainPhone}
-                              onChange={(e) => setFormData({ ...formData, captainPhone: e.target.value })}
-                              required
-                            />
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Phone Number *</label>
+                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="+91 XXXXX XXXXX" value={formData.captain.phone} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, phone: e.target.value } })} required />
                           </div>
+
                           <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              WhatsApp Number (10 digits) *
-                            </label>
-                            <input
-                              type="tel"
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                              placeholder="Enter 10-digit number"
-                              maxLength={10}
-                              value={formData.captainWhatsapp}
-                              onChange={(e) => setFormData({ ...formData, captainWhatsapp: e.target.value })}
-                              required
-                            />
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">WhatsApp Number (10 digits) *</label>
+                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="Enter 10-digit number" maxLength={10} value={formData.captain.whatsapp} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, whatsapp: e.target.value } })} required />
                           </div>
                         </div>
+
                         <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Email *
-                          </label>
-                          <input
-                            type="email"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                            placeholder="email@example.com"
-                            value={formData.captainEmail}
-                            onChange={(e) => setFormData({ ...formData, captainEmail: e.target.value })}
-                            required
-                          />
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Email *</label>
+                          <input type="email" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="email@example.com" value={formData.captain.email} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, email: e.target.value } })} required />
                         </div>
                       </div>
                     </div>
 
                     {/* Vice-Captain Details */}
                     <div className="bg-green-50 rounded-xl p-6">
-                      <h4 className="font-subheading font-bold text-green-700 text-xl mb-4">
-                        Vice-Captain Details
-                      </h4>
+                      <h4 className="font-subheading font-bold text-green-700 text-xl mb-4">Vice-Captain Details</h4>
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                            placeholder="Vice-Captain's name"
-                            value={formData.viceCaptainName}
-                            onChange={(e) => setFormData({ ...formData, viceCaptainName: e.target.value })}
-                            required
-                          />
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Full Name *</label>
+                          <input type="text" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="Vice-Captain's name" value={formData.viceCaptain.name} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, name: e.target.value } })} required />
                         </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Phone Number *
-                            </label>
-                            <input
-                              type="tel"
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                              placeholder="+91 XXXXX XXXXX"
-                              value={formData.viceCaptainPhone}
-                              onChange={(e) => setFormData({ ...formData, viceCaptainPhone: e.target.value })}
-                              required
-                            />
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Phone Number *</label>
+                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="+91 XXXXX XXXXX" value={formData.viceCaptain.phone} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, phone: e.target.value } })} required />
                           </div>
+
                           <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              WhatsApp Number (10 digits) *
-                            </label>
-                            <input
-                              type="tel"
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                              placeholder="Enter 10-digit number"
-                              maxLength={10}
-                              value={formData.viceCaptainWhatsapp}
-                              onChange={(e) => setFormData({ ...formData, viceCaptainWhatsapp: e.target.value })}
-                              required
-                            />
+                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">WhatsApp Number (10 digits) *</label>
+                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="Enter 10-digit number" maxLength={10} value={formData.viceCaptain.whatsapp} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, whatsapp: e.target.value } })} required />
                           </div>
                         </div>
+
                         <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Email *
-                          </label>
-                          <input
-                            type="email"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
-                            placeholder="email@example.com"
-                            value={formData.viceCaptainEmail}
-                            onChange={(e) => setFormData({ ...formData, viceCaptainEmail: e.target.value })}
-                            required
-                          />
+                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Email *</label>
+                          <input type="email" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="email@example.com" value={formData.viceCaptain.email} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, email: e.target.value } })} required />
                         </div>
                       </div>
                     </div>
@@ -457,26 +392,28 @@ const Registration = () => {
                     </p>
                   </div>
 
-                  <div className="space-y-4">
-                    {Array.from({ length: playerCount }).map((_, index) => (
-                      <PlayerFormCard
-                        key={index}
-                        playerNumber={index + 1}
-                        onRemove={playerCount > 11 ? () => setPlayerCount(playerCount - 1) : undefined}
-                        canRemove={playerCount > 11 && index === playerCount - 1}
-                      />
-                    ))}
-                  </div>
+                    <div className="space-y-4">
+                      {formData.players.map((player, index) => (
+                        <PlayerFormCard
+                          key={index}
+                          playerNumber={index + 1}
+                          player={player}
+                          onChange={(data) => updatePlayer(index, data)}
+                          onRemove={index === formData.players.length - 1 && formData.players.length > 11 ? removeLastPlayer : undefined}
+                          canRemove={index === formData.players.length - 1 && formData.players.length > 11}
+                        />
+                      ))}
+                    </div>
 
-                  {playerCount < 15 && (
-                    <button
-                      onClick={() => setPlayerCount(playerCount + 1)}
-                      className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary hover:shadow-lg hover:shadow-primary/50 text-white font-subheading font-semibold rounded-lg transition-all duration-300 hover:scale-105"
-                    >
-                      <Plus className="w-5 h-5" />
-                      Add Player
-                    </button>
-                  )}
+                    {formData.players.length < 15 && (
+                      <button
+                        onClick={addPlayer}
+                        className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary hover:shadow-lg hover:shadow-primary/50 text-white font-subheading font-semibold rounded-lg transition-all duration-300 hover:scale-105"
+                      >
+                        <Plus className="w-5 h-5" />
+                        Add Player
+                      </button>
+                    )}
                 </motion.div>
               )}
 
@@ -510,15 +447,32 @@ const Registration = () => {
                       </div>
                       <div className="flex justify-between py-2 border-b">
                         <span className="font-subheading font-semibold">Captain:</span>
-                        <span>{formData.captainName || 'N/A'}</span>
+                        <span>{formData.captain.name || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Captain Phone:</span>
+                        <span>{formData.captain.phone || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Captain Email:</span>
+                        <span>{formData.captain.email || 'N/A'}</span>
+                      </div>
+
+                      <div className="flex justify-between py-2 border-b">
                         <span className="font-subheading font-semibold">Vice-Captain:</span>
-                        <span>{formData.viceCaptainName || 'N/A'}</span>
+                        <span>{formData.viceCaptain.name || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Vice-Captain Phone:</span>
+                        <span>{formData.viceCaptain.phone || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Vice-Captain Email:</span>
+                        <span>{formData.viceCaptain.email || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b">
                         <span className="font-subheading font-semibold">Total Players:</span>
-                        <span>{playerCount}</span>
+                        <span>{formData.players.length}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b">
                         <span className="font-subheading font-semibold">Registration Fee:</span>
@@ -573,39 +527,9 @@ const Registration = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Upload Payment Receipt * (Required)
-                      </label>
-                      <div className="relative">
-                        <label
-                          className={`flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer bg-white hover:shadow-md transition text-sm ${paymentDragActive ? "border-gray-700 bg-gray-100" : "border-gray-300"}`}
-                          onDragOver={handlePaymentDragOver}
-                          onDragLeave={handlePaymentDragLeave}
-                          onDrop={handlePaymentDrop}
-                        >
-                          <Upload className="w-5 h-5 text-gray-600" />
-                          <span className="truncate max-w-[180px] text-gray-700 font-subheading">
-                            {paymentFileName ? paymentFileName : "Upload Receipt"}
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
-                            className="hidden"
-                          />
-                        </label>
-                        {paymentFileName && (
-                          <button
-                            type="button"
-                            className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
-                            style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onClick={(e) => { e.stopPropagation(); handleFileChange(null) }}
-                            tabIndex={-1}
-                            aria-label="Cancel file upload"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Upload Payment Receipt * (Required)</label>
+                      <div>
+                        <FileUpload file={formData.paymentReceipt} onFileChange={handleFileChange} accept="image/*" placeholder="Upload Receipt" />
                       </div>
                     </div>
                   </div>
@@ -630,10 +554,20 @@ const Registration = () => {
 
               <button
                 onClick={handleNext}
-                className="flex items-center gap-2 btn-gold"
+                disabled={isSubmitting}
+                className={`flex items-center gap-2 btn-gold ${isSubmitting ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
-                {currentStep === totalSteps ? 'Submit' : 'Next'}
-                {currentStep < totalSteps && <ChevronRight className="w-5 h-5" />}
+                {isSubmitting ? (
+                  <span className="inline-flex items-center gap-2">
+                    <svg className="w-4 h-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                    Processing...
+                  </span>
+                ) : (
+                  <>
+                    {currentStep === totalSteps ? 'Submit' : 'Next'}
+                    {currentStep < totalSteps && <ChevronRight className="w-5 h-5" />}
+                  </>
+                )}
               </button>
             </div>
           </motion.div>
