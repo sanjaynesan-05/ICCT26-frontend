@@ -59,8 +59,8 @@ export const HERO_SECTION = {
 export const TOURNAMENT_HIGHLIGHTS = [
   {
     icon: Trophy,
-    title: 'Prize Money',
-    value: '₹50,000',
+    title: 'Trophies',
+    value: 'TROPHIES & SPECIAL PRIZES',
     color: 'text-accent',
   },
   {

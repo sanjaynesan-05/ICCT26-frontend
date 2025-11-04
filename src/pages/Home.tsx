@@ -58,9 +58,35 @@ const Home = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <h1 className="font-heading text-6xl md:text-8xl lg:text-9xl text-accent tracking-wider mb-6">
-              {HERO_SECTION.mainTitle}
-            </h1>
+            <motion.h2
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="font-heading text-2xl md:text-3xl lg:text-4xl text-white mb-4 tracking-wider"
+            >
+              CSI St. Peter's Church,Youth Fellowship
+            </motion.h2>
+            <div className="flex items-center justify-center mb-6">
+              <motion.img
+                src="/churchlogo.png"
+                alt="Church Logo"
+                className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 mr-4 md:mr-6"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              />
+              <h1 className="font-heading text-6xl md:text-8xl lg:text-9xl text-accent tracking-wider">
+                {HERO_SECTION.mainTitle}
+              </h1>
+              <motion.img
+                src="/adonailogo.png"
+                alt="Adonai Logo"
+                className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 ml-4 md:ml-6"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              />
+            </div>
             <h2 className="font-heading text-3xl md:text-5xl lg:text-6xl text-white mb-4">
               {HERO_SECTION.subTitle}
             </h2>
