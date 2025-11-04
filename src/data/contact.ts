@@ -29,7 +29,7 @@ export const ORGANIZERS: Organizer[] = [
     },
     {
       role: 'Co-Ordinator',
-      name: 'Mr. Jeba',
+      name: 'Mr. Jebarsan',
       phone: '+91 7806965812',
       whatsapp: '917806965812',
       

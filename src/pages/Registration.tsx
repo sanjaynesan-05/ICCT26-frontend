@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Plus, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react'
 import PlayerFormCard from '../components/PlayerFormCard'
 import FileUpload from '../components/FileUpload'
+import { apiService } from '../services/api'
 
 interface CaptainInfo {
   name: string
@@ -121,6 +122,49 @@ const Registration = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
+      // Validation function
+      const validateForm = (): string | null => {
+        // Team details
+        if (!formData.churchName.trim()) return 'Please select a church name'
+        if (!formData.teamName.trim()) return 'Please enter a team name'
+        if (!formData.pastorLetter) return 'Please upload a church letter'
+
+        // Captain details
+        if (!formData.captain.name.trim()) return 'Please enter captain name'
+        if (!formData.captain.phone.trim()) return 'Please enter captain phone number'
+        if (!formData.captain.whatsapp.trim() || formData.captain.whatsapp.length !== 10) return 'Please enter valid 10-digit WhatsApp number for captain'
+        if (!formData.captain.email.trim() || !formData.captain.email.includes('@')) return 'Please enter valid email for captain'
+
+        // Vice-captain details
+        if (!formData.viceCaptain.name.trim()) return 'Please enter vice-captain name'
+        if (!formData.viceCaptain.phone.trim()) return 'Please enter vice-captain phone number'
+        if (!formData.viceCaptain.whatsapp.trim() || formData.viceCaptain.whatsapp.length !== 10) return 'Please enter valid 10-digit WhatsApp number for vice-captain'
+        if (!formData.viceCaptain.email.trim() || !formData.viceCaptain.email.includes('@')) return 'Please enter valid email for vice-captain'
+
+        // Players validation (validate active players only - those in the current set)
+        for (let i = 0; i < formData.players.length; i++) {
+          const player = formData.players[i]
+          if (!player.name.trim()) return `Player ${i + 1}: Please enter name`
+          if (player.age < 15 || player.age > 60) return `Player ${i + 1}: Age must be between 15 and 60`
+          if (!player.phone.trim()) return `Player ${i + 1}: Please enter phone number`
+          if (!player.role) return `Player ${i + 1}: Please select a role`
+          if (!player.aadharFile) return `Player ${i + 1}: Please upload Aadhar/ID`
+          if (!player.subscriptionFile) return `Player ${i + 1}: Please upload subscription/consent`
+        }
+
+        // Payment receipt
+        if (!formData.paymentReceipt) return 'Please upload payment receipt'
+
+        return null
+      }
+
+      const validationError = validateForm()
+      if (validationError) {
+        alert(validationError)
+        setIsSubmitting(false)
+        return
+      }
+
       // Convert files to base64
       const pastorLetterBase64 = formData.pastorLetter ? await toBase64(formData.pastorLetter) : ''
       const paymentReceiptBase64 = formData.paymentReceipt ? await toBase64(formData.paymentReceipt) : ''
@@ -146,21 +190,12 @@ const Registration = () => {
         paymentReceipt: paymentReceiptBase64,
       }
 
-      const response = await fetch('http://localhost:8000/register/team', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      if (response.ok) {
-        setShowSuccess(true)
-      } else {
-        const err = await response.json()
-        alert(`Error: ${err.detail || 'Registration failed'}`)
-      }
+      await apiService.registerTeam(payload)
+      setShowSuccess(true)
     } catch (err) {
       console.error('Submit error', err)
-      alert('Failed to submit registration')
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed'
+      alert(`Error: ${errorMessage}`)
     } finally {
       setIsSubmitting(false)
     }
@@ -263,7 +298,7 @@ const Registration = () => {
                         Church Name *
                       </label>
                       <select
-                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
                         value={formData.churchName}
                         onChange={(e) => setFormData({ ...formData, churchName: e.target.value })}
                         required
@@ -281,7 +316,7 @@ const Registration = () => {
                       </label>
                       <input
                         type="text"
-                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900"
+                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
                         placeholder="Enter team name"
                         value={formData.teamName}
                         onChange={(e) => setFormData({ ...formData, teamName: e.target.value })}
@@ -320,24 +355,24 @@ const Registration = () => {
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Full Name *</label>
-                          <input type="text" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="Captain's name" value={formData.captain.name} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, name: e.target.value } })} required />
+                          <input type="text" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="Captain's name" value={formData.captain.name} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, name: e.target.value } })} required />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Phone Number *</label>
-                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="+91 XXXXX XXXXX" value={formData.captain.phone} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, phone: e.target.value } })} required />
+                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="+91 XXXXX XXXXX" value={formData.captain.phone} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, phone: e.target.value } })} required />
                           </div>
 
                           <div>
                             <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">WhatsApp Number (10 digits) *</label>
-                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="Enter 10-digit number" maxLength={10} value={formData.captain.whatsapp} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, whatsapp: e.target.value } })} required />
+                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="Enter 10-digit number" maxLength={10} value={formData.captain.whatsapp} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, whatsapp: e.target.value } })} required />
                           </div>
                         </div>
 
                         <div>
                           <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Email *</label>
-                          <input type="email" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="email@example.com" value={formData.captain.email} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, email: e.target.value } })} required />
+                          <input type="email" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="email@example.com" value={formData.captain.email} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, email: e.target.value } })} required />
                         </div>
                       </div>
                     </div>
@@ -348,24 +383,24 @@ const Registration = () => {
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Full Name *</label>
-                          <input type="text" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="Vice-Captain's name" value={formData.viceCaptain.name} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, name: e.target.value } })} required />
+                          <input type="text" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="Vice-Captain's name" value={formData.viceCaptain.name} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, name: e.target.value } })} required />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Phone Number *</label>
-                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="+91 XXXXX XXXXX" value={formData.viceCaptain.phone} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, phone: e.target.value } })} required />
+                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="+91 XXXXX XXXXX" value={formData.viceCaptain.phone} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, phone: e.target.value } })} required />
                           </div>
 
                           <div>
                             <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">WhatsApp Number (10 digits) *</label>
-                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="Enter 10-digit number" maxLength={10} value={formData.viceCaptain.whatsapp} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, whatsapp: e.target.value } })} required />
+                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="Enter 10-digit number" maxLength={10} value={formData.viceCaptain.whatsapp} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, whatsapp: e.target.value } })} required />
                           </div>
                         </div>
 
                         <div>
                           <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Email *</label>
-                          <input type="email" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900" placeholder="email@example.com" value={formData.viceCaptain.email} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, email: e.target.value } })} required />
+                          <input type="email" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="email@example.com" value={formData.viceCaptain.email} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, email: e.target.value } })} required />
                         </div>
                       </div>
                     </div>
