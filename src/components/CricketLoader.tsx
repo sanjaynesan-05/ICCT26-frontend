@@ -104,6 +104,84 @@ export default function CricketLoader() {
 
           {/* Main content container */}
           <div className="relative z-10 flex flex-col items-center">
+            {/* Church Name - Top Highlighted */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="mb-6 flex items-center justify-center"
+            >
+              {/* Church Logo on Left */}
+              <motion.img
+                src="/churchlogo.png"
+                alt="Church Logo"
+                className="w-20 h-20 mr-6"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.1, duration: 0.6 }}
+              />
+              
+              {/* Text Block */}
+              <div className="flex flex-col items-center">
+                <motion.div
+                  className="font-bold text-xl sm:text-2xl md:text-3xl font-bebas tracking-wider text-center mb-1"
+                >
+                  <motion.span
+                    style={{
+                      textShadow: "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6), 0 0 60px rgba(255, 204, 41, 0.4)",
+                      background: "linear-gradient(45deg, #FFD65C, #FFCC29, #FFD65C)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text"
+                    }}
+                    animate={{
+                      textShadow: [
+                        "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6)",
+                        "0 0 25px rgba(255, 204, 41, 1), 0 0 50px rgba(255, 204, 41, 0.8)",
+                        "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6)"
+                      ]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    CSI St. Peter's Church
+                  </motion.span>
+                </motion.div>
+                <motion.div
+                  className="font-bold text-xl sm:text-2xl md:text-3xl font-bebas tracking-wider text-center"
+                >
+                  <motion.span
+                    style={{
+                      textShadow: "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6), 0 0 60px rgba(255, 204, 41, 0.4)",
+                      background: "linear-gradient(45deg, #FFD65C, #FFCC29, #FFD65C)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text"
+                    }}
+                    animate={{
+                      textShadow: [
+                        "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6)",
+                        "0 0 25px rgba(255, 204, 41, 1), 0 0 50px rgba(255, 204, 41, 0.8)",
+                        "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6)"
+                      ]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    Youth Fellowship
+                  </motion.span>
+                </motion.div>
+              </div>
+              
+              {/* Adonai Logo on Right */}
+              <motion.img
+                src="/adonailogo.png"
+                alt="Adonai Logo"
+                className="w-20 h-20 ml-6"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.1, duration: 0.6 }}
+              />
+            </motion.div>
+
             {/* Logo with glow effect */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8, y: -20 }}
@@ -122,7 +200,7 @@ export default function CricketLoader() {
                     textShadow: "0 0 40px rgba(255, 204, 41, 0.5), 0 0 20px rgba(255, 204, 41, 0.3)"
                   }}
                 >
-                  ICCT26
+                  ICCT'26
                 </motion.h1>
                 <motion.p 
                   className="text-white/80 text-xs sm:text-sm font-quicksand tracking-[0.3em] text-center mt-2"
@@ -269,16 +347,6 @@ export default function CricketLoader() {
                 {taglines[taglineIndex]}
               </motion.p>
             </AnimatePresence>
-
-            {/* Stadium ambience text */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: [0.5, 0.8, 0.5] }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="text-[#FFCC29]/60 text-xs sm:text-sm font-manrope tracking-[0.2em] uppercase mt-8"
-            >
-              CSI St. Peter's Church
-            </motion.p>
           </div>
 
           {/* Bottom light sweep */}

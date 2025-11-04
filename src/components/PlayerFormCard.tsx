@@ -25,7 +25,7 @@ const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRem
   return (
     <div className="bg-white rounded-xl p-4 shadow">
       <div className="flex justify-between items-start">
-        <h4 className="font-subheading font-semibold">Player {playerNumber}</h4>
+        <h4 className="font-subheading font-semibold text-gray-900">Player {playerNumber}</h4>
         {canRemove && onRemove && (
           <button onClick={onRemove} className="text-gray-400 hover:text-red-500" aria-label="Remove player"><X /></button>
         )}
