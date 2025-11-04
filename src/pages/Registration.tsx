@@ -45,10 +45,12 @@ const CHURCH_NAMES = [
 ]
 
 const Registration = () => {
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(0) // Start at step 0 for rules
   // playerCount is derived from formData.players length
   const [showSuccess, setShowSuccess] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [validationError, setValidationError] = useState<string>('')
+  const [acceptTerms, setAcceptTerms] = useState(false)
   const emptyPlayer = (): PlayerData => ({
     name: '',
     age: 18,
@@ -68,8 +70,8 @@ const Registration = () => {
     paymentReceipt: null,
   })
 
-  const totalSteps = 5
-  const progress = (currentStep / totalSteps) * 100
+  const totalSteps = 6
+  const progress = ((currentStep + 1) / totalSteps) * 100
 
   const steps = [
     { number: 1, title: 'Team Details' },
@@ -78,6 +80,10 @@ const Registration = () => {
     { number: 4, title: 'Review' },
     { number: 5, title: 'Payment Upload' },
   ]
+
+  const clearValidationError = () => {
+    setValidationError('')
+  }
 
   const validateCurrentStep = (): string | null => {
     switch (currentStep) {
@@ -130,14 +136,25 @@ const Registration = () => {
   }
 
   const handleNext = () => {
-    // Validate current step before proceeding
-    const validationError = validateCurrentStep()
-    if (validationError) {
-      alert(validationError)
-      return
+    // Clear any previous validation errors
+    setValidationError('')
+    
+    // Special validation for Step 0: Rules acceptance
+    if (currentStep === 0) {
+      if (!acceptTerms) {
+        setValidationError('Please accept the terms and conditions to proceed.')
+        return
+      }
+    } else {
+      // Validate current step before proceeding
+      const error = validateCurrentStep()
+      if (error) {
+        setValidationError(error)
+        return
+      }
     }
 
-    if (currentStep < totalSteps) {
+    if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1)
     } else {
       handleSubmit()
@@ -145,7 +162,8 @@ const Registration = () => {
   }
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
+    clearValidationError()
+    if (currentStep > 0) {
       setCurrentStep(currentStep - 1)
     }
   }
@@ -159,9 +177,20 @@ const Registration = () => {
   })
 
   const updatePlayer = (index: number, data: Partial<PlayerData>) => {
+    clearValidationError()
     const players = [...formData.players]
     players[index] = { ...players[index], ...data }
     setFormData({ ...formData, players })
+  }
+
+  const updateCaptain = (data: Partial<typeof formData.captain>) => {
+    clearValidationError()
+    setFormData({ ...formData, captain: { ...formData.captain, ...data } })
+  }
+
+  const updateViceCaptain = (data: Partial<typeof formData.viceCaptain>) => {
+    clearValidationError()
+    setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, ...data } })
   }
 
   const addPlayer = () => {
@@ -259,10 +288,12 @@ const Registration = () => {
   }
 
   const handleFileChange = (file: File | null) => {
+    clearValidationError()
     setFormData({ ...formData, paymentReceipt: file })
   }
 
   const handlePastorLetterChange = (file: File | null) => {
+    clearValidationError()
     setFormData({ ...formData, pastorLetter: file })
   }
 
@@ -337,6 +368,109 @@ const Registration = () => {
             className="glass-card rounded-2xl p-6 md:p-8"
           >
             <AnimatePresence mode="wait">
+              {/* Step 0: Rules & Regulations */}
+              {currentStep === 0 && (
+                <motion.div
+                  key="step0"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                  className="glass-card rounded-2xl p-8 mb-8"
+                >
+                  <div className="text-center mb-8">
+                    <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4">
+                      Rules & Regulations
+                    </h2>
+                    <p className="text-gray-600 font-subheading">
+                      Please read and accept the rules before proceeding with registration
+                    </p>
+                  </div>
+
+                  <div className="space-y-6 text-gray-800 max-h-96 overflow-y-auto mb-8">
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                      <p className="font-semibold text-yellow-800 mb-2">⚠️ Important Notice:</p>
+                      <p className="text-yellow-700">
+                        Ensure all the details you filled is correct & it must be matches with your Photo, Subscription card & Aadhaar Card details, after that your team will be qualify for registration.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-heading text-2xl text-primary mb-4">1. Team Registration</h3>
+                      <ul className="list-disc list-inside space-y-2 ml-4">
+                        <li>Only one team is allowed to represent a single church.</li>
+                        <li>The first 16 teams that complete their registration with the required documents will be eligible to participate.</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h3 className="font-heading text-2xl text-primary mb-4">2. Documents Required</h3>
+                      <p className="mb-3">To register, each team must submit the following:</p>
+                      <ul className="list-disc list-inside space-y-2 ml-4">
+                        <li>Passport-sized photo of each player.</li>
+                        <li>Subscription card.</li>
+                        <li>Aadhar card.</li>
+                      </ul>
+                      <p className="mt-3 text-sm text-gray-600 italic">
+                        Note: Each document must be submitted as a separate IMAGE (jpg) file, labeled with the respective player's name.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-heading text-2xl text-primary mb-4">3. Umpire's Decision</h3>
+                      <p>The umpire's decision is final and binding on all teams.</p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-heading text-2xl text-primary mb-4">4. Power-Play Rules</h3>
+                      <p className="mb-3">It's a 10 overs match.</p>
+                      <ul className="list-disc list-inside space-y-2 ml-4">
+                        <li><strong>First Power-Play:</strong> Overs 1-2<br />Only two fielders are allowed outside the 30-yard circle.</li>
+                        <li><strong>Second Power-Play:</strong> Can be taken in any one of the 6th, 7th, or 8th over.<br />Only five fielders are allowed outside the 30-yard circle during this period.</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h3 className="font-heading text-2xl text-primary mb-4">5. Bowling Restrictions</h3>
+                      <p>Only One bowler is allowed to bowl a maximum of 3 overs.</p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-heading text-2xl text-primary mb-4">6. Tie-Breaker Rule</h3>
+                      <p>In the event of a tie, a super over will be provided.</p>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                      <h3 className="font-heading text-xl text-blue-800 mb-4">7. Important Notice to all Teams:</h3>
+                      <ul className="list-disc list-inside space-y-3 text-blue-700">
+                        <li>Main 11 players need to be submit all the above required details.</li>
+                        <li>If your team has only main 11 players you don't need to fill the last 4 players details.</li>
+                        <li>While match you cannot change over the substitute if you submit only main 11 players.</li>
+                        <li>If the player name is submitted without the required details that application is not accepted even you get the registration successful.</li>
+                      </ul>
+                      <p className="mt-4 text-blue-800 font-semibold">
+                        These are the rules and regulations of the event.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-6">
+                    <div className="flex items-start gap-3 mb-6">
+                      <input
+                        type="checkbox"
+                        id="acceptTerms"
+                        checked={acceptTerms}
+                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                        className="mt-1 w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                      />
+                      <label htmlFor="acceptTerms" className="text-gray-700 font-medium">
+                        I have read and understood all the rules and regulations. I agree to abide by these terms and conditions.
+                      </label>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               {/* Step 1: Team Details */}
               {currentStep === 1 && (
                 <motion.div
@@ -629,13 +763,30 @@ const Registration = () => {
               )}
             </AnimatePresence>
 
+            {/* Validation Error Display */}
+            {validationError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-red-700 font-medium">{validationError}</p>
+                </div>
+              </motion.div>
+            )}
+
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
               <button
                 onClick={handlePrevious}
-                disabled={currentStep === 1}
+                disabled={currentStep === 0}
                 className={`flex items-center gap-2 px-6 py-3 rounded-lg font-subheading font-semibold transition-all ${
-                  currentStep === 1
+                  currentStep === 0
                     ? 'opacity-50 cursor-not-allowed bg-gray-200 text-gray-500'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
@@ -656,8 +807,8 @@ const Registration = () => {
                   </span>
                 ) : (
                   <>
-                    {currentStep === totalSteps ? 'Submit' : 'Next'}
-                    {currentStep < totalSteps && <ChevronRight className="w-5 h-5" />}
+                    {currentStep === 5 ? 'Submit' : 'Next'}
+                    {currentStep < 5 && <ChevronRight className="w-5 h-5" />}
                   </>
                 )}
               </button>
@@ -699,7 +850,7 @@ const Registration = () => {
               <button
                 onClick={() => {
                   setShowSuccess(false)
-                  setCurrentStep(1)
+                  setCurrentStep(0)
                 }}
                 className="btn-gold w-full"
               >
