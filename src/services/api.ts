@@ -126,6 +126,34 @@ class ApiService {
   async healthCheck(): Promise<any> {
     return this.request('/')
   }
+
+  /**
+   * Admin: Get all registered teams
+   */
+  async getAllTeams(): Promise<any> {
+    return this.request('/admin/teams')
+  }
+
+  /**
+   * Admin: Get team details by ID
+   */
+  async getTeamById(teamId: string): Promise<any> {
+    return this.request(`/admin/teams/${teamId}`)
+  }
+
+  /**
+   * Admin: Get player details
+   */
+  async getPlayerById(playerId: string): Promise<any> {
+    return this.request(`/admin/players/${playerId}`)
+  }
+
+  /**
+   * Admin: Get all registrations (teams + players)
+   */
+  async getAllRegistrations(): Promise<any> {
+    return this.request('/admin/registrations')
+  }
 }
 
 export const apiService = new ApiService()
