@@ -1,7 +1,18 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
-import { ChevronDown, Download, ClipboardList, Users, FileText, Gavel, Flame, Target, Flag, AlertTriangle } from 'lucide-react'
+import { 
+  ClipboardList,  // Registration and Match Rules  
+  Users,          // Team Registration  
+  FileText,       // Documents Required  
+  Gavel,          // Umpire's Decision  
+  Flame,          // Power-Play Rules  
+  Target,         // Bowling Restrictions  
+  Flag,           // Tie-Breaker Rule  
+  AlertTriangle,  // Important Notice  
+  ChevronDown,    // UI dropdown toggle (if used)  
+  Download        // Download button (if used)
+} from 'lucide-react'
 import { TOURNAMENT_RULES } from '../data/rules'
 
 const iconMap = {
