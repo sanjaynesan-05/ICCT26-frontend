@@ -48,59 +48,19 @@ const AdminDashboard = () => {
           const teamsList = response.teams || response.data || response
           setTeams(Array.isArray(teamsList) ? teamsList : [])
         } catch (databaseError: any) {
-          console.warn('Teams endpoint not available, using demo data:', databaseError.message)
-          // If both fail, show demo data
-          setTeams(generateDummyTeams())
+          console.error('Teams endpoint not available:', databaseError.message)
+          // If both fail, show error - no fallback to dummy data
+          setError('Failed to load teams from backend. Please ensure the backend server is running and accessible.')
+          setTeams([])
         }
       }
     } catch (err) {
       console.error('Error fetching teams:', err)
-      setError('Failed to load teams. Using demo data.')
-      setTeams(generateDummyTeams())
+      setError('Failed to load teams from backend. Connection error.')
+      setTeams([])
     } finally {
       setLoading(false)
     }
-  }
-
-  const generateDummyTeams = (): Team[] => {
-    return [
-      {
-        teamId: 'ICCT26-0001',
-        teamName: 'Thunder Strikers',
-        churchName: 'CSI St. Peter\'s Church',
-        captainName: 'John Doe',
-        captainPhone: '+919876543210',
-        captainEmail: 'john@example.com',
-        viceCaptainName: 'Jane Smith',
-        playerCount: 11,
-        registrationDate: '2026-01-15 10:30:45',
-        paymentReceipt: 'TXN123456789'
-      },
-      {
-        teamId: 'ICCT26-0002',
-        teamName: 'Royal Champions',
-        churchName: 'CSI Emmanuel Church',
-        captainName: 'Mike Johnson',
-        captainPhone: '+919876543211',
-        captainEmail: 'mike@example.com',
-        viceCaptainName: 'Sarah Williams',
-        playerCount: 13,
-        registrationDate: '2026-01-15 11:20:30',
-        paymentReceipt: 'TXN987654321'
-      },
-      {
-        teamId: 'ICCT26-0003',
-        teamName: 'Eagles XI',
-        churchName: 'CSI Grace Church',
-        captainName: 'David Brown',
-        captainPhone: '+919876543212',
-        captainEmail: 'david@example.com',
-        viceCaptainName: 'Emily Davis',
-        playerCount: 12,
-        registrationDate: '2026-01-15 14:45:15',
-        paymentReceipt: 'TXN555777999'
-      }
-    ]
   }
 
   const handleLogout = () => {

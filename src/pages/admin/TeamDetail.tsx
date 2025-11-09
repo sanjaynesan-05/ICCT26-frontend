@@ -65,53 +65,22 @@ const TeamDetail = () => {
           if (foundTeam) {
             setTeam(foundTeam)
           } else {
-            console.warn('Team not found in backend data, using demo data')
-            setTeam(generateDummyTeamDetails(teamId!))
+            console.error('Team not found in backend data')
+            setError('Team not found in backend')
+            setTeam(null)
           }
         } catch (databaseError: any) {
-          console.warn('Teams endpoint not available, using demo data:', databaseError.message)
-          setTeam(generateDummyTeamDetails(teamId!))
+          console.error('Teams endpoint not available:', databaseError.message)
+          setError('Failed to load team details from backend. Please ensure the backend server is running.')
+          setTeam(null)
         }
       }
     } catch (err) {
       console.error('Error fetching team details:', err)
-      setError('Failed to load team details')
-      setTeam(generateDummyTeamDetails(teamId!))
+      setError('Failed to load team details. Connection error.')
+      setTeam(null)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const generateDummyTeamDetails = (id: string): TeamDetails => {
-    const playerRoles = ['Batsman', 'Bowler', 'All-rounder', 'Wicket Keeper']
-    const players: Player[] = Array.from({ length: 11 }, (_, i) => ({
-      playerId: `${id}-P${String(i + 1).padStart(3, '0')}`,
-      name: `Player ${i + 1}`,
-      age: 20 + Math.floor(Math.random() * 15),
-      phone: `+9198765432${10 + i}`,
-      email: `player${i + 1}@example.com`,
-      role: playerRoles[Math.floor(Math.random() * playerRoles.length)],
-      jerseyNumber: String(i + 1),
-      aadharFile: `https://example.com/aadhar/${id}-P${i + 1}.pdf`,
-      subscriptionFile: `https://example.com/subscription/${id}-P${i + 1}.pdf`
-    }))
-
-    return {
-      teamId: id,
-      teamName: 'Thunder Strikers',
-      churchName: 'CSI St. Peter\'s Church',
-      captainName: 'John Doe',
-      captainPhone: '+919876543210',
-      captainEmail: 'john@example.com',
-      captainWhatsapp: '919876543210',
-      viceCaptainName: 'Jane Smith',
-      viceCaptainPhone: '+919876543211',
-      viceCaptainEmail: 'jane@example.com',
-      viceCaptainWhatsapp: '919876543211',
-      paymentReceipt: 'TXN123456789',
-      pastorLetter: 'https://example.com/pastor-letter.pdf',
-      registrationDate: '2026-01-15 10:30:45',
-      players
     }
   }
 
