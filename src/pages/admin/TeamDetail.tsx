@@ -50,16 +50,33 @@ const TeamDetail = () => {
       setError('')
 
       try {
+        // Try admin endpoint first
         const response = await apiService.getTeamById(teamId!)
         setTeam(response.team || response.data)
-      } catch (apiError) {
-        // Dummy data for demo
-        console.warn('Team details API not available, using dummy data:', apiError)
-        setTeam(generateDummyTeamDetails(teamId!))
+      } catch (adminError: any) {
+        console.warn('Admin team endpoint not available:', adminError.message)
+        
+        // Try alternative approach - fetch all teams and find the one with matching ID
+        try {
+          const response = await apiService.getTeamsFromDatabase()
+          const teams = Array.isArray(response) ? response : response.teams || response.data || []
+          const foundTeam = teams.find((t: any) => t.teamId === teamId)
+          
+          if (foundTeam) {
+            setTeam(foundTeam)
+          } else {
+            console.warn('Team not found in backend data, using demo data')
+            setTeam(generateDummyTeamDetails(teamId!))
+          }
+        } catch (databaseError: any) {
+          console.warn('Teams endpoint not available, using demo data:', databaseError.message)
+          setTeam(generateDummyTeamDetails(teamId!))
+        }
       }
     } catch (err) {
+      console.error('Error fetching team details:', err)
       setError('Failed to load team details')
-      console.error(err)
+      setTeam(generateDummyTeamDetails(teamId!))
     } finally {
       setLoading(false)
     }

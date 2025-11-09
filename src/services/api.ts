@@ -154,6 +154,20 @@ class ApiService {
   async getAllRegistrations(): Promise<any> {
     return this.request('/admin/registrations')
   }
+
+  /**
+   * Get all registered teams from database (alternative endpoint)
+   */
+  async getTeamsFromDatabase(): Promise<any> {
+    return this.request('/teams')
+  }
+
+  /**
+   * Get all players from database (alternative endpoint)
+   */
+  async getPlayersFromDatabase(): Promise<any> {
+    return this.request('/players')
+  }
 }
 
 export const apiService = new ApiService()

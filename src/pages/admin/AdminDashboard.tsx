@@ -34,18 +34,29 @@ const AdminDashboard = () => {
       setLoading(true)
       setError('')
       
-      // Try to fetch from backend - if endpoint doesn't exist, use dummy data
       try {
+        // Try admin endpoint first
         const response = await apiService.getAllTeams()
-        setTeams(response.teams || response.data || [])
-      } catch (apiError) {
-        // If API endpoint doesn't exist yet, show dummy data for demo
-        console.warn('Admin API not available, using dummy data:', apiError)
-        setTeams(generateDummyTeams())
+        const teamsList = response.teams || response.data || response
+        setTeams(Array.isArray(teamsList) ? teamsList : [])
+      } catch (adminError: any) {
+        console.warn('Admin teams endpoint not available, trying alternative endpoint:', adminError.message)
+        
+        // Try alternative endpoints
+        try {
+          const response = await apiService.getTeamsFromDatabase()
+          const teamsList = response.teams || response.data || response
+          setTeams(Array.isArray(teamsList) ? teamsList : [])
+        } catch (databaseError: any) {
+          console.warn('Teams endpoint not available, using demo data:', databaseError.message)
+          // If both fail, show demo data
+          setTeams(generateDummyTeams())
+        }
       }
     } catch (err) {
-      setError('Failed to load teams')
-      console.error(err)
+      console.error('Error fetching teams:', err)
+      setError('Failed to load teams. Using demo data.')
+      setTeams(generateDummyTeams())
     } finally {
       setLoading(false)
     }
