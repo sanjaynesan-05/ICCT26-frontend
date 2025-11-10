@@ -1,17 +1,64 @@
 import React, { useState, useRef } from 'react'
-import { Upload, X } from 'lucide-react'
+import { Upload, X, CheckCircle } from 'lucide-react'
 
 interface Props {
   file: File | null
-  onFileChange: (file: File | null) => void
+  onFileChange: (base64: string | null) => void
   accept?: string
   placeholder?: string
   className?: string
+  maxSizeMB?: number
 }
 
-const FileUpload: React.FC<Props> = ({ file, onFileChange, accept = '*', placeholder = 'Upload file', className = '' }) => {
+const FileUpload: React.FC<Props> = ({ 
+  file, 
+  onFileChange, 
+  accept = '.pdf,.png,.jpg,.jpeg', 
+  placeholder = 'Upload file', 
+  className = '',
+  maxSizeMB = 5
+}) => {
   const [dragActive, setDragActive] = useState(false)
+  const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement | null>(null)
+
+  const ALLOWED_MIME_TYPES = ['application/pdf', 'image/png', 'image/jpeg']
+  const MAX_FILE_SIZE = maxSizeMB * 1024 * 1024
+
+  const validateFile = (f: File): boolean => {
+    // Check MIME type
+    if (!ALLOWED_MIME_TYPES.includes(f.type)) {
+      setError(`Invalid file type. Allowed: PDF, PNG, JPEG`)
+      return false
+    }
+
+    // Check file size
+    if (f.size > MAX_FILE_SIZE) {
+      setError(`File size exceeds ${maxSizeMB}MB limit`)
+      return false
+    }
+
+    setError('')
+    return true
+  }
+
+  const readFileAsBase64 = (f: File) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(f)
+    reader.onload = () => {
+      const base64 = reader.result as string
+      onFileChange(base64) // Returns: data:image/jpeg;base64,...
+    }
+    reader.onerror = () => {
+      setError('Failed to read file')
+    }
+  }
+
+  const handleFile = (f: File) => {
+    if (validateFile(f)) {
+      readFileAsBase64(f)
+    }
+  }
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -30,12 +77,19 @@ const FileUpload: React.FC<Props> = ({ file, onFileChange, accept = '*', placeho
     e.stopPropagation()
     setDragActive(false)
     const files = e.dataTransfer.files
-    if (files && files[0]) onFileChange(files[0])
+    if (files && files[0]) handleFile(files[0])
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] || null
-    onFileChange(f)
+    const f = e.target.files?.[0]
+    if (f) handleFile(f)
+  }
+
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onFileChange(null)
+    if (inputRef.current) inputRef.current.value = ''
+    setError('')
   }
 
   const CricketAnimation = () => (
@@ -72,7 +126,11 @@ const FileUpload: React.FC<Props> = ({ file, onFileChange, accept = '*', placeho
           onDrop={handleDrop}
           className={`flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer bg-white hover:shadow-md transition text-sm ${dragActive ? 'border-gray-700 bg-gray-100' : 'border-gray-300'}`}
         >
-          {file ? <CricketAnimation /> : <Upload className="w-5 h-5 text-gray-600" />}
+          {file ? (
+            <CheckCircle className="w-5 h-5 text-green-600" />
+          ) : (
+            <Upload className="w-5 h-5 text-gray-600" />
+          )}
           <span className="truncate max-w-[180px] text-gray-700 font-subheading text-sm">{file ? file.name : placeholder}</span>
           <input ref={inputRef} type="file" accept={accept} onChange={handleChange} className="hidden" />
         </label>
@@ -82,13 +140,17 @@ const FileUpload: React.FC<Props> = ({ file, onFileChange, accept = '*', placeho
             type="button"
             className="absolute top-2 right-2 p-0.5 rounded-full bg-white hover:bg-gray-200 text-gray-500 shadow"
             style={{ zIndex: 2, width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onClick={(e) => { e.stopPropagation(); onFileChange(null) }}
+            onClick={handleClear}
             aria-label="Cancel upload"
           >
             <X className="w-3 h-3" />
           </button>
         )}
       </div>
+
+      {error && (
+        <p className="text-red-600 text-xs mt-2">{error}</p>
+      )}
     </div>
   )
 }

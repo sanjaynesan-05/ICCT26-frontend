@@ -18,17 +18,21 @@ interface PlayerData {
   phone: string
   role: string
   aadharFile: File | null
+  aadharFileBase64: string | null
   subscriptionFile: File | null
+  subscriptionFileBase64: string | null
 }
 
 interface FormData {
   churchName: string
   teamName: string
   pastorLetter: File | null
+  pastorLetterBase64: string | null
   captain: CaptainInfo
   viceCaptain: CaptainInfo
   players: PlayerData[]
   paymentReceipt: File | null
+  paymentReceiptBase64: string | null
 }
 
 const CHURCH_NAMES = [
@@ -64,17 +68,21 @@ const Registration = () => {
     phone: '',
     role: '',
     aadharFile: null,
+    aadharFileBase64: null,
     subscriptionFile: null,
+    subscriptionFileBase64: null,
   })
 
   const [formData, setFormData] = useState<FormData>({
     churchName: '',
     teamName: '',
     pastorLetter: null,
+    pastorLetterBase64: null,
     captain: { name: '', phone: '', whatsapp: '', email: '' },
     viceCaptain: { name: '', phone: '', whatsapp: '', email: '' },
     players: Array.from({ length: 11 }).map(() => emptyPlayer()),
     paymentReceipt: null,
+    paymentReceiptBase64: null,
   })
 
   const totalSteps = 6
@@ -95,7 +103,7 @@ const Registration = () => {
       case 1:
         if (!formData.churchName.trim()) return 'Please select a church name'
         if (!formData.teamName.trim()) return 'Please enter a team name'
-        if (!formData.pastorLetter) return 'Please upload a church letter'
+        if (!formData.pastorLetterBase64) return 'Please upload a church letter'
         break
 
       case 2:
@@ -126,8 +134,8 @@ const Registration = () => {
           if (!player.phone.trim()) return `Player ${i + 1}: Please enter phone number`
           if (!player.role) return `Player ${i + 1}: Please select a role`
           if (!VALID_ROLES.includes(player.role)) return `Player ${i + 1}: Invalid role '${player.role}'`
-          if (!player.aadharFile) return `Player ${i + 1}: Please upload Aadhar/ID`
-          if (!player.subscriptionFile) return `Player ${i + 1}: Please upload subscription/consent`
+          if (!player.aadharFileBase64) return `Player ${i + 1}: Please upload Aadhar/ID`
+          if (!player.subscriptionFileBase64) return `Player ${i + 1}: Please upload subscription/consent`
         }
         break
 
@@ -136,7 +144,7 @@ const Registration = () => {
         break
 
       case 5:
-        if (!formData.paymentReceipt) return 'Please upload payment receipt'
+        if (!formData.paymentReceiptBase64) return 'Please upload payment receipt'
         break
 
       default:
@@ -212,19 +220,17 @@ const Registration = () => {
 
   // Robust submit which:
   // - validates full form
-  // - converts files to base64
-  // - builds payload matching backend schema
+  // - builds payload matching backend schema with Base64 files
   // - calls apiService.registerTeam(payload)
   const handleSubmit = async () => {
     setIsSubmitting(true)
-    setConvertingFiles(true)
+    setConvertingFiles(false)
     setValidationError('')
     try {
       // Full-form validation
-      // Team & captain & vice validations (same as earlier)
       if (!formData.churchName.trim()) throw new Error('Please select a church name')
       if (!formData.teamName.trim()) throw new Error('Please enter a team name')
-      if (!formData.pastorLetter) throw new Error('Please upload a church letter')
+      if (!formData.pastorLetterBase64) throw new Error('Please upload a church letter')
 
       if (!formData.captain.name.trim()) throw new Error('Please enter captain name')
       if (!formData.captain.phone.trim()) throw new Error('Please enter captain phone number')
@@ -250,59 +256,17 @@ const Registration = () => {
         if (!p.phone.trim()) throw new Error(`Player ${idx + 1}: Please enter phone number`)
         if (!p.role) throw new Error(`Player ${idx + 1}: Please select a role`)
         if (!VALID_ROLES.includes(p.role)) throw new Error(`Player ${idx + 1}: Invalid role '${p.role}'`)
-        if (!p.aadharFile) throw new Error(`Player ${idx + 1}: Please upload Aadhar/ID`)
-        if (!p.subscriptionFile) throw new Error(`Player ${idx + 1}: Please upload subscription/consent`)
+        if (!p.aadharFileBase64) throw new Error(`Player ${idx + 1}: Please upload Aadhar/ID`)
+        if (!p.subscriptionFileBase64) throw new Error(`Player ${idx + 1}: Please upload subscription/consent`)
       })
 
-      if (!formData.paymentReceipt) throw new Error('Please upload payment receipt')
+      if (!formData.paymentReceiptBase64) throw new Error('Please upload payment receipt')
 
-      // Validate file sizes
-      if (formData.pastorLetter && formData.pastorLetter.size > MAX_FILE_SIZE) {
-        throw new Error(`Pastor letter file size must be less than ${MAX_FILE_SIZE_MB}MB`)
-      }
-      if (formData.paymentReceipt && formData.paymentReceipt.size > MAX_FILE_SIZE) {
-        throw new Error(`Payment receipt file size must be less than ${MAX_FILE_SIZE_MB}MB`)
-      }
-
-      for (const player of formData.players) {
-        if (player.aadharFile && player.aadharFile.size > MAX_FILE_SIZE) {
-          throw new Error(`Aadhar file for ${player.name} must be less than ${MAX_FILE_SIZE_MB}MB`)
-        }
-        if (player.subscriptionFile && player.subscriptionFile.size > MAX_FILE_SIZE) {
-          throw new Error(`Subscription file for ${player.name} must be less than ${MAX_FILE_SIZE_MB}MB`)
-        }
-      }
-
-      // Convert files to base64 (only those required)
-      const pastorLetterBase64 = formData.pastorLetter ? await toBase64(formData.pastorLetter) : null
-      const paymentReceiptBase64 = formData.paymentReceipt ? await toBase64(formData.paymentReceipt) : null
-
-      if (!pastorLetterBase64) throw new Error('Failed to process pastor letter')
-      if (!paymentReceiptBase64) throw new Error('Failed to process payment receipt')
-
-      const playersWithBase64 = await Promise.all(
-        formData.players.map(async (player) => {
-          const aadharBase64 = player.aadharFile ? await toBase64(player.aadharFile) : null
-          const subscriptionBase64 = player.subscriptionFile ? await toBase64(player.subscriptionFile) : null
-
-          if (!aadharBase64) throw new Error(`Failed to process Aadhar file for ${player.name}`)
-          if (!subscriptionBase64) throw new Error(`Failed to process subscription file for ${player.name}`)
-
-          return {
-            name: player.name,
-            age: player.age,
-            phone: player.phone,
-            role: player.role,
-            aadharFile: aadharBase64,
-            subscriptionFile: subscriptionBase64,
-          }
-        })
-      )
-
+      // Build payload with Base64 strings (already Base64 from FileUpload)
       const payload = {
         churchName: formData.churchName,
         teamName: formData.teamName,
-        pastorLetter: pastorLetterBase64,
+        pastorLetter: formData.pastorLetterBase64,
         captain: {
           name: formData.captain.name,
           phone: formData.captain.phone,
@@ -315,29 +279,32 @@ const Registration = () => {
           whatsapp: formData.viceCaptain.whatsapp,
           email: formData.viceCaptain.email,
         },
-        players: playersWithBase64,
-        paymentReceipt: paymentReceiptBase64,
+        players: formData.players.map(p => ({
+          name: p.name,
+          age: p.age,
+          phone: p.phone,
+          role: p.role,
+          aadharFile: p.aadharFileBase64,
+          subscriptionFile: p.subscriptionFileBase64,
+        })),
+        paymentReceipt: formData.paymentReceiptBase64,
       }
 
-      // Call your existing apiService (assumes it returns a promise and throws for non-2xx)
+      // Call API
       await apiService.registerTeam(payload)
 
       // Show success modal
       setShowSuccess(true)
-      // Reset to first step and optionally reset form if you want
-      // setFormData({ ...initial state if desired... })
     } catch (err: unknown) {
       // Parse and show better error messages
       console.error('Submit error (raw):', err)
 
-      // If error is an axios-like error with response data
       let message = 'Registration failed'
       try {
         // @ts-ignore
         if (err?.response?.data) {
           // @ts-ignore
           const data = err.response.data
-          // prefer structured message if available
           if (typeof data === 'string') message = data
           else if (data.detail) message = JSON.stringify(data.detail)
           else message = JSON.stringify(data)
@@ -357,14 +324,14 @@ const Registration = () => {
     }
   }
 
-  const handleFileChange = (file: File | null) => {
+  const handleFileChange = (base64: string | null) => {
     clearValidationError()
-    setFormData({ ...formData, paymentReceipt: file })
+    setFormData({ ...formData, paymentReceiptBase64: base64, paymentReceipt: base64 ? new File([], 'receipt') : null })
   }
 
-  const handlePastorLetterChange = (file: File | null) => {
+  const handlePastorLetterChange = (base64: string | null) => {
     clearValidationError()
-    setFormData({ ...formData, pastorLetter: file })
+    setFormData({ ...formData, pastorLetterBase64: base64, pastorLetter: base64 ? new File([], 'letter') : null })
   }
 
   return (
@@ -506,7 +473,7 @@ const Registration = () => {
                     <div>
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Church Letter *</label>
                       <div>
-                        <FileUpload file={formData.pastorLetter} onFileChange={handlePastorLetterChange} accept="image/*,.pdf,.doc,.docx" placeholder="Upload Church Letter" />
+                        <FileUpload file={formData.pastorLetter} onFileChange={handlePastorLetterChange} accept=".pdf,.png,.jpg,.jpeg" placeholder="Upload Church Letter" />
                       </div>
                     </div>
                   </div>
@@ -653,7 +620,7 @@ const Registration = () => {
                     <div>
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Upload Payment Receipt * (Required)</label>
                       <div>
-                        <FileUpload file={formData.paymentReceipt} onFileChange={handleFileChange} accept="image/*" placeholder="Upload Receipt" />
+                        <FileUpload file={formData.paymentReceipt} onFileChange={handleFileChange} accept=".pdf,.png,.jpg,.jpeg" placeholder="Upload Receipt" />
                       </div>
                     </div>
                   </div>

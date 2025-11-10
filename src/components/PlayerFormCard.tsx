@@ -8,7 +8,9 @@ interface PlayerData {
   phone: string
   role: string
   aadharFile: File | null
+  aadharFileBase64: string | null
   subscriptionFile: File | null
+  subscriptionFileBase64: string | null
 }
 
 interface Props {
@@ -20,7 +22,19 @@ interface Props {
 }
 
 const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRemove, canRemove }) => {
-  // kept inline using FileUpload; no local file input handlers required
+  const handleAadharChange = (base64: string | null) => {
+    onChange({ 
+      aadharFileBase64: base64,
+      aadharFile: base64 ? new File([], 'aadhar') : null
+    })
+  }
+
+  const handleSubscriptionChange = (base64: string | null) => {
+    onChange({ 
+      subscriptionFileBase64: base64,
+      subscriptionFile: base64 ? new File([], 'subscription') : null
+    })
+  }
 
   return (
     <div className="bg-white rounded-xl p-4 shadow">
@@ -53,7 +67,7 @@ const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRem
             <option value="">Select Role</option>
             <option value="Batsman">Batsman</option>
             <option value="Bowler">Bowler</option>
-            <option value="All rounder">All rounder</option>
+            <option value="All-rounder">All-rounder</option>
             <option value="Wicket Keeper">Wicket Keeper</option>
           </select>
         </div>
@@ -61,13 +75,13 @@ const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRem
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-subheading text-gray-700 mb-1">Aadhar / ID (image/pdf)</label>
-          <FileUpload file={player.aadharFile} onFileChange={(f) => onChange({ aadharFile: f })} accept="image/*,.pdf" placeholder="Upload Aadhar" />
+          <label className="block text-sm font-subheading text-gray-700 mb-1">Aadhar / ID (PDF/PNG/JPEG) *</label>
+          <FileUpload file={player.aadharFile} onFileChange={handleAadharChange} accept=".pdf,.png,.jpg,.jpeg" placeholder="Upload Aadhar" />
         </div>
 
         <div>
-          <label className="block text-sm font-subheading text-gray-700 mb-1">Subscription / Consent (image/pdf)</label>
-          <FileUpload file={player.subscriptionFile} onFileChange={(f) => onChange({ subscriptionFile: f })} accept="image/*,.pdf" placeholder="Upload Subscription" />
+          <label className="block text-sm font-subheading text-gray-700 mb-1">Subscription / Consent (PDF/PNG/JPEG) *</label>
+          <FileUpload file={player.subscriptionFile} onFileChange={handleSubscriptionChange} accept=".pdf,.png,.jpg,.jpeg" placeholder="Upload Subscription" />
         </div>
       </div>
     </div>
@@ -75,4 +89,3 @@ const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRem
 }
 
 export default PlayerFormCard
-
