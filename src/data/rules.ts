@@ -1,7 +1,3 @@
-/**
- * Tournament Rules Data
- * Contains all rules and regulations for ICCT26
- */
 import type { Rule } from '../types'
 
 export const TOURNAMENT_RULES: Rule[] = [
@@ -10,7 +6,8 @@ export const TOURNAMENT_RULES: Rule[] = [
     title: 'Registration and Match Rules',
     icon: 'ClipboardList',
     content: [
-      'Ensure all the details you filled is correct & it must be matches with your Photo, Subscription card & Aadhaar Card details, after that your team will be qualify for registration.',
+      'Ensure that all the details you provide are accurate and match your Photo, Subscription Card, and Aadhaar Card details.',
+      'Only after proper verification will your team be qualified for registration.'
     ],
   },
   {
@@ -18,8 +15,8 @@ export const TOURNAMENT_RULES: Rule[] = [
     title: 'Team Registration',
     icon: 'Users',
     content: [
-      'Only one team is allowed to represent a single church.',
-      'The first 16 teams that complete their registration with the required documents will be eligible to participate.',
+      'Only one team can represent a single church.',
+      'The first 16 teams that complete registration with all required documents will be eligible to participate.'
     ],
   },
   {
@@ -27,19 +24,11 @@ export const TOURNAMENT_RULES: Rule[] = [
     title: 'Documents Required',
     icon: 'FileText',
     content: [
-      'To register, each team must submit the following:',
-      '• Passport-sized photo of each player.',
-      '• Subscription card.',
-      '• Aadhar card.',
-      'Note: Each document must be submitted as a separate IMAGE (jpg) file, labeled with the respective player\'s name.',
-    ],
-  },
-  {
-    id: 4,
-    title: 'Umpire\'s Decision',
-    icon: 'Gavel',
-    content: [
-      'The umpire\'s decision is final and binding on all teams.',
+      'Each team must submit the following for every player:',
+      '• Passport-size photo',
+      '• Subscription card',
+      '• Aadhaar card',
+      'Note: Each document must be uploaded as a separate image (JPG format) and named after the respective player (e.g., John_Doe_Photo.jpg, John_Doe_Aadhaar.jpg).'
     ],
   },
   {
@@ -47,11 +36,8 @@ export const TOURNAMENT_RULES: Rule[] = [
     title: "Umpire's Decision",
     icon: 'Gavel',
     content: [
-      'It\'s a 10 overs match.',
-      'First Power-Play: Overs 1-2',
-      'Only two fielders are allowed outside the 30-yard circle.',
-      'Second Power-Play: Can be taken in any one of the 6th, 7th, or 8th over.',
-      'Only five fielders are allowed outside the 30-yard circle during this period.',
+      'The umpire’s decision is final and binding on all teams.',
+      'Any disputes must be resolved respectfully on the field.'
     ],
   },
   {
@@ -59,7 +45,10 @@ export const TOURNAMENT_RULES: Rule[] = [
     title: 'Power-Play Rules',
     icon: 'Flame',
     content: [
-      'Only One bowler is allowed to bowl a maximum of 3 overs.',
+      'Each match will consist of 10 overs per side.',
+      'First Power-Play: Overs 1–2 — Only two fielders are allowed outside the 30-yard circle.',
+      'Second Power-Play: Can be taken in any one of the 6th, 7th, or 8th overs.',
+      'During the second Power-Play, only five fielders are allowed outside the 30-yard circle.'
     ],
   },
   {
@@ -67,7 +56,7 @@ export const TOURNAMENT_RULES: Rule[] = [
     title: 'Bowling Restrictions',
     icon: 'Target',
     content: [
-      'Only One bowler is allowed to bowl a maximum of 3 overs.',
+      'Each bowler can bowl a maximum of 3 overs.'
     ],
   },
   {
@@ -75,18 +64,18 @@ export const TOURNAMENT_RULES: Rule[] = [
     title: 'Tie-Breaker Rule',
     icon: 'Flag',
     content: [
-      'In the event of a tie, a super over will be provided.',
+      'In case of a tie, a Super Over will decide the winner.'
     ],
   },
   {
     id: 8,
-    title: 'Important Notice to all Teams',
+    title: 'Important Notice to All Teams',
     icon: 'AlertTriangle',
     content: [
-      '• Main 11 players need to be submit all the above required details.',
-      '• If your team has only main 11 players you don\'t need to fill the last 4 players details.',
-      '• While match you cannot change over the substitute if you submit only main 11 players.',
-      '• If the player name is submitted without the required details that application is not accepted even you get the registration successful.',
+      '• The main 11 players must submit all the required documents (photo, subscription card, and Aadhaar).',
+      '• If your team has only 11 players, you don’t need to fill the last 4 players’ details.',
+      '• During the match, substitutes cannot be used if your team has registered only 11 players.',
+      '• If any player’s name is submitted without the required documents, the application will be rejected even if registration appears successful.'
     ],
   }
 ]
