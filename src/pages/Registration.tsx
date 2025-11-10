@@ -397,7 +397,7 @@ const Registration = () => {
         <div className="max-w-3xl mx-auto">
           <motion.div initial={{ x: 30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="glass-card rounded-2xl p-6 md:p-8">
             <AnimatePresence mode="wait">
-              {/* Step 0: Rules & Regulations */}
+              {/* Step 0: Rules & Regulations */} 
               {currentStep === 0 && (
                 <motion.div key="step0" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} transition={{ duration: 0.3 }} className="glass-card rounded-2xl p-8 mb-8">
                   <div className="text-center mb-8">
@@ -406,12 +406,60 @@ const Registration = () => {
                   </div>
 
                   <div className="space-y-6 text-gray-800 max-h-96 overflow-y-auto mb-8">
-                    {/* (content omitted for brevity - kept same as before) */}
                     <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
                       <p className="font-semibold text-yellow-800 mb-2">⚠️ Important Notice:</p>
                       <p className="text-yellow-700">Ensure all the details you filled is correct & it must be matches with your Photo, Subscription card & Aadhaar Card details, after that your team will be qualify for registration.</p>
                     </div>
-                    {/* ... the rest of rules blocks unchanged ... */}
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                      <h3 className="font-heading text-xl text-blue-800 mb-4">1. Team Registration</h3>
+                      <ul className="list-disc list-inside space-y-2 text-blue-700">
+                        <li>Only one team is allowed to represent a single church.</li>
+                        <li>The first 16 teams that complete their registration with the required documents will be eligible to participate.</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                      <h3 className="font-heading text-xl text-green-800 mb-4">2. Documents Required</h3>
+                      <p className="text-green-700 mb-3">To register, each team must submit the following:</p>
+                      <ul className="list-disc list-inside space-y-2 text-green-700">
+                        <li>Passport-sized photo of each player.</li>
+                        <li>Subscription card.</li>
+                        <li>Aadhar card.</li>
+                      </ul>
+                      <p className="text-green-800 font-semibold mt-3">Note: Each document must be submitted as a separate IMAGE (jpg) file, labeled with the respective player's name.</p>
+                    </div>
+
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+                      <h3 className="font-heading text-xl text-purple-800 mb-4">3. Umpire's Decision</h3>
+                      <p className="text-purple-700">The umpire's decision is final and binding on all teams.</p>
+                    </div>
+
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                      <h3 className="font-heading text-xl text-orange-800 mb-4">4. Power-Play Rules</h3>
+                      <p className="text-orange-700 mb-3">It's a 10 overs match.</p>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="font-semibold text-orange-800">First Power-Play: Overs 1-2</p>
+                          <p className="text-orange-700">Only two fielders are allowed outside the 30-yard circle.</p>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-orange-800">Second Power-Play: Can be taken in any one of the 6th, 7th, or 8th over.</p>
+                          <p className="text-orange-700">Only five fielders are allowed outside the 30-yard circle during this period.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                      <h3 className="font-heading text-xl text-red-800 mb-4">5. Bowling Restrictions</h3>
+                      <p className="text-red-700">Only One bowler is allowed to bowl a maximum of 3 overs.</p>
+                    </div>
+
+                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
+                      <h3 className="font-heading text-xl text-indigo-800 mb-4">6. Tie-Breaker Rule</h3>
+                      <p className="text-indigo-700">In the event of a tie, a super over will be provided.</p>
+                    </div>
+
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                       <h3 className="font-heading text-xl text-blue-800 mb-4">7. Important Notice to all Teams:</h3>
                       <ul className="list-disc list-inside space-y-3 text-blue-700">
