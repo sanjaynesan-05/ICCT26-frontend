@@ -107,7 +107,7 @@ class ApiService {
    * Register a team
    */
   async registerTeam(payload: TeamRegistrationPayload): Promise<any> {
-    return this.request('/register/team', {
+    return this.request('/api/register/team', {
       method: 'POST',
       body: JSON.stringify(payload),
     })
@@ -124,20 +124,48 @@ class ApiService {
    * Health check endpoint
    */
   async healthCheck(): Promise<any> {
-    return this.request('/')
+    return this.request('/health')
+  }
+
+  /**
+   * Get API status
+   */
+  async getApiStatus(): Promise<any> {
+    return this.request('/status')
+  }
+
+  /**
+   * Get database stats
+   */
+  async getDatabaseStats(): Promise<any> {
+    return this.request('/db')
+  }
+
+  /**
+   * Get all registered teams (Team Management)
+   */
+  async getAllTeams(): Promise<any> {
+    return this.request('/api/teams')
+  }
+
+  /**
+   * Get team details by ID (Team Management)
+   */
+  async getTeamById(teamId: string): Promise<any> {
+    return this.request(`/api/teams/${teamId}`)
   }
 
   /**
    * Admin: Get all registered teams
    */
-  async getAllTeams(): Promise<any> {
+  async getAdminTeams(): Promise<any> {
     return this.request('/admin/teams')
   }
 
   /**
    * Admin: Get team details by ID
    */
-  async getTeamById(teamId: string): Promise<any> {
+  async getAdminTeamById(teamId: string): Promise<any> {
     return this.request(`/admin/teams/${teamId}`)
   }
 
@@ -156,17 +184,17 @@ class ApiService {
   }
 
   /**
-   * Get all registered teams from database (alternative endpoint)
+   * Get all teams from database
    */
   async getTeamsFromDatabase(): Promise<any> {
-    return this.request('/teams')
+    return this.request('/api/teams')
   }
 
   /**
-   * Get all players from database (alternative endpoint)
+   * Get all players from database
    */
   async getPlayersFromDatabase(): Promise<any> {
-    return this.request('/players')
+    return this.request('/api/players')
   }
 }
 
