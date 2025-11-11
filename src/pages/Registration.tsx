@@ -130,7 +130,7 @@ const Registration = () => {
         for (let i = 0; i < formData.players.length; i++) {
           const player = formData.players[i]
           if (!player.name.trim()) return `Player ${i + 1}: Please enter name`
-          if (player.age < 18 || player.age > 40) return `Player ${i + 1}: Age must be between 18 and 40`
+          if (player.age < 14 || player.age > 60) return `Player ${i + 1}: Age must be between 18 and 40`
           if (!player.phone.trim()) return `Player ${i + 1}: Please enter phone number`
           if (!player.role) return `Player ${i + 1}: Please select a role`
           if (!VALID_ROLES.includes(player.role)) return `Player ${i + 1}: Invalid role '${player.role}'`
