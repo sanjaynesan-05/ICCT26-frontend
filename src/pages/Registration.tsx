@@ -48,7 +48,7 @@ const CHURCH_NAMES = [
   'CSI Vision Church',
 ]
 
-const VALID_ROLES = ['Batsman', 'Bowler', 'All-Rounder', 'Wicket Keeper']
+const VALID_ROLES = ['Batsman', 'Bowler', 'All-rounder', 'Wicketkeeper']
 
 // File size limits (in bytes)
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
@@ -130,7 +130,7 @@ const Registration = () => {
         for (let i = 0; i < formData.players.length; i++) {
           const player = formData.players[i]
           if (!player.name.trim()) return `Player ${i + 1}: Please enter name`
-          if (player.age < 15 || player.age > 60) return `Player ${i + 1}: Age must be between 15 and 60`
+          if (player.age < 18 || player.age > 40) return `Player ${i + 1}: Age must be between 18 and 40`
           if (!player.phone.trim()) return `Player ${i + 1}: Please enter phone number`
           if (!player.role) return `Player ${i + 1}: Please select a role`
           if (!VALID_ROLES.includes(player.role)) return `Player ${i + 1}: Invalid role '${player.role}'`
@@ -252,7 +252,7 @@ const Registration = () => {
 
       formData.players.forEach((p, idx) => {
         if (!p.name.trim()) throw new Error(`Player ${idx + 1}: Please enter name`)
-        if (p.age < 15 || p.age > 60) throw new Error(`Player ${idx + 1}: Age must be between 15 and 60`)
+        if (p.age < 18 || p.age > 40) throw new Error(`Player ${idx + 1}: Age must be between 18 and 40`)
         if (!p.phone.trim()) throw new Error(`Player ${idx + 1}: Please enter phone number`)
         if (!p.role) throw new Error(`Player ${idx + 1}: Please select a role`)
         if (!VALID_ROLES.includes(p.role)) throw new Error(`Player ${idx + 1}: Invalid role '${p.role}'`)
@@ -473,7 +473,7 @@ const Registration = () => {
                     <div>
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Church Letter *</label>
                       <div>
-                        <FileUpload file={formData.pastorLetter} onFileChange={handlePastorLetterChange} accept=".pdf,.png,.jpg,.jpeg" placeholder="Upload Church Letter" />
+                        <FileUpload file={formData.pastorLetter} onFileChange={handlePastorLetterChange} accept=".png,.jpg,.jpeg,.gif,.webp" placeholder="Upload Church Letter" fileType="image" />
                       </div>
                     </div>
                   </div>
@@ -620,7 +620,7 @@ const Registration = () => {
                     <div>
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Upload Payment Receipt * (Required)</label>
                       <div>
-                        <FileUpload file={formData.paymentReceipt} onFileChange={handleFileChange} accept=".pdf,.png,.jpg,.jpeg" placeholder="Upload Receipt" />
+                        <FileUpload file={formData.paymentReceipt} onFileChange={handleFileChange} accept=".png,.jpg,.jpeg,.gif,.webp" placeholder="Upload Receipt" fileType="image" />
                       </div>
                     </div>
                   </div>

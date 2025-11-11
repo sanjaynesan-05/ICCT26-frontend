@@ -8,6 +8,7 @@ interface Props {
   placeholder?: string
   className?: string
   maxSizeMB?: number
+  fileType?: 'image' | 'pdf' | 'any'
 }
 
 const FileUpload: React.FC<Props> = ({ 
@@ -16,19 +17,43 @@ const FileUpload: React.FC<Props> = ({
   accept = '.pdf,.png,.jpg,.jpeg', 
   placeholder = 'Upload file', 
   className = '',
-  maxSizeMB = 5
+  maxSizeMB = 5,
+  fileType = 'any'
 }) => {
   const [dragActive, setDragActive] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement | null>(null)
 
-  const ALLOWED_MIME_TYPES = ['application/pdf', 'image/png', 'image/jpeg']
+  // MIME types based on fileType
+  const getMimeTypes = () => {
+    switch (fileType) {
+      case 'pdf':
+        return ['application/pdf']
+      case 'image':
+        return ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+      default:
+        return ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    }
+  }
+
+  const getErrorMessage = () => {
+    switch (fileType) {
+      case 'pdf':
+        return 'Invalid file type. Allowed: PDF'
+      case 'image':
+        return 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP'
+      default:
+        return 'Invalid file type'
+    }
+  }
+
+  const ALLOWED_MIME_TYPES = getMimeTypes()
   const MAX_FILE_SIZE = maxSizeMB * 1024 * 1024
 
   const validateFile = (f: File): boolean => {
     // Check MIME type
     if (!ALLOWED_MIME_TYPES.includes(f.type)) {
-      setError(`Invalid file type. Allowed: PDF, PNG, JPEG`)
+      setError(getErrorMessage())
       return false
     }
 

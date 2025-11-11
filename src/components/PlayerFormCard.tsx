@@ -53,7 +53,7 @@ const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRem
 
         <div>
           <label className="block text-sm font-subheading text-gray-700 mb-1">Age *</label>
-          <input type="number" min={15} max={60} value={player.age} onChange={(e) => onChange({ age: Number(e.target.value) })} className="w-full px-3 py-2 border rounded bg-white text-gray-900" required />
+          <input type="number" min={18} max={40} value={player.age} onChange={(e) => onChange({ age: Number(e.target.value) })} className="w-full px-3 py-2 border rounded bg-white text-gray-900" required />
         </div>
 
         <div>
@@ -68,20 +68,20 @@ const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRem
             <option value="Batsman">Batsman</option>
             <option value="Bowler">Bowler</option>
             <option value="All-rounder">All-rounder</option>
-            <option value="Wicket Keeper">Wicket Keeper</option>
+            <option value="Wicketkeeper">Wicketkeeper</option>
           </select>
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-subheading text-gray-700 mb-1">Aadhar / ID (PDF/PNG/JPEG) *</label>
-          <FileUpload file={player.aadharFile} onFileChange={handleAadharChange} accept=".pdf,.png,.jpg,.jpeg" placeholder="Upload Aadhar" />
+          <label className="block text-sm font-subheading text-gray-700 mb-1">Aadhar / ID (PDF) *</label>
+          <FileUpload file={player.aadharFile} onFileChange={handleAadharChange} accept=".pdf" placeholder="Upload Aadhar" fileType="pdf" />
         </div>
 
         <div>
-          <label className="block text-sm font-subheading text-gray-700 mb-1">Subscription / Consent (PDF/PNG/JPEG) *</label>
-          <FileUpload file={player.subscriptionFile} onFileChange={handleSubscriptionChange} accept=".pdf,.png,.jpg,.jpeg" placeholder="Upload Subscription" />
+          <label className="block text-sm font-subheading text-gray-700 mb-1">Subscription / Consent (PDF) *</label>
+          <FileUpload file={player.subscriptionFile} onFileChange={handleSubscriptionChange} accept=".pdf" placeholder="Upload Subscription" fileType="pdf" />
         </div>
       </div>
     </div>
