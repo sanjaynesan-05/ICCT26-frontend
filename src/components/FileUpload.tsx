@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { Upload, X, CheckCircle } from 'lucide-react'
+import { validateFile, getFileUploadHelpText, ALLOWED_EXTENSIONS, MAX_FILE_SIZE_MB } from '../lib/fileValidation'
 
 interface Props {
   file: File | null
@@ -7,65 +8,18 @@ interface Props {
   accept?: string
   placeholder?: string
   className?: string
-  maxSizeMB?: number
-  fileType?: 'image' | 'pdf' | 'any'
 }
 
 const FileUpload: React.FC<Props> = ({ 
   file, 
   onFileChange, 
-  accept = '.pdf,.png,.jpg,.jpeg', 
+  accept = '.jpg,.jpeg,.png,.pdf', 
   placeholder = 'Upload file', 
-  className = '',
-  maxSizeMB = 5,
-  fileType = 'any'
+  className = ''
 }) => {
   const [dragActive, setDragActive] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement | null>(null)
-
-  // MIME types based on fileType
-  const getMimeTypes = () => {
-    switch (fileType) {
-      case 'pdf':
-        return ['application/pdf']
-      case 'image':
-        return ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-      default:
-        return ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    }
-  }
-
-  const getErrorMessage = () => {
-    switch (fileType) {
-      case 'pdf':
-        return 'Invalid file type. Allowed: PDF'
-      case 'image':
-        return 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP'
-      default:
-        return 'Invalid file type'
-    }
-  }
-
-  const ALLOWED_MIME_TYPES = getMimeTypes()
-  const MAX_FILE_SIZE = maxSizeMB * 1024 * 1024
-
-  const validateFile = (f: File): boolean => {
-    // Check MIME type
-    if (!ALLOWED_MIME_TYPES.includes(f.type)) {
-      setError(getErrorMessage())
-      return false
-    }
-
-    // Check file size
-    if (f.size > MAX_FILE_SIZE) {
-      setError(`File size exceeds ${maxSizeMB}MB limit`)
-      return false
-    }
-
-    setError('')
-    return true
-  }
 
   const readFileAsBase64 = (f: File) => {
     const reader = new FileReader()
@@ -80,9 +34,13 @@ const FileUpload: React.FC<Props> = ({
   }
 
   const handleFile = (f: File) => {
-    if (validateFile(f)) {
-      readFileAsBase64(f)
+    const validation = validateFile(f)
+    if (!validation.valid) {
+      setError(validation.error || 'Invalid file')
+      return
     }
+
+    readFileAsBase64(f)
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -174,8 +132,10 @@ const FileUpload: React.FC<Props> = ({
       </div>
 
       {error && (
-        <p className="text-red-600 text-xs mt-2">{error}</p>
+        <p className="text-red-600 text-xs mt-2">❌ {error}</p>
       )}
+
+      <p className="text-xs text-gray-600 mt-2">{getFileUploadHelpText()}</p>
     </div>
   )
 }

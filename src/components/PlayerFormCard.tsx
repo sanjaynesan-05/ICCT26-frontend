@@ -76,12 +76,12 @@ const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRem
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-subheading text-gray-700 mb-1">Aadhar / ID (PDF) *</label>
-          <FileUpload file={player.aadharFile} onFileChange={handleAadharChange} accept=".pdf" placeholder="Upload Aadhar" fileType="pdf" />
+          <FileUpload file={player.aadharFile} onFileChange={handleAadharChange} accept=".jpg,.jpeg,.png,.pdf" placeholder="Upload Aadhar" />
         </div>
 
         <div>
           <label className="block text-sm font-subheading text-gray-700 mb-1">Subscription / Consent (PDF) *</label>
-          <FileUpload file={player.subscriptionFile} onFileChange={handleSubscriptionChange} accept=".pdf" placeholder="Upload Subscription" fileType="pdf" />
+          <FileUpload file={player.subscriptionFile} onFileChange={handleSubscriptionChange} accept=".jpg,.jpeg,.png,.pdf" placeholder="Upload Subscription" />
         </div>
       </div>
     </div>

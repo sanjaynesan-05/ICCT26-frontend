@@ -473,7 +473,7 @@ const Registration = () => {
                     <div>
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Church Letter *</label>
                       <div>
-                        <FileUpload file={formData.pastorLetter} onFileChange={handlePastorLetterChange} accept=".png,.jpg,.jpeg,.gif,.webp" placeholder="Upload Church Letter" fileType="image" />
+                        <FileUpload file={formData.pastorLetter} onFileChange={handlePastorLetterChange} accept=".jpg,.jpeg,.png,.pdf" placeholder="Upload Church Letter" />
                       </div>
                     </div>
                   </div>
@@ -620,7 +620,7 @@ const Registration = () => {
                     <div>
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Upload Payment Receipt * (Required)</label>
                       <div>
-                        <FileUpload file={formData.paymentReceipt} onFileChange={handleFileChange} accept=".png,.jpg,.jpeg,.gif,.webp" placeholder="Upload Receipt" fileType="image" />
+                        <FileUpload file={formData.paymentReceipt} onFileChange={handleFileChange} accept=".jpg,.jpeg,.png,.pdf" placeholder="Upload Receipt" />
                       </div>
                     </div>
                   </div>
