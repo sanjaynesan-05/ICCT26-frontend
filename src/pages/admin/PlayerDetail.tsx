@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
@@ -22,6 +23,7 @@ interface Team {
 const PlayerDetail = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  const [viewingDocument, setViewingDocument] = useState<{ type: string; url: string } | null>(null)
 
   // ✅ Safely extract player and team with fallbacks
   const player = location.state?.player as Player | undefined
@@ -171,7 +173,7 @@ const PlayerDetail = () => {
               <DocumentCard
                 title="Aadhar Card"
                 subtitle="Identity Proof Document"
-                href={aadharFile}
+                onClick={() => setViewingDocument({ type: 'Aadhar Card', url: aadharFile })}
               />
             ) : (
               <MissingDocumentCard title="Aadhar Card" />
@@ -182,7 +184,7 @@ const PlayerDetail = () => {
               <DocumentCard
                 title="Subscription Card"
                 subtitle="Church Membership Proof"
-                href={subscriptionFile}
+                onClick={() => setViewingDocument({ type: 'Subscription Card', url: subscriptionFile })}
               />
             ) : (
               <MissingDocumentCard title="Subscription Card" />
@@ -202,13 +204,62 @@ const PlayerDetail = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Document Viewer Modal */}
+      {viewingDocument && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-primary rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden glass-effect"
+          >
+            <div className="bg-primary/80 border-b border-white/10 p-4 flex items-center justify-between">
+              <h3 className="font-heading text-2xl text-white">{viewingDocument.type}</h3>
+              <button
+                onClick={() => setViewingDocument(null)}
+                className="text-white hover:text-accent transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-auto max-h-[calc(90vh-80px)]">
+              {viewingDocument.url.startsWith('data:image') ? (
+                <img
+                  src={viewingDocument.url}
+                  alt={viewingDocument.type}
+                  className="w-full h-auto rounded-lg"
+                />
+              ) : viewingDocument.url.startsWith('data:application/pdf') ? (
+                <iframe
+                  src={viewingDocument.url}
+                  className="w-full h-[70vh] rounded-lg"
+                  title={viewingDocument.type}
+                />
+              ) : (
+                <div className="text-center text-white font-body">
+                  <p className="mb-4">Unable to preview this file type</p>
+                  <a
+                    href={viewingDocument.url}
+                    download
+                    className="btn-gold px-6 py-3 rounded-lg inline-block"
+                  >
+                    Download File
+                  </a>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }
 
 /* ✅ Modular Reusable Subcomponents */
 
-const DocumentCard = ({ title, subtitle, href }: { title: string; subtitle: string; href: string }) => (
+const DocumentCard = ({ title, subtitle, onClick }: { title: string; subtitle: string; onClick: () => void }) => (
   <div className="bg-white/5 rounded-lg p-6 border border-white/10">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -222,10 +273,8 @@ const DocumentCard = ({ title, subtitle, href }: { title: string; subtitle: stri
           <p className="text-white/60 text-sm font-body">{subtitle}</p>
         </div>
       </div>
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
+      <button
+        onClick={onClick}
         className="btn-gold px-6 py-3 rounded-lg font-body inline-flex items-center gap-2"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +282,7 @@ const DocumentCard = ({ title, subtitle, href }: { title: string; subtitle: stri
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
         </svg>
         View Document
-      </a>
+      </button>
     </div>
   </div>
 )

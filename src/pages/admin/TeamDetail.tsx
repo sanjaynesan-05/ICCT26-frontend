@@ -39,6 +39,7 @@ const TeamDetail = () => {
   const [team, setTeam] = useState<TeamDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [viewingDocument, setViewingDocument] = useState<{ type: string; url: string } | null>(null)
 
   useEffect(() => {
     fetchTeamDetails()
@@ -199,17 +200,32 @@ const TeamDetail = () => {
           {team.pastorLetter && (
             <div className="mt-6 pt-6 border-t border-white/20">
               <p className="text-accent text-sm font-body mb-2">Pastor's Letter</p>
-              <a
-                href={team.pastorLetter}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => setViewingDocument({ type: 'Pastor Letter', url: team.pastorLetter! })}
                 className="inline-flex items-center gap-2 btn-gold px-6 py-3 rounded-lg font-body"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
                 View Pastor's Letter
-              </a>
+              </button>
+            </div>
+          )}
+
+          {team.paymentReceipt && (
+            <div className="mt-6 pt-6 border-t border-white/20">
+              <p className="text-accent text-sm font-body mb-2">Payment Receipt</p>
+              <button
+                onClick={() => setViewingDocument({ type: 'Payment Receipt', url: team.paymentReceipt })}
+                className="inline-flex items-center gap-2 btn-gold px-6 py-3 rounded-lg font-body"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                View Payment Receipt
+              </button>
             </div>
           )}
         </motion.div>
@@ -272,6 +288,55 @@ const TeamDetail = () => {
           )}
         </motion.div>
       </div>
+
+      {/* Document Viewer Modal */}
+      {viewingDocument && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-primary rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden glass-effect"
+          >
+            <div className="bg-primary/80 border-b border-white/10 p-4 flex items-center justify-between">
+              <h3 className="font-heading text-2xl text-white">{viewingDocument.type}</h3>
+              <button
+                onClick={() => setViewingDocument(null)}
+                className="text-white hover:text-accent transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-auto max-h-[calc(90vh-80px)]">
+              {viewingDocument.url.startsWith('data:image') ? (
+                <img
+                  src={viewingDocument.url}
+                  alt={viewingDocument.type}
+                  className="w-full h-auto rounded-lg"
+                />
+              ) : viewingDocument.url.startsWith('data:application/pdf') ? (
+                <iframe
+                  src={viewingDocument.url}
+                  className="w-full h-[70vh] rounded-lg"
+                  title={viewingDocument.type}
+                />
+              ) : (
+                <div className="text-center text-white font-body">
+                  <p className="mb-4">Unable to preview this file type</p>
+                  <a
+                    href={viewingDocument.url}
+                    download
+                    className="btn-gold px-6 py-3 rounded-lg inline-block"
+                  >
+                    Download File
+                  </a>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }

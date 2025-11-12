@@ -11,10 +11,16 @@ interface Team {
   captainName: string
   captainPhone: string
   captainEmail: string
+  captainWhatsapp: string
   viceCaptainName: string
+  viceCaptainPhone: string
+  viceCaptainEmail: string
+  viceCaptainWhatsapp: string
   playerCount: number
   registrationDate: string
   paymentReceipt: string
+  pastorLetter: string
+  players?: any[]
 }
 
 const AdminDashboard = () => {
@@ -62,10 +68,16 @@ const AdminDashboard = () => {
             captainName: team.captainName || team.captain_name || 'N/A',
             captainPhone: team.captainPhone || team.captain_phone || '',
             captainEmail: team.captainEmail || team.captain_email || '',
+            captainWhatsapp: team.captainWhatsapp || team.captain_whatsapp || '',
             viceCaptainName: team.viceCaptainName || team.vice_captain_name || 'N/A',
+            viceCaptainPhone: team.viceCaptainPhone || team.vice_captain_phone || '',
+            viceCaptainEmail: team.viceCaptainEmail || team.vice_captain_email || '',
+            viceCaptainWhatsapp: team.viceCaptainWhatsapp || team.vice_captain_whatsapp || '',
             playerCount: team.playerCount || team.player_count || 0,
             registrationDate: team.registrationDate || team.registration_date || '',
-            paymentReceipt: team.paymentReceipt || team.payment_receipt || ''
+            paymentReceipt: team.paymentReceipt || team.payment_receipt || '',
+            pastorLetter: team.pastorLetter || team.pastor_letter || '',
+            players: team.players || []
           }))
         : []
 
@@ -226,24 +238,45 @@ const AdminDashboard = () => {
                         </h3>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
-                          <p className="text-accent text-sm font-body mb-1">Church</p>
+                          <p className="text-accent text-sm font-body mb-1">Church Name</p>
                           <p className="text-white font-body">{team.churchName || 'Unknown'}</p>
+                        </div>
+                        <div>
+                          <p className="text-accent text-sm font-body mb-1">Registration Date</p>
+                          <p className="text-white font-body">{team.registrationDate || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-accent text-sm font-body mb-1">Total Players</p>
+                          <p className="text-white font-body">{team.playerCount || 0} players</p>
                         </div>
                         <div>
                           <p className="text-accent text-sm font-body mb-1">Captain</p>
                           <p className="text-white font-body">{team.captainName || 'N/A'}</p>
                           <p className="text-white/60 text-sm font-body">{team.captainPhone || ''}</p>
+                          {team.captainEmail && (
+                            <p className="text-white/60 text-xs font-body">{team.captainEmail}</p>
+                          )}
                         </div>
                         <div>
                           <p className="text-accent text-sm font-body mb-1">Vice Captain</p>
                           <p className="text-white font-body">{team.viceCaptainName || 'N/A'}</p>
+                          <p className="text-white/60 text-sm font-body">{team.viceCaptainPhone || ''}</p>
+                          {team.viceCaptainEmail && (
+                            <p className="text-white/60 text-xs font-body">{team.viceCaptainEmail}</p>
+                          )}
                         </div>
                         <div>
-                          <p className="text-accent text-sm font-body mb-1">Players</p>
-                          <p className="text-white font-body">{team.playerCount || 0} players</p>
-                          <p className="text-white/60 text-sm font-body">{team.registrationDate || ''}</p>
+                          <p className="text-accent text-sm font-body mb-1">Documents</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {team.paymentReceipt && (
+                              <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded">✓ Receipt</span>
+                            )}
+                            {team.pastorLetter && (
+                              <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded">✓ Letter</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
