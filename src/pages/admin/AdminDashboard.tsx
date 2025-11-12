@@ -33,27 +33,43 @@ const AdminDashboard = () => {
     try {
       setLoading(true)
       setError('')
-      
+
+      let teamsList: any[] = []
+
       try {
-        // Try admin endpoint first
         const response = await apiService.getAllTeams()
-        const teamsList = response.teams || response.data || response
-        setTeams(Array.isArray(teamsList) ? teamsList : [])
+        teamsList = response.teams || response.data || response
       } catch (adminError: any) {
-        console.warn('Admin teams endpoint not available, trying alternative endpoint:', adminError.message)
-        
-        // Try alternative endpoints
+        console.warn('Admin teams endpoint not available, trying fallback:', adminError.message)
         try {
           const response = await apiService.getTeamsFromDatabase()
-          const teamsList = response.teams || response.data || response
-          setTeams(Array.isArray(teamsList) ? teamsList : [])
+          teamsList = response.teams || response.data || response
         } catch (databaseError: any) {
           console.error('Teams endpoint not available:', databaseError.message)
-          // If both fail, show error - no fallback to dummy data
           setError('Failed to load teams from backend. Please ensure the backend server is running and accessible.')
           setTeams([])
+          return
         }
       }
+
+      // ✅ Sanitize data: ensure all string fields are safe strings
+      const safeTeams = Array.isArray(teamsList)
+        ? teamsList.map((team: any) => ({
+            ...team,
+            teamId: team.teamId || team.team_id || 'UNKNOWN-ID',
+            teamName: team.teamName || team.team_name || 'Unnamed Team',
+            churchName: team.churchName || team.church_name || 'Unknown Church',
+            captainName: team.captainName || team.captain_name || 'N/A',
+            captainPhone: team.captainPhone || team.captain_phone || '',
+            captainEmail: team.captainEmail || team.captain_email || '',
+            viceCaptainName: team.viceCaptainName || team.vice_captain_name || 'N/A',
+            playerCount: team.playerCount || team.player_count || 0,
+            registrationDate: team.registrationDate || team.registration_date || '',
+            paymentReceipt: team.paymentReceipt || team.payment_receipt || ''
+          }))
+        : []
+
+      setTeams(safeTeams)
     } catch (err) {
       console.error('Error fetching teams:', err)
       setError('Failed to load teams from backend. Connection error.')
@@ -68,12 +84,21 @@ const AdminDashboard = () => {
     navigate('/admin/login')
   }
 
-  const filteredTeams = teams.filter(team =>
-    team.teamName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    team.churchName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    team.teamId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    team.captainName.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // ✅ Safe Filtering (prevents "Cannot read toLowerCase of undefined")
+  const filteredTeams = teams.filter(team => {
+    const query = (searchQuery || '').toLowerCase()
+    const teamName = (team.teamName || '').toLowerCase()
+    const churchName = (team.churchName || '').toLowerCase()
+    const teamId = (team.teamId || '').toLowerCase()
+    const captainName = (team.captainName || '').toLowerCase()
+
+    return (
+      teamName.includes(query) ||
+      churchName.includes(query) ||
+      teamId.includes(query) ||
+      captainName.includes(query)
+    )
+  })
 
   return (
     <div className="min-h-screen bg-gradient-primary">
@@ -106,51 +131,37 @@ const AdminDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="glass-effect rounded-xl p-6 glow-border"
-          >
-            <div className="text-accent font-body text-sm mb-2">Total Teams</div>
-            <div className="text-white font-heading text-5xl tracking-wide">{teams.length}</div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="glass-effect rounded-xl p-6 glow-border"
-          >
-            <div className="text-accent font-body text-sm mb-2">Total Players</div>
-            <div className="text-white font-heading text-5xl tracking-wide">
-              {teams.reduce((sum, team) => sum + team.playerCount, 0)}
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="glass-effect rounded-xl p-6 glow-border"
-          >
-            <div className="text-accent font-body text-sm mb-2">Churches</div>
-            <div className="text-white font-heading text-5xl tracking-wide">
-              {new Set(teams.map(t => t.churchName)).size}
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="glass-effect rounded-xl p-6 glow-border"
-          >
-            <div className="text-accent font-body text-sm mb-2">Avg Team Size</div>
-            <div className="text-white font-heading text-5xl tracking-wide">
-              {teams.length > 0 ? Math.round(teams.reduce((sum, team) => sum + team.playerCount, 0) / teams.length) : 0}
-            </div>
-          </motion.div>
+          {[
+            { label: 'Total Teams', value: teams.length },
+            {
+              label: 'Total Players',
+              value: teams.reduce((sum, team) => sum + (team.playerCount || 0), 0)
+            },
+            {
+              label: 'Churches',
+              value: new Set(teams.map(t => t.churchName || 'Unknown')).size
+            },
+            {
+              label: 'Avg Team Size',
+              value:
+                teams.length > 0
+                  ? Math.round(
+                      teams.reduce((sum, t) => sum + (t.playerCount || 0), 0) / teams.length
+                    )
+                  : 0
+            }
+          ].map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="glass-effect rounded-xl p-6 glow-border"
+            >
+              <div className="text-accent font-body text-sm mb-2">{stat.label}</div>
+              <div className="text-white font-heading text-5xl tracking-wide">{stat.value}</div>
+            </motion.div>
+          ))}
         </div>
 
         {/* Search & Filter */}
@@ -168,21 +179,14 @@ const AdminDashboard = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 input-focus focus:outline-none font-body"
             />
-            <button
-              onClick={fetchTeams}
-              className="btn-gold px-8 py-3 rounded-lg font-body"
-            >
+            <button onClick={fetchTeams} className="btn-gold px-8 py-3 rounded-lg font-body">
               Refresh
             </button>
           </div>
         </motion.div>
 
         {/* Teams List */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
           <h2 className="font-heading text-4xl text-white mb-6 tracking-wide">
             Registered Teams ({filteredTeams.length})
           </h2>
@@ -218,28 +222,28 @@ const AdminDashboard = () => {
                           {team.teamId}
                         </span>
                         <h3 className="font-heading text-3xl text-white group-hover:text-accent transition-colors tracking-wide">
-                          {team.teamName}
+                          {team.teamName || 'Unnamed Team'}
                         </h3>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                           <p className="text-accent text-sm font-body mb-1">Church</p>
-                          <p className="text-white font-body">{team.churchName}</p>
+                          <p className="text-white font-body">{team.churchName || 'Unknown'}</p>
                         </div>
                         <div>
                           <p className="text-accent text-sm font-body mb-1">Captain</p>
-                          <p className="text-white font-body">{team.captainName}</p>
-                          <p className="text-white/60 text-sm font-body">{team.captainPhone}</p>
+                          <p className="text-white font-body">{team.captainName || 'N/A'}</p>
+                          <p className="text-white/60 text-sm font-body">{team.captainPhone || ''}</p>
                         </div>
                         <div>
                           <p className="text-accent text-sm font-body mb-1">Vice Captain</p>
-                          <p className="text-white font-body">{team.viceCaptainName}</p>
+                          <p className="text-white font-body">{team.viceCaptainName || 'N/A'}</p>
                         </div>
                         <div>
                           <p className="text-accent text-sm font-body mb-1">Players</p>
-                          <p className="text-white font-body">{team.playerCount} players</p>
-                          <p className="text-white/60 text-sm font-body">{team.registrationDate}</p>
+                          <p className="text-white font-body">{team.playerCount || 0} players</p>
+                          <p className="text-white/60 text-sm font-body">{team.registrationDate || ''}</p>
                         </div>
                       </div>
                     </div>
@@ -251,12 +255,7 @@ const AdminDashboard = () => {
                         stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
                   </div>
