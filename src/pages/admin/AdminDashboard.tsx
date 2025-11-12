@@ -54,7 +54,16 @@ const AdminDashboard = () => {
             try {
               const teamId = team.teamId || team.team_id
               const detailResponse = await apiService.getTeamById(teamId)
-              return detailResponse.team || detailResponse.data || detailResponse
+              
+              // Backend returns { team: {...}, players: [...] }
+              // Merge them together
+              const teamData = detailResponse.team || detailResponse.data || detailResponse
+              const playersData = detailResponse.players || []
+              
+              return {
+                ...teamData,
+                players: playersData
+              }
             } catch (err) {
               console.warn(`Failed to fetch details for team ${team.teamId}:`, err)
               return team // Return summary data if detail fetch fails

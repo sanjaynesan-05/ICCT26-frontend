@@ -51,11 +51,20 @@ const TeamDetail = () => {
       setError('')
 
       let fetchedTeam: any = null
+      let fetchedPlayers: any[] = []
 
       try {
         // Try admin endpoint
         const response = await apiService.getTeamById(teamId!)
+        
+        // Backend returns { team: {...}, players: [...] }
         fetchedTeam = response.team || response.data || response
+        fetchedPlayers = response.players || []
+        
+        // Merge players into team object
+        if (fetchedTeam) {
+          fetchedTeam.players = fetchedPlayers
+        }
       } catch (adminError: any) {
         console.warn('Admin team endpoint not available:', adminError.message)
 
