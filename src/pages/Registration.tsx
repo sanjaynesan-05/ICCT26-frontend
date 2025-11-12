@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Plus, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react'
 import PlayerFormCard from '../components/PlayerFormCard'
 import FileUpload from '../components/FileUpload'
-import { apiService } from '../services/api'
+import { apiService, type TeamRegistrationPayload } from '../services/api'
 
 interface CaptainInfo {
   name: string
@@ -17,6 +17,7 @@ interface PlayerData {
   age: number
   phone: string
   role: string
+  jerseyNumber: string
   aadharFile: File | null
   aadharFileBase64: string | null
   subscriptionFile: File | null
@@ -50,10 +51,6 @@ const CHURCH_NAMES = [
 
 const VALID_ROLES = ['Batsman', 'Bowler', 'All-rounder', 'Wicketkeeper']
 
-// File size limits (in bytes)
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-const MAX_FILE_SIZE_MB = 5
-
 const Registration = () => {
   const [currentStep, setCurrentStep] = useState(0) // Start at step 0 for rules
   const [showSuccess, setShowSuccess] = useState(false)
@@ -67,6 +64,7 @@ const Registration = () => {
     age: 18,
     phone: '',
     role: '',
+    jerseyNumber: '',
     aadharFile: null,
     aadharFileBase64: null,
     subscriptionFile: null,
@@ -134,6 +132,7 @@ const Registration = () => {
           if (!player.phone.trim()) return `Player ${i + 1}: Please enter phone number`
           if (!player.role) return `Player ${i + 1}: Please select a role`
           if (!VALID_ROLES.includes(player.role)) return `Player ${i + 1}: Invalid role '${player.role}'`
+          if (!player.jerseyNumber.trim()) return `Player ${i + 1}: Please enter jersey number`
           if (!player.aadharFileBase64) return `Player ${i + 1}: Please upload Aadhar/ID`
           if (!player.subscriptionFileBase64) return `Player ${i + 1}: Please upload subscription/consent`
         }
@@ -181,29 +180,11 @@ const Registration = () => {
   }
 
   // Base64 helper for files
-  const toBase64 = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = (err) => reject(err)
-    })
-
   const updatePlayer = (index: number, data: Partial<PlayerData>) => {
     clearValidationError()
     const players = [...formData.players]
     players[index] = { ...players[index], ...data }
     setFormData({ ...formData, players })
-  }
-
-  const updateCaptain = (data: Partial<typeof formData.captain>) => {
-    clearValidationError()
-    setFormData({ ...formData, captain: { ...formData.captain, ...data } })
-  }
-
-  const updateViceCaptain = (data: Partial<typeof formData.viceCaptain>) => {
-    clearValidationError()
-    setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, ...data } })
   }
 
   const addPlayer = () => {
@@ -256,38 +237,40 @@ const Registration = () => {
         if (!p.phone.trim()) throw new Error(`Player ${idx + 1}: Please enter phone number`)
         if (!p.role) throw new Error(`Player ${idx + 1}: Please select a role`)
         if (!VALID_ROLES.includes(p.role)) throw new Error(`Player ${idx + 1}: Invalid role '${p.role}'`)
+        if (!p.jerseyNumber.trim()) throw new Error(`Player ${idx + 1}: Please enter jersey number`)
         if (!p.aadharFileBase64) throw new Error(`Player ${idx + 1}: Please upload Aadhar/ID`)
         if (!p.subscriptionFileBase64) throw new Error(`Player ${idx + 1}: Please upload subscription/consent`)
       })
 
       if (!formData.paymentReceiptBase64) throw new Error('Please upload payment receipt')
 
-      // Build payload with Base64 strings (already Base64 from FileUpload)
-      const payload = {
-        churchName: formData.churchName,
-        teamName: formData.teamName,
-        pastorLetter: formData.pastorLetterBase64,
+      // Build payload with Base64 strings matching backend schema (nested objects)
+      const payload: TeamRegistrationPayload = {
+        team_name: formData.teamName,
+        church_name: formData.churchName,
         captain: {
           name: formData.captain.name,
           phone: formData.captain.phone,
-          whatsapp: formData.captain.whatsapp,
           email: formData.captain.email,
+          whatsapp: formData.captain.whatsapp || "",
         },
         viceCaptain: {
           name: formData.viceCaptain.name,
           phone: formData.viceCaptain.phone,
-          whatsapp: formData.viceCaptain.whatsapp,
           email: formData.viceCaptain.email,
+          whatsapp: formData.viceCaptain.whatsapp || "",
         },
+        payment_receipt: formData.paymentReceiptBase64!,
+        pastor_letter: formData.pastorLetterBase64!,
         players: formData.players.map(p => ({
           name: p.name,
           age: p.age,
           phone: p.phone,
           role: p.role,
-          aadharFile: p.aadharFileBase64,
-          subscriptionFile: p.subscriptionFileBase64,
+          jersey_number: p.jerseyNumber,
+          aadhar_file: p.aadharFileBase64!,
+          subscription_file: p.subscriptionFileBase64!,
         })),
-        paymentReceipt: formData.paymentReceiptBase64,
       }
 
       // Call API

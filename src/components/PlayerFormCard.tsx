@@ -7,6 +7,7 @@ interface PlayerData {
   age: number
   phone: string
   role: string
+  jerseyNumber: string
   aadharFile: File | null
   aadharFileBase64: string | null
   subscriptionFile: File | null
@@ -70,6 +71,19 @@ const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRem
             <option value="All-rounder">All-rounder</option>
             <option value="Wicketkeeper">Wicketkeeper</option>
           </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-subheading text-gray-700 mb-1">Jersey Number *</label>
+          <input 
+            type="text" 
+            value={player.jerseyNumber} 
+            onChange={(e) => onChange({ jerseyNumber: e.target.value })} 
+            maxLength={3}
+            placeholder="e.g., 7, 10, 99"
+            className="w-full px-3 py-2 border rounded bg-white text-gray-900" 
+            required 
+          />
         </div>
       </div>
 

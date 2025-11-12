@@ -6,30 +6,31 @@
 import { API_CONFIG } from '../config/app.config'
 
 export interface TeamRegistrationPayload {
-  churchName: string
-  teamName: string
-  pastorLetter: string
+  team_name: string
+  church_name: string
   captain: {
     name: string
     phone: string
-    whatsapp: string
     email: string
+    whatsapp: string
   }
   viceCaptain: {
     name: string
     phone: string
-    whatsapp: string
     email: string
+    whatsapp: string
   }
+  payment_receipt: string
+  pastor_letter: string
   players: Array<{
     name: string
     age: number
     phone: string
     role: string
-    aadharFile: string
-    subscriptionFile: string
+    jersey_number: string
+    aadhar_file: string
+    subscription_file: string
   }>
-  paymentReceipt: string
 }
 
 export interface ApiResponse<T = any> {
