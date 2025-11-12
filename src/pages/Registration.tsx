@@ -133,6 +133,7 @@ const Registration = () => {
           if (!player.role) return `Player ${i + 1}: Please select a role`
           if (!VALID_ROLES.includes(player.role)) return `Player ${i + 1}: Invalid role '${player.role}'`
           if (!player.jerseyNumber.trim()) return `Player ${i + 1}: Please enter jersey number`
+          if (!/^\d{1,3}$/.test(player.jerseyNumber.trim())) return `Player ${i + 1}: Jersey number must be 1-3 digits`
           if (!player.aadharFileBase64) return `Player ${i + 1}: Please upload Aadhar/ID`
           if (!player.subscriptionFileBase64) return `Player ${i + 1}: Please upload subscription/consent`
         }
@@ -262,16 +263,23 @@ const Registration = () => {
         },
         payment_receipt: formData.paymentReceiptBase64!,
         pastor_letter: formData.pastorLetterBase64!,
-        players: formData.players.map(p => ({
+        players: formData.players.map((p, idx) => ({
           name: p.name,
           age: p.age,
           phone: p.phone,
           role: p.role,
-          jersey_number: p.jerseyNumber,
+          jersey_number: p.jerseyNumber || String(idx + 1).padStart(2, '0'),
           aadhar_file: p.aadharFileBase64!,
           subscription_file: p.subscriptionFileBase64!,
         })),
       }
+
+      // Debug logging for payload verification
+      console.log('📤 Registration Payload - Players jersey_number validation:')
+      payload.players.forEach((p, idx) => {
+        console.log(`  Player ${idx + 1}: jersey_number="${p.jersey_number}" (type: ${typeof p.jersey_number})`)
+      })
+      console.log('📤 Full payload:', JSON.stringify(payload, null, 2))
 
       // Call API
       await apiService.registerTeam(payload)

@@ -75,14 +75,16 @@ const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRem
 
         <div>
           <label className="block text-sm font-subheading text-gray-700 mb-1">Jersey Number *</label>
-          <input 
-            type="text" 
-            value={player.jerseyNumber} 
-            onChange={(e) => onChange({ jerseyNumber: e.target.value })} 
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="\d{1,3}"
             maxLength={3}
-            placeholder="e.g., 7, 10, 99"
-            className="w-full px-3 py-2 border rounded bg-white text-gray-900" 
-            required 
+            value={player.jerseyNumber}
+            onChange={(e) => onChange({ jerseyNumber: e.target.value })}
+            className="w-full px-3 py-2 border rounded bg-white text-gray-900"
+            placeholder="e.g. 07"
+            required
           />
         </div>
       </div>
