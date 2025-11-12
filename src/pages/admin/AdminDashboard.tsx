@@ -44,7 +44,25 @@ const AdminDashboard = () => {
 
       try {
         const response = await apiService.getAllTeams()
-        teamsList = response.teams || response.data || response
+        const summaryTeams = response.teams || response.data || response
+        
+        // Fetch complete details for each team
+        if (Array.isArray(summaryTeams) && summaryTeams.length > 0) {
+          console.log(`Fetching complete details for ${summaryTeams.length} teams...`)
+          
+          const detailedTeamsPromises = summaryTeams.map(async (team: any) => {
+            try {
+              const teamId = team.teamId || team.team_id
+              const detailResponse = await apiService.getTeamById(teamId)
+              return detailResponse.team || detailResponse.data || detailResponse
+            } catch (err) {
+              console.warn(`Failed to fetch details for team ${team.teamId}:`, err)
+              return team // Return summary data if detail fetch fails
+            }
+          })
+          
+          teamsList = await Promise.all(detailedTeamsPromises)
+        }
       } catch (adminError: any) {
         console.warn('Admin teams endpoint not available, trying fallback:', adminError.message)
         try {
@@ -65,15 +83,17 @@ const AdminDashboard = () => {
             teamId: team.teamId || team.team_id || 'UNKNOWN-ID',
             teamName: team.teamName || team.team_name || 'Unnamed Team',
             churchName: team.churchName || team.church_name || 'Unknown Church',
-            captainName: team.captainName || team.captain_name || 'N/A',
-            captainPhone: team.captainPhone || team.captain_phone || '',
-            captainEmail: team.captainEmail || team.captain_email || '',
-            captainWhatsapp: team.captainWhatsapp || team.captain_whatsapp || '',
-            viceCaptainName: team.viceCaptainName || team.vice_captain_name || 'N/A',
-            viceCaptainPhone: team.viceCaptainPhone || team.vice_captain_phone || '',
-            viceCaptainEmail: team.viceCaptainEmail || team.vice_captain_email || '',
-            viceCaptainWhatsapp: team.viceCaptainWhatsapp || team.vice_captain_whatsapp || '',
-            playerCount: team.playerCount || team.player_count || 0,
+            // Handle nested captain object OR flat properties
+            captainName: team.captain?.name || team.captainName || team.captain_name || 'N/A',
+            captainPhone: team.captain?.phone || team.captainPhone || team.captain_phone || '',
+            captainEmail: team.captain?.email || team.captainEmail || team.captain_email || '',
+            captainWhatsapp: team.captain?.whatsapp || team.captainWhatsapp || team.captain_whatsapp || '',
+            // Handle nested viceCaptain object OR flat properties
+            viceCaptainName: team.viceCaptain?.name || team.viceCaptainName || team.vice_captain_name || 'N/A',
+            viceCaptainPhone: team.viceCaptain?.phone || team.viceCaptainPhone || team.vice_captain_phone || '',
+            viceCaptainEmail: team.viceCaptain?.email || team.viceCaptainEmail || team.vice_captain_email || '',
+            viceCaptainWhatsapp: team.viceCaptain?.whatsapp || team.viceCaptainWhatsapp || team.vice_captain_whatsapp || '',
+            playerCount: team.playerCount || team.player_count || (team.players?.length || 0),
             registrationDate: team.registrationDate || team.registration_date || '',
             paymentReceipt: team.paymentReceipt || team.payment_receipt || '',
             pastorLetter: team.pastorLetter || team.pastor_letter || '',
