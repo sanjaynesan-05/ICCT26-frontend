@@ -22,12 +22,10 @@ export interface TeamRegistrationPayload {
   }
   payment_receipt: string
   pastor_letter: string
+  groupPhoto?: string
   players: Array<{
     name: string
-    age: number
-    phone: string
     role: string
-    jersey_number: string
     aadhar_file: string
     subscription_file: string
   }>

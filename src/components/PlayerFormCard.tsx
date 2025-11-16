@@ -4,10 +4,7 @@ import FileUpload from './FileUpload'
 
 interface PlayerData {
   name: string
-  age: number
-  phone: string
   role: string
-  jerseyNumber: string
   aadharFile: File | null
   aadharFileBase64: string | null
   subscriptionFile: File | null
@@ -53,39 +50,14 @@ const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRem
         </div>
 
         <div>
-          <label className="block text-sm font-subheading text-gray-700 mb-1">Age *</label>
-          <input type="number" min={18} max={40} value={player.age} onChange={(e) => onChange({ age: Number(e.target.value) })} className="w-full px-3 py-2 border rounded bg-white text-gray-900" required />
-        </div>
-
-        <div>
-          <label className="block text-sm font-subheading text-gray-700 mb-1">Phone *</label>
-          <input type="tel" value={player.phone} onChange={(e) => onChange({ phone: e.target.value })} className="w-full px-3 py-2 border rounded bg-white text-gray-900" required />
-        </div>
-
-        <div>
-          <label className="block text-sm font-subheading text-gray-700 mb-1">Role *</label>
-          <select value={player.role} onChange={(e) => onChange({ role: e.target.value })} className="w-full px-3 py-2 border rounded bg-white text-gray-900" required>
-            <option value="">Select Role</option>
+          <label className="block text-sm font-subheading text-gray-700 mb-1">Role</label>
+          <select value={player.role} onChange={(e) => onChange({ role: e.target.value })} className="w-full px-3 py-2 border rounded bg-white text-gray-900">
+            <option value="">Select Role (Optional)</option>
             <option value="Batsman">Batsman</option>
             <option value="Bowler">Bowler</option>
             <option value="All-rounder">All-rounder</option>
             <option value="Wicketkeeper">Wicketkeeper</option>
           </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-subheading text-gray-700 mb-1">Jersey Number *</label>
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="\d{1,3}"
-            maxLength={3}
-            value={player.jerseyNumber}
-            onChange={(e) => onChange({ jerseyNumber: e.target.value })}
-            className="w-full px-3 py-2 border rounded bg-white text-gray-900"
-            placeholder="e.g. 07"
-            required
-          />
         </div>
       </div>
 

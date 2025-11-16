@@ -29,6 +29,7 @@ interface TeamDetails {
   viceCaptainWhatsapp: string
   paymentReceipt: string
   pastorLetter?: string
+  groupPhoto?: string
   registrationDate: string
   players: Player[]
 }
@@ -97,6 +98,7 @@ const TeamDetail = () => {
         viceCaptainWhatsapp: fetchedTeam.viceCaptain?.whatsapp || fetchedTeam.viceCaptainWhatsapp || '',
         paymentReceipt: normalizeFileURL(fetchedTeam.paymentReceipt || fetchedTeam.payment_receipt, 'image'),
         pastorLetter: normalizeFileURL(fetchedTeam.pastorLetter || fetchedTeam.pastor_letter, 'pdf'),
+        groupPhoto: normalizeFileURL(fetchedTeam.groupPhoto || fetchedTeam.group_photo, 'image'),
         registrationDate: fetchedTeam.registrationDate || fetchedTeam.registration_date || '',
         players: Array.isArray(fetchedTeam.players)
           ? fetchedTeam.players.map((p: any) => ({
@@ -200,6 +202,27 @@ const TeamDetail = () => {
           {/* Payment Receipt */}
           {team.paymentReceipt && (
             <DocButton type="Payment Receipt" url={team.paymentReceipt} onView={setViewingDocument} />
+          )}
+
+          {/* Group Photo */}
+          {team.groupPhoto && (
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <h3 className="font-heading text-2xl text-white mb-4 tracking-wide">Team Group Photo</h3>
+              <div className="flex flex-col md:flex-row gap-4 items-start">
+                <img 
+                  src={team.groupPhoto} 
+                  alt="Team group photo" 
+                  className="max-w-md w-full rounded-lg border-2 border-accent/50 hover:border-accent transition-colors cursor-pointer"
+                  onClick={() => window.open(team.groupPhoto, '_blank')}
+                />
+                <button
+                  onClick={() => window.open(team.groupPhoto, '_blank')}
+                  className="btn-gold px-6 py-3 rounded-lg font-body"
+                >
+                  View Full Size
+                </button>
+              </div>
+            </div>
           )}
         </motion.div>
 

@@ -20,6 +20,7 @@ interface Team {
   registrationDate: string
   paymentReceipt: string
   pastorLetter: string
+  groupPhoto?: string
   players?: any[]
 }
 
@@ -171,7 +172,7 @@ const AdminDashboard = () => {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {[
             { label: 'Total Teams', value: teams.length },
             {
@@ -181,15 +182,6 @@ const AdminDashboard = () => {
             {
               label: 'Churches',
               value: new Set(teams.map(t => t.churchName || 'Unknown')).size
-            },
-            {
-              label: 'Avg Team Size',
-              value:
-                teams.length > 0
-                  ? Math.round(
-                      teams.reduce((sum, t) => sum + (t.playerCount || 0), 0) / teams.length
-                    )
-                  : 0
             }
           ].map((stat, i) => (
             <motion.div
@@ -257,6 +249,19 @@ const AdminDashboard = () => {
                   className="glass-effect rounded-xl p-6 hover:border-accent hover:bg-white/20 transition-all cursor-pointer group glow-border"
                 >
                   <div className="flex items-start justify-between">
+                    {team.groupPhoto && (
+                      <div className="mr-4 flex-shrink-0">
+                        <img 
+                          src={team.groupPhoto} 
+                          alt="Team photo" 
+                          className="w-20 h-20 object-cover rounded-lg border-2 border-accent/50 hover:border-accent transition-colors cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            window.open(team.groupPhoto, '_blank')
+                          }}
+                        />
+                      </div>
+                    )}
                     <div className="flex-1">
                       <div className="flex items-center gap-4 mb-3">
                         <span className="bg-accent/20 text-accent px-3 py-1 rounded-full text-sm font-body font-semibold">
