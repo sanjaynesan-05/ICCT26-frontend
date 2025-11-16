@@ -5,11 +5,7 @@ import { motion } from 'framer-motion'
 interface Player {
   playerId: string
   name: string
-  age: number
-  phone: string
-  email?: string
   role: string
-  jerseyNumber: string
   aadharFile?: string
   subscriptionFile?: string
 }
@@ -57,11 +53,7 @@ const PlayerDetail = () => {
   const {
     playerId = 'N/A',
     name = 'Unnamed Player',
-    age = 0,
-    phone = 'Not Provided',
-    email = '',
     role = 'Unknown Role',
-    jerseyNumber = '--',
     aadharFile = '',
     subscriptionFile = ''
   } = player
@@ -110,14 +102,6 @@ const PlayerDetail = () => {
           className="glass-effect rounded-xl p-4 sm:p-6 md:p-8 glow-border mb-6 sm:mb-8"
         >
           <div className="flex flex-col md:flex-row items-start gap-6 sm:gap-8">
-            {/* Jersey Number Display */}
-            <div className="bg-gradient-to-br from-accent/30 to-accent/10 rounded-2xl p-6 sm:p-8 border-2 border-accent/50 min-w-[120px] sm:min-w-[150px] self-center md:self-start">
-              <div className="text-center">
-                <p className="text-accent text-xs sm:text-sm font-body mb-2">Jersey No.</p>
-                <p className="font-heading text-5xl sm:text-6xl md:text-7xl text-white tracking-wide">{jerseyNumber}</p>
-              </div>
-            </div>
-
             {/* Player Details */}
             <div className="flex-1 w-full">
               <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl text-white mb-4 sm:mb-6 tracking-wide break-words">{name}</h2>
@@ -128,29 +112,17 @@ const PlayerDetail = () => {
                   <p className="text-white font-body text-base sm:text-lg">{role}</p>
                 </div>
                 <div>
-                  <p className="text-accent text-xs sm:text-sm font-body mb-1">Age</p>
-                  <p className="text-white font-body text-base sm:text-lg">{age} years</p>
-                </div>
-                <div>
-                  <p className="text-accent text-xs sm:text-sm font-body mb-1">Phone</p>
-                  <p className="text-white font-body text-base sm:text-lg">{phone}</p>
-                </div>
-                {email && (
-                  <div>
-                    <p className="text-accent text-xs sm:text-sm font-body mb-1">Email</p>
-                    <p className="text-white font-body text-base sm:text-lg break-all">{email}</p>
-                  </div>
-                )}
-                <div>
                   <p className="text-accent text-xs sm:text-sm font-body mb-1">Player ID</p>
                   <p className="text-white font-body text-base sm:text-lg">{playerId}</p>
                 </div>
                 {team && (
-                  <div>
-                    <p className="text-accent text-xs sm:text-sm font-body mb-1">Team</p>
-                    <p className="text-white font-body text-base sm:text-lg break-words">{teamName}</p>
-                    <p className="text-white/60 text-xs sm:text-sm font-body break-words">{churchName}</p>
-                  </div>
+                  <>
+                    <div>
+                      <p className="text-accent text-xs sm:text-sm font-body mb-1">Team</p>
+                      <p className="text-white font-body text-base sm:text-lg break-words">{teamName}</p>
+                      <p className="text-white/60 text-xs sm:text-sm font-body break-words">{churchName}</p>
+                    </div>
+                  </>
                 )}
               </div>
             </div>

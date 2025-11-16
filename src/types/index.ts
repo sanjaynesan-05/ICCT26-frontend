@@ -66,10 +66,11 @@ export interface FormData {
  * Player information interface
  */
 export interface Player {
+  playerId: string
   name: string
-  phone: string
-  email: string
-  jerseyNumber: string
+  role: string
+  aadharFile?: string
+  subscriptionFile?: string
 }
 
 /**

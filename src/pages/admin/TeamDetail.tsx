@@ -6,11 +6,7 @@ import { apiService } from '../../services/api'
 interface Player {
   playerId: string
   name: string
-  age: number
-  phone: string
-  email?: string
   role: string
-  jerseyNumber: string
   aadharFile?: string
   subscriptionFile?: string
 }
@@ -103,11 +99,7 @@ const TeamDetail = () => {
           ? fetchedTeam.players.map((p: any) => ({
               playerId: p.playerId || 'UNKNOWN',
               name: p.name || 'Unnamed Player',
-              age: p.age || 0,
-              phone: p.phone || '',
-              email: p.email || '',
               role: p.role || 'Unknown Role',
-              jerseyNumber: p.jerseyNumber || '--',
               aadharFile: normalizeFileURL(p.aadharFile || p.aadhar_file, 'pdf'),
               subscriptionFile: normalizeFileURL(p.subscriptionFile || p.subscription_file, 'pdf'),
             }))
@@ -276,15 +268,6 @@ const InfoCard = ({ label, value }: { label: string; value: string }) => (
   <div className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-accent/50 transition-colors">
     <p className="text-accent text-xs sm:text-sm font-body font-semibold mb-2 uppercase tracking-wide">{label}</p>
     <p className="text-white font-body text-sm sm:text-base break-words line-clamp-2">{value || 'N/A'}</p>
-  </div>
-)
-
-const Info = ({ label, value, sub1, sub2 }: { label: string; value: string; sub1?: string; sub2?: string }) => (
-  <div className="min-w-0">
-    <p className="text-accent text-xs sm:text-sm font-body mb-1">{label}</p>
-    <p className="text-white font-body text-sm sm:text-base lg:text-lg break-words">{value || 'N/A'}</p>
-    {sub1 && <p className="text-white/60 text-xs sm:text-sm font-body break-words">{sub1}</p>}
-    {sub2 && <p className="text-white/60 text-xs sm:text-sm font-body break-all">{sub2}</p>}
   </div>
 )
 
