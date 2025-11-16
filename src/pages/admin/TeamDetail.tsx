@@ -206,6 +206,48 @@ const TeamDetail = () => {
             </div>
           </div>
 
+          {/* Players Section */}
+          <div className="mt-8 pt-8 border-t border-white/10">
+            <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white mb-6 tracking-wide">Squad ({team.players?.length || 0} Players)</h2>
+            {team.players?.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 mb-8">
+                {team.players.map((p, index) => (
+                  <motion.div
+                    key={p.playerId}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => navigate(`/admin/player/${p.playerId}`, { state: { player: p, team } })}
+                    className="glass-effect rounded-xl p-4 sm:p-6 hover:border-accent hover:bg-white/20 transition-all cursor-pointer group glow-border"
+                  >
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                      <div className="flex-1 w-full">
+                        <h3 className="font-heading text-lg sm:text-xl md:text-2xl text-white group-hover:text-accent transition-colors tracking-wide mb-2">{p.name}</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Role</p>
+                            <p className="text-white font-body text-sm sm:text-base">{p.role}</p>
+                          </div>
+                          <div>
+                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Player ID</p>
+                            <p className="text-white font-body text-sm sm:text-base">{p.playerId}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-accent group-hover:translate-x-1 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="glass-effect rounded-xl p-8 sm:p-12 text-center mb-8">
+                <p className="text-white font-body text-base sm:text-lg">No players found for this team.</p>
+              </div>
+            )}
+          </div>
+
           {/* Documents Section */}
           <div className="mt-8">
             <h3 className="font-heading text-xl sm:text-2xl text-white mb-6 tracking-wide">Submitted Documents</h3>
