@@ -29,6 +29,7 @@ interface TeamDetails {
   viceCaptainWhatsapp: string
   paymentReceipt: string
   pastorLetter?: string
+  groupPhoto: string
   registrationDate: string
   players: Player[]
 }
@@ -50,7 +51,6 @@ const TeamDetail = () => {
   const [team, setTeam] = useState<TeamDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [viewingDocument, setViewingDocument] = useState<{ type: string; url: string } | null>(null)
 
   useEffect(() => {
     fetchTeamDetails()
@@ -97,6 +97,7 @@ const TeamDetail = () => {
         viceCaptainWhatsapp: fetchedTeam.viceCaptain?.whatsapp || fetchedTeam.viceCaptainWhatsapp || '',
         paymentReceipt: normalizeFileURL(fetchedTeam.paymentReceipt || fetchedTeam.payment_receipt, 'image'),
         pastorLetter: normalizeFileURL(fetchedTeam.pastorLetter || fetchedTeam.pastor_letter, 'pdf'),
+        groupPhoto: normalizeFileURL(fetchedTeam.groupPhoto || fetchedTeam.group_photo, 'image'),
         registrationDate: fetchedTeam.registrationDate || fetchedTeam.registration_date || '',
         players: Array.isArray(fetchedTeam.players)
           ? fetchedTeam.players.map((p: any) => ({
@@ -153,24 +154,24 @@ const TeamDetail = () => {
     <div className="min-h-screen bg-gradient-primary">
       {/* Header */}
       <header className="bg-primary/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
             <button
               onClick={() => navigate('/admin/dashboard')}
-              className="text-accent hover:text-white transition-colors"
+              className="text-accent hover:text-white transition-colors flex-shrink-0"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <div>
-              <h1 className="font-heading text-3xl text-white tracking-wide">{team.teamName}</h1>
-              <p className="font-body text-accent text-sm">{team.teamId}</p>
+            <div className="min-w-0 flex-1">
+              <h1 className="font-heading text-xl sm:text-2xl md:text-3xl text-white tracking-wide truncate">{team.teamName}</h1>
+              <p className="font-body text-accent text-xs sm:text-sm truncate">{team.teamId}</p>
             </div>
           </div>
           <button
             onClick={() => navigate('/admin/dashboard')}
-            className="bg-accent/20 hover:bg-accent/30 text-accent px-4 py-2 rounded-lg font-body transition-all"
+            className="bg-accent/20 hover:bg-accent/30 text-accent px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap self-end sm:self-auto"
           >
             Back to Dashboard
           </button>
@@ -180,124 +181,110 @@ const TeamDetail = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Team Information */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="glass-effect rounded-xl p-8 glow-border mb-8"
+          className="glass-effect rounded-xl p-4 sm:p-6 md:p-8 glow-border mb-6 sm:mb-8"
         >
-          <h2 className="font-heading text-4xl text-white mb-6 tracking-wide">Team Information</h2>
+          <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white mb-6 sm:mb-8 tracking-wide">Team Details</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Info label="Team Name" value={team.teamName} />
-            <Info label="Church" value={team.churchName} />
-            <Info label="Registration Date" value={team.registrationDate} />
-            <Info label="Captain" value={team.captainName} sub1={team.captainPhone} sub2={team.captainEmail} />
-            <Info label="Vice Captain" value={team.viceCaptainName} sub1={team.viceCaptainPhone} sub2={team.viceCaptainEmail} />
+          {/* Team Info Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 pb-8 border-b border-white/10">
+            <InfoCard label="Team Name" value={team.teamName} />
+            <InfoCard label="Church Name" value={team.churchName} />
+            <InfoCard label="Registration Date" value={team.registrationDate} />
           </div>
 
-          {/* Pastor Letter */}
-          {team.pastorLetter && (
-            <DocButton type="Pastor Letter" url={team.pastorLetter} onView={setViewingDocument} />
-          )}
-
-          {/* Payment Receipt */}
-          {team.paymentReceipt && (
-            <DocButton type="Payment Receipt" url={team.paymentReceipt} onView={setViewingDocument} />
-          )}
-        </motion.div>
-
-        {/* Players */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <h2 className="font-heading text-4xl text-white mb-6 tracking-wide">
-            Squad ({team.players?.length || 0} Players)
-          </h2>
-          {team.players?.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4">
-              {team.players.map((p, index) => (
-                <motion.div
-                  key={p.playerId}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => navigate(`/admin/player/${p.playerId}`, { state: { player: p, team } })}
-                  className="glass-effect rounded-xl p-6 hover:border-accent hover:bg-white/20 transition-all cursor-pointer group glow-border"
-                >
-                  <div className="flex items-center gap-6">
-                    <div className="bg-accent/20 text-accent w-16 h-16 rounded-full flex items-center justify-center">
-                      <span className="font-heading text-3xl">{p.jerseyNumber}</span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
-                      <Info label="Player Name" value={p.name} />
-                      <Info label="Role" value={p.role} />
-                      <Info label="Age" value={`${p.age} years`} />
-                      <Info label="Phone" value={p.phone} />
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+          {/* Captain Section */}
+          <div className="mb-8 pb-8 border-b border-white/10">
+            <h3 className="font-heading text-lg sm:text-xl text-accent mb-4 tracking-wide">Captain Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <InfoCard label="Name" value={team.captainName} />
+              <InfoCard label="Phone" value={team.captainPhone} />
+              <InfoCard label="Email" value={team.captainEmail} />
+              <InfoCard label="WhatsApp" value={team.captainWhatsapp} />
             </div>
-          ) : (
-            <div className="glass-effect rounded-xl p-12 text-center">
-              <p className="text-white font-body text-lg">No players found for this team.</p>
-            </div>
-          )}
-        </motion.div>
-      </div>
+          </div>
 
-      {/* Document Viewer Modal */}
-      {viewingDocument && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-            className="bg-primary rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden glass-effect"
-          >
-            <div className="bg-primary/80 border-b border-white/10 p-4 flex justify-between items-center">
-              <h3 className="font-heading text-2xl text-white">{viewingDocument.type}</h3>
-              <button onClick={() => setViewingDocument(null)} className="text-white hover:text-accent">
-                ✕
-              </button>
+          {/* Vice Captain Section */}
+          <div className="mb-8 pb-8 border-b border-white/10">
+            <h3 className="font-heading text-lg sm:text-xl text-accent mb-4 tracking-wide">Vice Captain Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <InfoCard label="Name" value={team.viceCaptainName} />
+              <InfoCard label="Phone" value={team.viceCaptainPhone} />
+              <InfoCard label="Email" value={team.viceCaptainEmail} />
+              <InfoCard label="WhatsApp" value={team.viceCaptainWhatsapp} />
             </div>
-            <div className="p-4 overflow-auto max-h-[calc(90vh-80px)]">
-              {viewingDocument.url.startsWith('data:image') ? (
-                <img src={viewingDocument.url} alt={viewingDocument.type} className="w-full rounded-lg" />
-              ) : viewingDocument.url.startsWith('data:application/pdf') ? (
-                <iframe src={viewingDocument.url} className="w-full h-[70vh] rounded-lg" title={viewingDocument.type} />
-              ) : (
-                <div className="text-center text-white font-body">
-                  <p className="mb-4">Unable to preview this file type</p>
-                  <a href={viewingDocument.url} download className="btn-gold px-6 py-3 rounded-lg inline-block">
-                    Download File
-                  </a>
+          </div>
+
+          {/* Documents Section */}
+          <div className="mt-8">
+            <h3 className="font-heading text-xl sm:text-2xl text-white mb-6 tracking-wide">Submitted Documents</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Pastor Letter */}
+              {team.pastorLetter && (
+                <div className="flex flex-col">
+                  <p className="text-accent text-sm font-body mb-3 font-semibold">Pastor Letter</p>
+                  {team.pastorLetter.startsWith('data:image') ? (
+                    <img 
+                      src={team.pastorLetter} 
+                      alt="Pastor Letter" 
+                      className="w-full h-64 object-cover rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
+                      onClick={() => window.open(team.pastorLetter, '_blank')}
+                    />
+                  ) : (
+                    <iframe 
+                      src={team.pastorLetter} 
+                      className="w-full h-64 rounded-lg border-2 border-accent/50"
+                      title="Pastor Letter"
+                    />
+                  )}
                 </div>
               )}
+
+              {/* Payment Receipt */}
+              {team.paymentReceipt && (
+                <div className="flex flex-col">
+                  <p className="text-accent text-sm font-body mb-3 font-semibold">Payment Receipt</p>
+                  <img 
+                    src={team.paymentReceipt} 
+                    alt="Payment Receipt" 
+                    className="w-full h-64 object-cover rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
+                    onClick={() => window.open(team.paymentReceipt, '_blank')}
+                  />
+                </div>
+              )}
+
+              {/* Group Photo */}
+              <div className="flex flex-col">
+                <p className="text-accent text-sm font-body mb-3 font-semibold">Team Group Photo</p>
+                <img 
+                  src={team.groupPhoto} 
+                  alt="Team group photo" 
+                  className="w-full h-64 object-cover rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
+                  onClick={() => window.open(team.groupPhoto, '_blank')}
+                />
+              </div>
             </div>
-          </motion.div>
-        </div>
-      )}
+          </div>
+        </motion.div>
+      </div>
     </div>
   )
 }
 
 /* ♻️ Reusable subcomponents */
-const Info = ({ label, value, sub1, sub2 }: { label: string; value: string; sub1?: string; sub2?: string }) => (
-  <div>
-    <p className="text-accent text-sm font-body mb-1">{label}</p>
-    <p className="text-white font-body text-lg">{value || 'N/A'}</p>
-    {sub1 && <p className="text-white/60 text-sm font-body">{sub1}</p>}
-    {sub2 && <p className="text-white/60 text-sm font-body">{sub2}</p>}
+const InfoCard = ({ label, value }: { label: string; value: string }) => (
+  <div className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-accent/50 transition-colors">
+    <p className="text-accent text-xs sm:text-sm font-body font-semibold mb-2 uppercase tracking-wide">{label}</p>
+    <p className="text-white font-body text-sm sm:text-base break-words line-clamp-2">{value || 'N/A'}</p>
   </div>
 )
 
-const DocButton = ({
-  type,
-  url,
-  onView
-}: {
-  type: string
-  url: string
-  onView: (d: { type: string; url: string }) => void
-}) => (
-  <div className="mt-6 pt-6 border-t border-white/20">
-    <p className="text-accent text-sm font-body mb-2">{type}</p>
-    <button onClick={() => onView({ type, url })} className="btn-gold px-6 py-3 rounded-lg font-body inline-flex items-center gap-2">
-      👁️ View {type}
-    </button>
+const Info = ({ label, value, sub1, sub2 }: { label: string; value: string; sub1?: string; sub2?: string }) => (
+  <div className="min-w-0">
+    <p className="text-accent text-xs sm:text-sm font-body mb-1">{label}</p>
+    <p className="text-white font-body text-sm sm:text-base lg:text-lg break-words">{value || 'N/A'}</p>
+    {sub1 && <p className="text-white/60 text-xs sm:text-sm font-body break-words">{sub1}</p>}
+    {sub2 && <p className="text-white/60 text-xs sm:text-sm font-body break-all">{sub2}</p>}
   </div>
 )
 

@@ -20,6 +20,7 @@ interface Team {
   registrationDate: string
   paymentReceipt: string
   pastorLetter: string
+  groupPhoto: string
   players?: any[]
 }
 
@@ -106,6 +107,7 @@ const AdminDashboard = () => {
             registrationDate: team.registrationDate || team.registration_date || '',
             paymentReceipt: team.paymentReceipt || team.payment_receipt || '',
             pastorLetter: team.pastorLetter || team.pastor_letter || '',
+            groupPhoto: team.groupPhoto || team.group_photo || '',
             players: team.players || []
           }))
         : []
@@ -146,21 +148,21 @@ const AdminDashboard = () => {
       {/* Admin Header */}
       <header className="bg-primary/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <h1 className="font-heading text-4xl text-white tracking-wider">ICCT'26 ADMIN</h1>
-              <p className="font-body text-accent text-sm">Team Management Dashboard</p>
+              <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white tracking-wider">ICCT'26 ADMIN</h1>
+              <p className="font-body text-accent text-xs sm:text-sm">Team Management Dashboard</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
               <button
                 onClick={() => navigate('/')}
-                className="font-body text-white/80 hover:text-accent transition-colors"
+                className="font-body text-sm sm:text-base text-white/80 hover:text-accent transition-colors"
               >
                 View Site
               </button>
               <button
                 onClick={handleLogout}
-                className="bg-red-500/80 hover:bg-red-500 text-white px-6 py-2 rounded-lg font-body transition-all"
+                className="bg-red-500/80 hover:bg-red-500 text-white px-4 sm:px-6 py-2 rounded-lg font-body text-sm sm:text-base transition-all"
               >
                 Logout
               </button>
@@ -171,7 +173,7 @@ const AdminDashboard = () => {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {[
             { label: 'Total Teams', value: teams.length },
             {
@@ -181,15 +183,6 @@ const AdminDashboard = () => {
             {
               label: 'Churches',
               value: new Set(teams.map(t => t.churchName || 'Unknown')).size
-            },
-            {
-              label: 'Avg Team Size',
-              value:
-                teams.length > 0
-                  ? Math.round(
-                      teams.reduce((sum, t) => sum + (t.playerCount || 0), 0) / teams.length
-                    )
-                  : 0
             }
           ].map((stat, i) => (
             <motion.div
@@ -197,10 +190,10 @@ const AdminDashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="glass-effect rounded-xl p-6 glow-border"
+              className="glass-effect rounded-xl p-4 sm:p-6 glow-border"
             >
-              <div className="text-accent font-body text-sm mb-2">{stat.label}</div>
-              <div className="text-white font-heading text-5xl tracking-wide">{stat.value}</div>
+              <div className="text-accent font-body text-xs sm:text-sm mb-2">{stat.label}</div>
+              <div className="text-white font-heading text-3xl sm:text-4xl md:text-5xl tracking-wide">{stat.value}</div>
             </motion.div>
           ))}
         </div>
@@ -210,17 +203,17 @@ const AdminDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="glass-effect rounded-xl p-6 mb-6"
+          className="glass-effect rounded-xl p-4 sm:p-6 mb-6"
         >
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             <input
               type="text"
-              placeholder="Search teams by name, church, ID, or captain..."
+              placeholder="Search teams..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 input-focus focus:outline-none font-body"
+              className="flex-1 px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 input-focus focus:outline-none font-body text-sm sm:text-base"
             />
-            <button onClick={fetchTeams} className="btn-gold px-8 py-3 rounded-lg font-body">
+            <button onClick={fetchTeams} className="btn-gold px-6 sm:px-8 py-3 rounded-lg font-body text-sm sm:text-base whitespace-nowrap">
               Refresh
             </button>
           </div>
@@ -228,7 +221,7 @@ const AdminDashboard = () => {
 
         {/* Teams List */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-          <h2 className="font-heading text-4xl text-white mb-6 tracking-wide">
+          <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white mb-4 sm:mb-6 tracking-wide">
             Registered Teams ({filteredTeams.length})
           </h2>
 
@@ -254,65 +247,81 @@ const AdminDashboard = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => navigate(`/admin/team/${team.teamId}`)}
-                  className="glass-effect rounded-xl p-6 hover:border-accent hover:bg-white/20 transition-all cursor-pointer group glow-border"
+                  className="glass-effect rounded-xl p-4 sm:p-6 hover:border-accent hover:bg-white/20 transition-all cursor-pointer group glow-border"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-3">
-                        <span className="bg-accent/20 text-accent px-3 py-1 rounded-full text-sm font-body font-semibold">
-                          {team.teamId}
-                        </span>
-                        <h3 className="font-heading text-3xl text-white group-hover:text-accent transition-colors tracking-wide">
-                          {team.teamName || 'Unnamed Team'}
-                        </h3>
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                    <div className="flex items-start gap-3 sm:gap-4 w-full">
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={team.groupPhoto} 
+                          alt="Team photo" 
+                          className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border-2 border-accent/50 hover:border-accent transition-colors cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            window.open(team.groupPhoto, '_blank')
+                          }}
+                        />
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3">
+                          <span className="bg-accent/20 text-accent px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-body font-semibold">
+                            {team.teamId}
+                          </span>
+                          <h3 className="font-heading text-xl sm:text-2xl md:text-3xl text-white group-hover:text-accent transition-colors tracking-wide break-words">
+                            {team.teamName || 'Unnamed Team'}
+                          </h3>
+                        </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div>
-                          <p className="text-accent text-sm font-body mb-1">Church Name</p>
-                          <p className="text-white font-body">{team.churchName || 'Unknown'}</p>
-                        </div>
-                        <div>
-                          <p className="text-accent text-sm font-body mb-1">Registration Date</p>
-                          <p className="text-white font-body">{team.registrationDate || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-accent text-sm font-body mb-1">Total Players</p>
-                          <p className="text-white font-body">{team.playerCount || 0} players</p>
-                        </div>
-                        <div>
-                          <p className="text-accent text-sm font-body mb-1">Captain</p>
-                          <p className="text-white font-body">{team.captainName || 'N/A'}</p>
-                          <p className="text-white/60 text-sm font-body">{team.captainPhone || ''}</p>
-                          {team.captainEmail && (
-                            <p className="text-white/60 text-xs font-body">{team.captainEmail}</p>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-accent text-sm font-body mb-1">Vice Captain</p>
-                          <p className="text-white font-body">{team.viceCaptainName || 'N/A'}</p>
-                          <p className="text-white/60 text-sm font-body">{team.viceCaptainPhone || ''}</p>
-                          {team.viceCaptainEmail && (
-                            <p className="text-white/60 text-xs font-body">{team.viceCaptainEmail}</p>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-accent text-sm font-body mb-1">Documents</p>
-                          <div className="flex gap-2 flex-wrap">
-                            {team.paymentReceipt && (
-                              <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded">✓ Receipt</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                          <div>
+                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Church Name</p>
+                            <p className="text-white font-body text-sm sm:text-base break-words">{team.churchName || 'Unknown'}</p>
+                          </div>
+                          <div>
+                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Registration Date</p>
+                            <p className="text-white font-body text-sm sm:text-base">{team.registrationDate || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Total Players</p>
+                            <p className="text-white font-body text-sm sm:text-base">{team.playerCount || 0} players</p>
+                          </div>
+                          <div>
+                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Captain</p>
+                            <p className="text-white font-body text-sm sm:text-base break-words">{team.captainName || 'N/A'}</p>
+                              <p className="text-white/60 text-xs sm:text-sm font-body">{team.captainPhone || ''}</p>
+                            {team.captainEmail && (
+                              <p className="text-white/60 text-xs font-body break-all">{team.captainEmail}</p>
                             )}
-                            {team.pastorLetter && (
-                              <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded">✓ Letter</span>
+                          </div>
+                          <div>
+                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Vice Captain</p>
+                            <p className="text-white font-body text-sm sm:text-base break-words">{team.viceCaptainName || 'N/A'}</p>
+                            <p className="text-white/60 text-xs sm:text-sm font-body">{team.viceCaptainPhone || ''}</p>
+                            {team.viceCaptainEmail && (
+                              <p className="text-white/60 text-xs font-body break-all">{team.viceCaptainEmail}</p>
                             )}
+                          </div>
+                          <div>
+                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Documents</p>
+                            <div className="flex gap-2 flex-wrap">
+                              {team.paymentReceipt && (
+                                <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded whitespace-nowrap">✓ Receipt</span>
+                              )}
+                              {team.pastorLetter && (
+                                <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded whitespace-nowrap">✓ Letter</span>
+                              )}
+                              {team.groupPhoto && (
+                                <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded whitespace-nowrap">✓ Group Photo</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="ml-4">
+                    <div className="ml-auto sm:ml-4 flex-shrink-0 self-center sm:self-start">
                       <svg
-                        className="w-6 h-6 text-accent group-hover:translate-x-1 transition-transform"
+                        className="w-5 h-5 sm:w-6 sm:h-6 text-accent group-hover:translate-x-1 transition-transform"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"

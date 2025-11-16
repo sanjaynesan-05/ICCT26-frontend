@@ -14,10 +14,7 @@ interface CaptainInfo {
 
 interface PlayerData {
   name: string
-  age: number
-  phone: string
   role: string
-  jerseyNumber: string
   aadharFile: File | null
   aadharFileBase64: string | null
   subscriptionFile: File | null
@@ -29,6 +26,8 @@ interface FormData {
   teamName: string
   pastorLetter: File | null
   pastorLetterBase64: string | null
+  groupPhoto: File | null
+  groupPhotoBase64: string | null
   captain: CaptainInfo
   viceCaptain: CaptainInfo
   players: PlayerData[]
@@ -61,10 +60,7 @@ const Registration = () => {
 
   const emptyPlayer = (): PlayerData => ({
     name: '',
-    age: 18,
-    phone: '',
     role: '',
-    jerseyNumber: '',
     aadharFile: null,
     aadharFileBase64: null,
     subscriptionFile: null,
@@ -76,6 +72,8 @@ const Registration = () => {
     teamName: '',
     pastorLetter: null,
     pastorLetterBase64: null,
+    groupPhoto: null,
+    groupPhotoBase64: null,
     captain: { name: '', phone: '', whatsapp: '', email: '' },
     viceCaptain: { name: '', phone: '', whatsapp: '', email: '' },
     players: Array.from({ length: 11 }).map(() => emptyPlayer()),
@@ -96,28 +94,37 @@ const Registration = () => {
 
   const clearValidationError = () => setValidationError('')
 
+  // Email validation regex - standard email format
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
   const validateCurrentStep = (): string | null => {
     switch (currentStep) {
       case 1:
         if (!formData.churchName.trim()) return 'Please select a church name'
         if (!formData.teamName.trim()) return 'Please enter a team name'
         if (!formData.pastorLetterBase64) return 'Please upload a church letter'
+        if (!formData.groupPhotoBase64) return 'Please upload team group photo'
         break
 
       case 2:
         if (!formData.captain.name.trim()) return 'Please enter captain name'
-        if (!formData.captain.phone.trim()) return 'Please enter captain phone number'
+        if (!formData.captain.phone.trim() || formData.captain.phone.length !== 10)
+          return 'Please enter valid 10-digit phone number for captain'
         if (!formData.captain.whatsapp.trim() || formData.captain.whatsapp.length !== 10)
           return 'Please enter valid 10-digit WhatsApp number for captain'
-        if (!formData.captain.email.trim() || !formData.captain.email.includes('@'))
-          return 'Please enter valid email for captain'
+        if (!formData.captain.email.trim() || !isValidEmail(formData.captain.email))
+          return 'Please enter valid email for captain (e.g., name@example.com)'
 
         if (!formData.viceCaptain.name.trim()) return 'Please enter vice-captain name'
-        if (!formData.viceCaptain.phone.trim()) return 'Please enter vice-captain phone number'
+        if (!formData.viceCaptain.phone.trim() || formData.viceCaptain.phone.length !== 10)
+          return 'Please enter valid 10-digit phone number for vice-captain'
         if (!formData.viceCaptain.whatsapp.trim() || formData.viceCaptain.whatsapp.length !== 10)
           return 'Please enter valid 10-digit WhatsApp number for vice-captain'
-        if (!formData.viceCaptain.email.trim() || !formData.viceCaptain.email.includes('@'))
-          return 'Please enter valid email for vice-captain'
+        if (!formData.viceCaptain.email.trim() || !isValidEmail(formData.viceCaptain.email))
+          return 'Please enter valid email for vice-captain (e.g., name@example.com)'
         break
 
       case 3:
@@ -128,12 +135,7 @@ const Registration = () => {
         for (let i = 0; i < formData.players.length; i++) {
           const player = formData.players[i]
           if (!player.name.trim()) return `Player ${i + 1}: Please enter name`
-          if (player.age < 14 || player.age > 60) return `Player ${i + 1}: Age must be between 18 and 40`
-          if (!player.phone.trim()) return `Player ${i + 1}: Please enter phone number`
-          if (!player.role) return `Player ${i + 1}: Please select a role`
-          if (!VALID_ROLES.includes(player.role)) return `Player ${i + 1}: Invalid role '${player.role}'`
-          if (!player.jerseyNumber.trim()) return `Player ${i + 1}: Please enter jersey number`
-          if (!/^\d{1,3}$/.test(player.jerseyNumber.trim())) return `Player ${i + 1}: Jersey number must be 1-3 digits`
+          if (player.role && !VALID_ROLES.includes(player.role)) return `Player ${i + 1}: Invalid role '${player.role}'`
           if (!player.aadharFileBase64) return `Player ${i + 1}: Please upload Aadhar/ID`
           if (!player.subscriptionFileBase64) return `Player ${i + 1}: Please upload subscription/consent`
         }
@@ -215,18 +217,20 @@ const Registration = () => {
       if (!formData.pastorLetterBase64) throw new Error('Please upload a church letter')
 
       if (!formData.captain.name.trim()) throw new Error('Please enter captain name')
-      if (!formData.captain.phone.trim()) throw new Error('Please enter captain phone number')
+      if (!formData.captain.phone.trim() || formData.captain.phone.length !== 10)
+        throw new Error('Please enter valid 10-digit phone number for captain')
       if (!formData.captain.whatsapp.trim() || formData.captain.whatsapp.length !== 10)
         throw new Error('Please enter valid 10-digit WhatsApp number for captain')
-      if (!formData.captain.email.trim() || !formData.captain.email.includes('@'))
-        throw new Error('Please enter valid email for captain')
+      if (!formData.captain.email.trim() || !isValidEmail(formData.captain.email))
+        throw new Error('Please enter valid email for captain (e.g., name@example.com)')
 
       if (!formData.viceCaptain.name.trim()) throw new Error('Please enter vice-captain name')
-      if (!formData.viceCaptain.phone.trim()) throw new Error('Please enter vice-captain phone number')
+      if (!formData.viceCaptain.phone.trim() || formData.viceCaptain.phone.length !== 10)
+        throw new Error('Please enter valid 10-digit phone number for vice-captain')
       if (!formData.viceCaptain.whatsapp.trim() || formData.viceCaptain.whatsapp.length !== 10)
         throw new Error('Please enter valid 10-digit WhatsApp number for vice-captain')
-      if (!formData.viceCaptain.email.trim() || !formData.viceCaptain.email.includes('@'))
-        throw new Error('Please enter valid email for vice-captain')
+      if (!formData.viceCaptain.email.trim() || !isValidEmail(formData.viceCaptain.email))
+        throw new Error('Please enter valid email for vice-captain (e.g., name@example.com)')
 
       // Players
       if (formData.players.length < 11 || formData.players.length > 15)
@@ -234,11 +238,7 @@ const Registration = () => {
 
       formData.players.forEach((p, idx) => {
         if (!p.name.trim()) throw new Error(`Player ${idx + 1}: Please enter name`)
-        if (p.age < 18 || p.age > 40) throw new Error(`Player ${idx + 1}: Age must be between 18 and 40`)
-        if (!p.phone.trim()) throw new Error(`Player ${idx + 1}: Please enter phone number`)
-        if (!p.role) throw new Error(`Player ${idx + 1}: Please select a role`)
-        if (!VALID_ROLES.includes(p.role)) throw new Error(`Player ${idx + 1}: Invalid role '${p.role}'`)
-        if (!p.jerseyNumber.trim()) throw new Error(`Player ${idx + 1}: Please enter jersey number`)
+        if (p.role && !VALID_ROLES.includes(p.role)) throw new Error(`Player ${idx + 1}: Invalid role '${p.role}'`)
         if (!p.aadharFileBase64) throw new Error(`Player ${idx + 1}: Please upload Aadhar/ID`)
         if (!p.subscriptionFileBase64) throw new Error(`Player ${idx + 1}: Please upload subscription/consent`)
       })
@@ -263,23 +263,17 @@ const Registration = () => {
         },
         payment_receipt: formData.paymentReceiptBase64!,
         pastor_letter: formData.pastorLetterBase64!,
-        players: formData.players.map((p, idx) => ({
+        groupPhoto: formData.groupPhotoBase64!,
+        players: formData.players.map((p) => ({
           name: p.name,
-          age: p.age,
-          phone: p.phone,
           role: p.role,
-          jersey_number: p.jerseyNumber || String(idx + 1).padStart(2, '0'),
           aadhar_file: p.aadharFileBase64!,
           subscription_file: p.subscriptionFileBase64!,
         })),
       }
 
       // Debug logging for payload verification
-      console.log('📤 Registration Payload - Players jersey_number validation:')
-      payload.players.forEach((p, idx) => {
-        console.log(`  Player ${idx + 1}: jersey_number="${p.jersey_number}" (type: ${typeof p.jersey_number})`)
-      })
-      console.log('📤 Full payload:', JSON.stringify(payload, null, 2))
+      console.log('📤 Registration Payload:', JSON.stringify(payload, null, 2))
 
       // Call API
       await apiService.registerTeam(payload)
@@ -323,6 +317,11 @@ const Registration = () => {
   const handlePastorLetterChange = (base64: string | null) => {
     clearValidationError()
     setFormData({ ...formData, pastorLetterBase64: base64, pastorLetter: base64 ? new File([], 'letter') : null })
+  }
+
+  const handleGroupPhotoChange = (base64: string | null) => {
+    clearValidationError()
+    setFormData({ ...formData, groupPhotoBase64: base64, groupPhoto: base64 ? new File([], 'photo') : null })
   }
 
   return (
@@ -467,6 +466,14 @@ const Registration = () => {
                         <FileUpload file={formData.pastorLetter} onFileChange={handlePastorLetterChange} accept=".jpg,.jpeg,.png,.pdf" placeholder="Upload Church Letter" />
                       </div>
                     </div>
+
+                    <div>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Team Group Photo *</label>
+                      <p className="text-xs text-gray-500 mb-2">Upload a group photo of your team (JPEG or PNG, max 5MB)</p>
+                      <div>
+                        <FileUpload file={formData.groupPhoto} onFileChange={handleGroupPhotoChange} accept=".jpg,.jpeg,.png" placeholder="Upload Team Photo" />
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -487,12 +494,18 @@ const Registration = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Phone Number *</label>
-                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="+91 XXXXX XXXXX" value={formData.captain.phone} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, phone: e.target.value } })} required />
+                            <input type="tel" inputMode="numeric" pattern="[0-9]*" maxLength={10} className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="+91 XXXXX XXXXX" value={formData.captain.phone} onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '')
+                              setFormData({ ...formData, captain: { ...formData.captain, phone: value } })
+                            }} required />
                           </div>
 
                           <div>
                             <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">WhatsApp Number (10 digits) *</label>
-                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="Enter 10-digit number" maxLength={10} value={formData.captain.whatsapp} onChange={(e) => setFormData({ ...formData, captain: { ...formData.captain, whatsapp: e.target.value } })} required />
+                            <input type="tel" inputMode="numeric" pattern="[0-9]*" maxLength={10} className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="Enter 10-digit number" value={formData.captain.whatsapp} onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '')
+                              setFormData({ ...formData, captain: { ...formData.captain, whatsapp: value } })
+                            }} required />
                           </div>
                         </div>
 
@@ -514,12 +527,18 @@ const Registration = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Phone Number *</label>
-                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="+91 XXXXX XXXXX" value={formData.viceCaptain.phone} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, phone: e.target.value } })} required />
+                            <input type="tel" inputMode="numeric" pattern="[0-9]*" maxLength={10} className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="+91 XXXXX XXXXX" value={formData.viceCaptain.phone} onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '')
+                              setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, phone: value } })
+                            }} required />
                           </div>
 
                           <div>
                             <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">WhatsApp Number (10 digits) *</label>
-                            <input type="tel" className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="Enter 10-digit number" maxLength={10} value={formData.viceCaptain.whatsapp} onChange={(e) => setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, whatsapp: e.target.value } })} required />
+                            <input type="tel" inputMode="numeric" pattern="[0-9]*" maxLength={10} className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white" placeholder="Enter 10-digit number" value={formData.viceCaptain.whatsapp} onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '')
+                              setFormData({ ...formData, viceCaptain: { ...formData.viceCaptain, whatsapp: value } })
+                            }} required />
                           </div>
                         </div>
 

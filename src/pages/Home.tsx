@@ -1,14 +1,40 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Facebook, Instagram, Youtube } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import Countdown from '../components/Countdown'
 import RegistrationCountdown from '../components/RegistrationCountdown'
 import AnnouncementTicker from '../components/AnnouncementTicker'
 import { ANNOUNCEMENTS, HERO_SECTION, TOURNAMENT_HIGHLIGHTS } from '../data/home'
+import { apiService } from '../services/api'
 
 const Home = () => {
   // Convert ANNOUNCEMENTS to array of strings for ticker
   const announcementTexts = ANNOUNCEMENTS.map(a => a.text)
+  
+  // State for teams count
+  const [teamsCount, setTeamsCount] = useState<number>(0)
+  const [loadingCount, setLoadingCount] = useState<boolean>(true)
+
+  // Fetch teams count from backend
+  useEffect(() => {
+    const fetchTeamsCount = async () => {
+      try {
+        setLoadingCount(true)
+        const response = await apiService.getAllTeams()
+        const teams = response.teams || response.data || response
+        const count = Array.isArray(teams) ? teams.length : 0
+        setTeamsCount(count)
+      } catch (error) {
+        console.error('Failed to fetch teams count:', error)
+        // Keep default value of 0 on error
+      } finally {
+        setLoadingCount(false)
+      }
+    }
+
+    fetchTeamsCount()
+  }, [])
 
   return (
     <motion.div
@@ -144,6 +170,11 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {TOURNAMENT_HIGHLIGHTS.map((highlight, index) => {
               const Icon = highlight.icon;
+              // Use dynamic count for Teams Registered
+              const displayValue = highlight.title === 'Teams Registered' 
+                ? (loadingCount ? 'Loading...' : `${teamsCount} Teams`)
+                : highlight.value;
+              
               return (
                 <motion.div
                   key={highlight.title}
@@ -159,7 +190,7 @@ const Home = () => {
                     {highlight.title}
                   </h3>
                   <p className="font-body text-xl text-white font-bold">
-                    {highlight.value}
+                    {displayValue}
                   </p>
                 </motion.div>
               );
