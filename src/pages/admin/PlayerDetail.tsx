@@ -23,7 +23,6 @@ interface Team {
 const PlayerDetail = () => {
   const location = useLocation()
   const navigate = useNavigate()
-  const [viewingDocument, setViewingDocument] = useState<{ type: string; url: string } | null>(null)
 
   // ✅ Safely extract player and team with fallbacks
   const player = location.state?.player as Player | undefined
@@ -75,26 +74,26 @@ const PlayerDetail = () => {
       {/* Header */}
       <header className="bg-primary/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto min-w-0">
               <button
                 onClick={handleBackToTeam}
-                className="text-accent hover:text-white transition-colors"
+                className="text-accent hover:text-white transition-colors flex-shrink-0"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <div>
-                <h1 className="font-heading text-3xl text-white tracking-wide">{name}</h1>
-                <p className="font-body text-accent text-sm">
+              <div className="min-w-0 flex-1">
+                <h1 className="font-heading text-xl sm:text-2xl md:text-3xl text-white tracking-wide truncate">{name}</h1>
+                <p className="font-body text-accent text-xs sm:text-sm truncate">
                   {team ? `${teamName} • ${playerId}` : playerId}
                 </p>
               </div>
             </div>
             <button
               onClick={handleBackToTeam}
-              className="bg-accent/20 hover:bg-accent/30 text-accent px-4 py-2 rounded-lg font-body transition-all"
+              className="bg-accent/20 hover:bg-accent/30 text-accent px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap self-end sm:self-auto"
             >
               Back to Team
             </button>
@@ -108,49 +107,49 @@ const PlayerDetail = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-effect rounded-xl p-8 glow-border mb-8"
+          className="glass-effect rounded-xl p-4 sm:p-6 md:p-8 glow-border mb-6 sm:mb-8"
         >
-          <div className="flex flex-col md:flex-row items-start gap-8">
+          <div className="flex flex-col md:flex-row items-start gap-6 sm:gap-8">
             {/* Jersey Number Display */}
-            <div className="bg-gradient-to-br from-accent/30 to-accent/10 rounded-2xl p-8 border-2 border-accent/50 min-w-[150px]">
+            <div className="bg-gradient-to-br from-accent/30 to-accent/10 rounded-2xl p-6 sm:p-8 border-2 border-accent/50 min-w-[120px] sm:min-w-[150px] self-center md:self-start">
               <div className="text-center">
-                <p className="text-accent text-sm font-body mb-2">Jersey No.</p>
-                <p className="font-heading text-7xl text-white tracking-wide">{jerseyNumber}</p>
+                <p className="text-accent text-xs sm:text-sm font-body mb-2">Jersey No.</p>
+                <p className="font-heading text-5xl sm:text-6xl md:text-7xl text-white tracking-wide">{jerseyNumber}</p>
               </div>
             </div>
 
             {/* Player Details */}
-            <div className="flex-1">
-              <h2 className="font-heading text-5xl text-white mb-6 tracking-wide">{name}</h2>
+            <div className="flex-1 w-full">
+              <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl text-white mb-4 sm:mb-6 tracking-wide break-words">{name}</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <p className="text-accent text-sm font-body mb-1">Role</p>
-                  <p className="text-white font-body text-lg">{role}</p>
+                  <p className="text-accent text-xs sm:text-sm font-body mb-1">Role</p>
+                  <p className="text-white font-body text-base sm:text-lg">{role}</p>
                 </div>
                 <div>
-                  <p className="text-accent text-sm font-body mb-1">Age</p>
-                  <p className="text-white font-body text-lg">{age} years</p>
+                  <p className="text-accent text-xs sm:text-sm font-body mb-1">Age</p>
+                  <p className="text-white font-body text-base sm:text-lg">{age} years</p>
                 </div>
                 <div>
-                  <p className="text-accent text-sm font-body mb-1">Phone</p>
-                  <p className="text-white font-body text-lg">{phone}</p>
+                  <p className="text-accent text-xs sm:text-sm font-body mb-1">Phone</p>
+                  <p className="text-white font-body text-base sm:text-lg">{phone}</p>
                 </div>
                 {email && (
                   <div>
-                    <p className="text-accent text-sm font-body mb-1">Email</p>
-                    <p className="text-white font-body text-lg break-all">{email}</p>
+                    <p className="text-accent text-xs sm:text-sm font-body mb-1">Email</p>
+                    <p className="text-white font-body text-base sm:text-lg break-all">{email}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-accent text-sm font-body mb-1">Player ID</p>
-                  <p className="text-white font-body text-lg">{playerId}</p>
+                  <p className="text-accent text-xs sm:text-sm font-body mb-1">Player ID</p>
+                  <p className="text-white font-body text-base sm:text-lg">{playerId}</p>
                 </div>
                 {team && (
                   <div>
-                    <p className="text-accent text-sm font-body mb-1">Team</p>
-                    <p className="text-white font-body text-lg">{teamName}</p>
-                    <p className="text-white/60 text-sm font-body">{churchName}</p>
+                    <p className="text-accent text-xs sm:text-sm font-body mb-1">Team</p>
+                    <p className="text-white font-body text-base sm:text-lg break-words">{teamName}</p>
+                    <p className="text-white/60 text-xs sm:text-sm font-body break-words">{churchName}</p>
                   </div>
                 )}
               </div>
@@ -163,31 +162,75 @@ const PlayerDetail = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="glass-effect rounded-xl p-8 glow-border"
+          className="glass-effect rounded-xl p-4 sm:p-6 md:p-8 glow-border"
         >
-          <h3 className="font-heading text-3xl text-white mb-6 tracking-wide">Submitted Documents</h3>
+          <h3 className="font-heading text-2xl sm:text-3xl text-white mb-4 sm:mb-6 tracking-wide">Submitted Documents</h3>
 
-          <div className="space-y-4">
+          <div className="space-y-6 sm:space-y-8">
             {/* Aadhar File */}
             {aadharFile ? (
-              <DocumentCard
-                title="Aadhar Card"
-                subtitle="Identity Proof Document"
-                onClick={() => setViewingDocument({ type: 'Aadhar Card', url: aadharFile })}
-              />
+              <div>
+                <div className="flex items-center gap-2 sm:gap-3 mb-4">
+                  <div className="bg-accent/20 p-2 rounded-lg flex-shrink-0">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-body text-base sm:text-lg font-semibold">Aadhar Card</p>
+                    <p className="text-white/60 text-xs sm:text-sm font-body">Identity Proof Document</p>
+                  </div>
+                </div>
+                {aadharFile.startsWith('data:image') ? (
+                  <img 
+                    src={aadharFile} 
+                    alt="Aadhar Card" 
+                    className="max-w-full sm:max-w-2xl w-full rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
+                    onClick={() => window.open(aadharFile, '_blank')}
+                  />
+                ) : (
+                  <iframe 
+                    src={aadharFile} 
+                    className="w-full h-[400px] sm:h-[600px] rounded-lg border-2 border-accent/50"
+                    title="Aadhar Card"
+                  />
+                )}
+              </div>
             ) : (
-              <MissingDocumentCard title="Aadhar Card" />
+              <MissingDocumentCard title="Aadhar Card" subtitle="Identity Proof Document" />
             )}
 
             {/* Subscription File */}
             {subscriptionFile ? (
-              <DocumentCard
-                title="Subscription Card"
-                subtitle="Church Membership Proof"
-                onClick={() => setViewingDocument({ type: 'Subscription Card', url: subscriptionFile })}
-              />
+              <div>
+                <div className="flex items-center gap-2 sm:gap-3 mb-4">
+                  <div className="bg-accent/20 p-2 rounded-lg flex-shrink-0">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-body text-base sm:text-lg font-semibold">Subscription Card</p>
+                    <p className="text-white/60 text-xs sm:text-sm font-body">Church Membership Proof</p>
+                  </div>
+                </div>
+                {subscriptionFile.startsWith('data:image') ? (
+                  <img 
+                    src={subscriptionFile} 
+                    alt="Subscription Card" 
+                    className="max-w-full sm:max-w-2xl w-full rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
+                    onClick={() => window.open(subscriptionFile, '_blank')}
+                  />
+                ) : (
+                  <iframe 
+                    src={subscriptionFile} 
+                    className="w-full h-[400px] sm:h-[600px] rounded-lg border-2 border-accent/50"
+                    title="Subscription Card"
+                  />
+                )}
+              </div>
             ) : (
-              <MissingDocumentCard title="Subscription Card" />
+              <MissingDocumentCard title="Subscription Card" subtitle="Church Membership Proof" />
             )}
           </div>
 
@@ -204,90 +247,13 @@ const PlayerDetail = () => {
           </div>
         </motion.div>
       </div>
-
-      {/* Document Viewer Modal */}
-      {viewingDocument && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-primary rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden glass-effect"
-          >
-            <div className="bg-primary/80 border-b border-white/10 p-4 flex items-center justify-between">
-              <h3 className="font-heading text-2xl text-white">{viewingDocument.type}</h3>
-              <button
-                onClick={() => setViewingDocument(null)}
-                className="text-white hover:text-accent transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-4 overflow-auto max-h-[calc(90vh-80px)]">
-              {viewingDocument.url.startsWith('data:image') ? (
-                <img
-                  src={viewingDocument.url}
-                  alt={viewingDocument.type}
-                  className="w-full h-auto rounded-lg"
-                />
-              ) : viewingDocument.url.startsWith('data:application/pdf') ? (
-                <iframe
-                  src={viewingDocument.url}
-                  className="w-full h-[70vh] rounded-lg"
-                  title={viewingDocument.type}
-                />
-              ) : (
-                <div className="text-center text-white font-body">
-                  <p className="mb-4">Unable to preview this file type</p>
-                  <a
-                    href={viewingDocument.url}
-                    download
-                    className="btn-gold px-6 py-3 rounded-lg inline-block"
-                  >
-                    Download File
-                  </a>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   )
 }
 
 /* ✅ Modular Reusable Subcomponents */
 
-const DocumentCard = ({ title, subtitle, onClick }: { title: string; subtitle: string; onClick: () => void }) => (
-  <div className="bg-white/5 rounded-lg p-6 border border-white/10">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <div className="bg-accent/20 p-3 rounded-lg">
-          <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-        <div>
-          <p className="text-white font-body text-lg">{title}</p>
-          <p className="text-white/60 text-sm font-body">{subtitle}</p>
-        </div>
-      </div>
-      <button
-        onClick={onClick}
-        className="btn-gold px-6 py-3 rounded-lg font-body inline-flex items-center gap-2"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-        View Document
-      </button>
-    </div>
-  </div>
-)
-
-const MissingDocumentCard = ({ title }: { title: string }) => (
+const MissingDocumentCard = ({ title, subtitle }: { title: string; subtitle: string }) => (
   <div className="bg-white/5 rounded-lg p-6 border border-red-500/30">
     <div className="flex items-center gap-4">
       <div className="bg-red-500/20 p-3 rounded-lg">
@@ -297,7 +263,7 @@ const MissingDocumentCard = ({ title }: { title: string }) => (
       </div>
       <div>
         <p className="text-white font-body text-lg">{title}</p>
-        <p className="text-red-400 text-sm font-body">Not submitted</p>
+        <p className="text-red-400 text-sm font-body">{subtitle} - Not submitted</p>
       </div>
     </div>
   </div>

@@ -22,7 +22,7 @@ export interface TeamRegistrationPayload {
   }
   payment_receipt: string
   pastor_letter: string
-  groupPhoto?: string
+  groupPhoto: string
   players: Array<{
     name: string
     role: string

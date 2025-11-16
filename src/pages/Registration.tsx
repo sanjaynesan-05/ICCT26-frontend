@@ -106,6 +106,7 @@ const Registration = () => {
         if (!formData.churchName.trim()) return 'Please select a church name'
         if (!formData.teamName.trim()) return 'Please enter a team name'
         if (!formData.pastorLetterBase64) return 'Please upload a church letter'
+        if (!formData.groupPhotoBase64) return 'Please upload team group photo'
         break
 
       case 2:
@@ -262,7 +263,7 @@ const Registration = () => {
         },
         payment_receipt: formData.paymentReceiptBase64!,
         pastor_letter: formData.pastorLetterBase64!,
-        ...(formData.groupPhotoBase64 && { groupPhoto: formData.groupPhotoBase64 }),
+        groupPhoto: formData.groupPhotoBase64!,
         players: formData.players.map((p) => ({
           name: p.name,
           role: p.role,
@@ -467,7 +468,7 @@ const Registration = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Team Group Photo (Optional)</label>
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">Team Group Photo *</label>
                       <p className="text-xs text-gray-500 mb-2">Upload a group photo of your team (JPEG or PNG, max 5MB)</p>
                       <div>
                         <FileUpload file={formData.groupPhoto} onFileChange={handleGroupPhotoChange} accept=".jpg,.jpeg,.png" placeholder="Upload Team Photo" />
