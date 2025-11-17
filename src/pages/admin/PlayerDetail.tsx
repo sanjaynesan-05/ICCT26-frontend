@@ -24,6 +24,64 @@ const PlayerDetail = () => {
   const player = location.state?.player as Player | undefined
   const team = location.state?.team as Team | undefined
 
+  // Sanitize file URLs to handle legacy data (null, {}, local paths)
+  const cleanFileUrl = (url: any): string => {
+    if (!url || typeof url !== 'string' || url.trim() === '') return ''
+    if (url.startsWith('data:') || url.startsWith('file:') || url.startsWith('C:') || url.startsWith('/')) return ''
+    if (!url.startsWith('http://') && !url.startsWith('https://')) return ''
+    return url.trim()
+  }
+
+  // Unified file preview helper for Cloudinary URLs
+  const getFilePreview = (url: string | undefined, altText: string = 'Document') => {
+    const cleanUrl = cleanFileUrl(url)
+    if (!cleanUrl) return null
+
+    const ext = url.split('.').pop()?.toLowerCase()
+
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')) {
+      return (
+        <img 
+          src={cleanUrl} 
+          alt={altText}
+          className="max-w-full sm:max-w-2xl w-full rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
+          onClick={() => window.open(cleanUrl, '_blank')}
+        />
+      )
+    }
+
+    if (ext === 'pdf') {
+      return (
+        <div className="w-full h-[400px] rounded-lg border-2 border-accent/50 bg-white/5 flex flex-col items-center justify-center gap-4">
+          <svg className="w-16 h-16 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          <a
+            href={cleanUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-gold px-6 py-3 rounded-lg"
+          >
+            View PDF
+          </a>
+        </div>
+      )
+    }
+
+    return (
+      <div className="w-full h-[400px] rounded-lg border-2 border-accent/50 bg-white/5 flex items-center justify-center">
+        <a
+          href={cleanUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-gold px-6 py-3 rounded-lg"
+        >
+          Download File
+        </a>
+      </div>
+    )
+  }
+
   // ✅ Handle missing player (e.g., direct URL visit or reload)
   if (!player) {
     return (
@@ -153,20 +211,7 @@ const PlayerDetail = () => {
                     <p className="text-white/60 text-xs sm:text-sm font-body">Identity Proof Document</p>
                   </div>
                 </div>
-                {aadharFile.startsWith('data:image') ? (
-                  <img 
-                    src={aadharFile} 
-                    alt="Aadhar Card" 
-                    className="max-w-full sm:max-w-2xl w-full rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
-                    onClick={() => window.open(aadharFile, '_blank')}
-                  />
-                ) : (
-                  <iframe 
-                    src={aadharFile} 
-                    className="w-full h-[400px] sm:h-[600px] rounded-lg border-2 border-accent/50"
-                    title="Aadhar Card"
-                  />
-                )}
+                {getFilePreview(aadharFile, 'Aadhar Card')}
               </div>
             ) : (
               <MissingDocumentCard title="Aadhar Card" subtitle="Identity Proof Document" />
@@ -186,20 +231,7 @@ const PlayerDetail = () => {
                     <p className="text-white/60 text-xs sm:text-sm font-body">Church Membership Proof</p>
                   </div>
                 </div>
-                {subscriptionFile.startsWith('data:image') ? (
-                  <img 
-                    src={subscriptionFile} 
-                    alt="Subscription Card" 
-                    className="max-w-full sm:max-w-2xl w-full rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
-                    onClick={() => window.open(subscriptionFile, '_blank')}
-                  />
-                ) : (
-                  <iframe 
-                    src={subscriptionFile} 
-                    className="w-full h-[400px] sm:h-[600px] rounded-lg border-2 border-accent/50"
-                    title="Subscription Card"
-                  />
-                )}
+                {getFilePreview(subscriptionFile, 'Subscription Card')}
               </div>
             ) : (
               <MissingDocumentCard title="Subscription Card" subtitle="Church Membership Proof" />

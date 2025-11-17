@@ -32,6 +32,48 @@ const AdminDashboard = () => {
   const navigate = useNavigate()
   const { logout } = useAdmin()
 
+  // Sanitize file URLs to handle legacy data (null, {}, local paths)
+  const cleanFileUrl = (url: any): string => {
+    if (!url || typeof url !== 'string' || url.trim() === '') return ''
+    // Filter out local file paths and invalid URLs
+    if (url.startsWith('data:') || url.startsWith('file:') || url.startsWith('C:') || url.startsWith('/')) return ''
+    // Only accept valid HTTP/HTTPS URLs (Cloudinary)
+    if (!url.startsWith('http://') && !url.startsWith('https://')) return ''
+    return url.trim()
+  }
+
+  // Unified file status helper for Cloudinary URLs
+  const getFileStatusIcon = (url: string | undefined) => {
+    const cleanUrl = cleanFileUrl(url)
+    if (!url) {
+      return <span className="text-red-500 font-semibold text-xs">No File</span>
+    }
+
+    const ext = url.split('.').pop()?.toLowerCase()
+
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')) {
+      return (
+        <img 
+          src={cleanUrl} 
+          alt="Document thumbnail"
+          className="w-12 h-12 rounded border-2 border-accent/50 object-cover cursor-pointer hover:border-accent transition-colors"
+          onClick={(e) => {
+            e.stopPropagation()
+            window.open(cleanUrl, '_blank')
+          }}
+        />
+      )
+    }
+
+    if (ext === 'pdf') {
+      return <span className="text-blue-400 underline text-xs font-semibold">PDF</span>
+    }
+
+    return <span className="text-blue-400 underline text-xs font-semibold">File</span>
+  }
+
+  // Removed unused viewFile function - click handlers are inline in JSX
+
   useEffect(() => {
     fetchTeams()
   }, [])
@@ -105,9 +147,10 @@ const AdminDashboard = () => {
             viceCaptainWhatsapp: team.viceCaptain?.whatsapp || team.viceCaptainWhatsapp || team.vice_captain_whatsapp || '',
             playerCount: team.playerCount || team.player_count || (team.players?.length || 0),
             registrationDate: team.registrationDate || team.registration_date || '',
-            paymentReceipt: team.paymentReceipt || team.payment_receipt || '',
-            pastorLetter: team.pastorLetter || team.pastor_letter || '',
-            groupPhoto: team.groupPhoto || team.group_photo || '',
+            // Sanitize file URLs to handle legacy data
+            paymentReceipt: cleanFileUrl(team.paymentReceipt || team.payment_receipt),
+            pastorLetter: cleanFileUrl(team.pastorLetter || team.pastor_letter),
+            groupPhoto: cleanFileUrl(team.groupPhoto || team.group_photo),
             players: team.players || []
           }))
         : []
@@ -302,26 +345,42 @@ const AdminDashboard = () => {
                             )}
                           </div>
                           <div>
-                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Documents</p>
-                            <div className="flex gap-2 flex-wrap">
-                              {team.paymentReceipt && (
-                                <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded whitespace-nowrap">✓ Receipt</span>
-                              )}
-                              {team.pastorLetter && (
-                                <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded whitespace-nowrap">✓ Letter</span>
-                              )}
-                              {team.groupPhoto && (
-                                <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded whitespace-nowrap">✓ Group Photo</span>
-                              )}
+                            <p className="text-accent text-xs sm:text-sm font-body mb-2">Team Documents</p>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div className="flex flex-col items-center gap-1">
+                                {getFileStatusIcon(team.paymentReceipt)}
+                                <span className="text-[10px] text-white/60">Receipt</span>
+                              </div>
+                              <div className="flex flex-col items-center gap-1">
+                                {getFileStatusIcon(team.pastorLetter)}
+                                <span className="text-[10px] text-white/60">Letter</span>
+                              </div>
+                              <div className="flex flex-col items-center gap-1">
+                                {getFileStatusIcon(team.groupPhoto)}
+                                <span className="text-[10px] text-white/60">Photo</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="ml-auto sm:ml-4 flex-shrink-0 self-center sm:self-start">
+                    <div className="ml-auto sm:ml-4 flex-shrink-0 self-start flex flex-col gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(`/admin/team/${team.teamId}`)
+                        }}
+                        className="bg-accent/20 hover:bg-accent/30 text-accent px-3 py-2 rounded-lg text-xs font-body transition-all flex items-center gap-1 whitespace-nowrap"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        View Details
+                      </button>
                       <svg
-                        className="w-5 h-5 sm:w-6 sm:h-6 text-accent group-hover:translate-x-1 transition-transform"
+                        className="w-5 h-5 sm:w-6 sm:h-6 text-accent group-hover:translate-x-1 transition-transform self-center"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"

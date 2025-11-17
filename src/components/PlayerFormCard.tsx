@@ -6,9 +6,7 @@ interface PlayerData {
   name: string
   role: string
   aadharFile: File | null
-  aadharFileBase64: string | null
   subscriptionFile: File | null
-  subscriptionFileBase64: string | null
 }
 
 interface Props {
@@ -20,18 +18,12 @@ interface Props {
 }
 
 const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRemove, canRemove }) => {
-  const handleAadharChange = (base64: string | null) => {
-    onChange({ 
-      aadharFileBase64: base64,
-      aadharFile: base64 ? new File([], 'aadhar') : null
-    })
+  const handleAadharChange = (file: File | null) => {
+    onChange({ aadharFile: file })
   }
 
-  const handleSubscriptionChange = (base64: string | null) => {
-    onChange({ 
-      subscriptionFileBase64: base64,
-      subscriptionFile: base64 ? new File([], 'subscription') : null
-    })
+  const handleSubscriptionChange = (file: File | null) => {
+    onChange({ subscriptionFile: file })
   }
 
   return (

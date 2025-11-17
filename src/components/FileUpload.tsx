@@ -4,7 +4,7 @@ import { validateFile, getFileUploadHelpText, ALLOWED_EXTENSIONS, MAX_FILE_SIZE_
 
 interface Props {
   file: File | null
-  onFileChange: (base64: string | null) => void
+  onFileChange: (file: File | null) => void
   accept?: string
   placeholder?: string
   className?: string
@@ -21,18 +21,6 @@ const FileUpload: React.FC<Props> = ({
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement | null>(null)
 
-  const readFileAsBase64 = (f: File) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(f)
-    reader.onload = () => {
-      const base64 = reader.result as string
-      onFileChange(base64) // Returns: data:image/jpeg;base64,...
-    }
-    reader.onerror = () => {
-      setError('Failed to read file')
-    }
-  }
-
   const handleFile = (f: File) => {
     const validation = validateFile(f)
     if (!validation.valid) {
@@ -40,7 +28,8 @@ const FileUpload: React.FC<Props> = ({
       return
     }
 
-    readFileAsBase64(f)
+    setError('')
+    onFileChange(f)
   }
 
   const handleDragOver = (e: React.DragEvent) => {
