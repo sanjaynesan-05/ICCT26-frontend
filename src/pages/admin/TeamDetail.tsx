@@ -30,23 +30,70 @@ interface TeamDetails {
   players: Player[]
 }
 
-/* 🧠 Utility — normalize any file (base64 or hosted URL) */
-const normalizeFileURL = (file?: string, type: 'image' | 'pdf' = 'image'): string => {
-  if (!file) return ''
-  if (file.startsWith('data:')) return file // already valid base64 URI
-  if (file.startsWith('http')) return file  // hosted file
-  // Add proper prefix if backend sent raw base64
-  return type === 'pdf'
-    ? `data:application/pdf;base64,${file}`
-    : `data:image/png;base64,${file}`
-}
-
 const TeamDetail = () => {
   const { teamId } = useParams<{ teamId: string }>()
   const navigate = useNavigate()
   const [team, setTeam] = useState<TeamDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // Sanitize file URLs to handle legacy data (null, {}, local paths)
+  const cleanFileUrl = (url: any): string => {
+    if (!url || typeof url !== 'string' || url.trim() === '') return ''
+    if (url.startsWith('data:') || url.startsWith('file:') || url.startsWith('C:') || url.startsWith('/')) return ''
+    if (!url.startsWith('http://') && !url.startsWith('https://')) return ''
+    return url.trim()
+  }
+
+  // Unified file preview helper for Cloudinary URLs
+  const getFilePreview = (url: string | undefined, altText: string = 'Document') => {
+    const cleanUrl = cleanFileUrl(url)
+    if (!cleanUrl) return null
+
+    const ext = cleanUrl.split('.').pop()?.toLowerCase()
+
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')) {
+      return (
+        <img 
+          src={cleanUrl} 
+          alt={altText}
+          className="max-w-full sm:max-w-2xl w-full rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
+          onClick={() => window.open(cleanUrl, '_blank')}
+        />
+      )
+    }
+
+    if (ext === 'pdf') {
+      return (
+        <div className="w-full h-[400px] rounded-lg border-2 border-accent/50 bg-white/5 flex flex-col items-center justify-center gap-4">
+          <svg className="w-16 h-16 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          <a
+            href={cleanUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-gold px-6 py-3 rounded-lg"
+          >
+            View PDF
+          </a>
+        </div>
+      )
+    }
+
+    return (
+      <div className="w-full h-[400px] rounded-lg border-2 border-accent/50 bg-white/5 flex items-center justify-center">
+        <a
+          href={cleanUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-gold px-6 py-3 rounded-lg"
+        >
+          Download File
+        </a>
+      </div>
+    )
+  }
 
   useEffect(() => {
     fetchTeamDetails()
@@ -91,17 +138,17 @@ const TeamDetail = () => {
         viceCaptainPhone: fetchedTeam.viceCaptain?.phone || fetchedTeam.viceCaptainPhone || '',
         viceCaptainEmail: fetchedTeam.viceCaptain?.email || fetchedTeam.viceCaptainEmail || '',
         viceCaptainWhatsapp: fetchedTeam.viceCaptain?.whatsapp || fetchedTeam.viceCaptainWhatsapp || '',
-        paymentReceipt: normalizeFileURL(fetchedTeam.paymentReceipt || fetchedTeam.payment_receipt, 'image'),
-        pastorLetter: normalizeFileURL(fetchedTeam.pastorLetter || fetchedTeam.pastor_letter, 'pdf'),
-        groupPhoto: normalizeFileURL(fetchedTeam.groupPhoto || fetchedTeam.group_photo, 'image'),
+        paymentReceipt: fetchedTeam.paymentReceipt || fetchedTeam.payment_receipt || '',
+        pastorLetter: fetchedTeam.pastorLetter || fetchedTeam.pastor_letter || '',
+        groupPhoto: fetchedTeam.groupPhoto || fetchedTeam.group_photo || '',
         registrationDate: fetchedTeam.registrationDate || fetchedTeam.registration_date || '',
         players: Array.isArray(fetchedTeam.players)
           ? fetchedTeam.players.map((p: any) => ({
               playerId: p.playerId || 'UNKNOWN',
               name: p.name || 'Unnamed Player',
               role: p.role || 'Unknown Role',
-              aadharFile: normalizeFileURL(p.aadharFile || p.aadhar_file, 'pdf'),
-              subscriptionFile: normalizeFileURL(p.subscriptionFile || p.subscription_file, 'pdf'),
+              aadharFile: p.aadharFile || p.aadhar_file || '',
+              subscriptionFile: p.subscriptionFile || p.subscription_file || '',
             }))
           : []
       }
@@ -257,20 +304,7 @@ const TeamDetail = () => {
               {team.pastorLetter && (
                 <div className="flex flex-col">
                   <p className="text-accent text-sm font-body mb-3 font-semibold">Pastor Letter</p>
-                  {team.pastorLetter.startsWith('data:image') ? (
-                    <img 
-                      src={team.pastorLetter} 
-                      alt="Pastor Letter" 
-                      className="w-full h-64 object-cover rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
-                      onClick={() => window.open(team.pastorLetter, '_blank')}
-                    />
-                  ) : (
-                    <iframe 
-                      src={team.pastorLetter} 
-                      className="w-full h-64 rounded-lg border-2 border-accent/50"
-                      title="Pastor Letter"
-                    />
-                  )}
+                  {getFilePreview(team.pastorLetter, 'Pastor Letter')}
                 </div>
               )}
 
@@ -278,25 +312,17 @@ const TeamDetail = () => {
               {team.paymentReceipt && (
                 <div className="flex flex-col">
                   <p className="text-accent text-sm font-body mb-3 font-semibold">Payment Receipt</p>
-                  <img 
-                    src={team.paymentReceipt} 
-                    alt="Payment Receipt" 
-                    className="w-full h-64 object-cover rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
-                    onClick={() => window.open(team.paymentReceipt, '_blank')}
-                  />
+                  {getFilePreview(team.paymentReceipt, 'Payment Receipt')}
                 </div>
               )}
 
               {/* Group Photo */}
-              <div className="flex flex-col">
-                <p className="text-accent text-sm font-body mb-3 font-semibold">Team Group Photo</p>
-                <img 
-                  src={team.groupPhoto} 
-                  alt="Team group photo" 
-                  className="w-full h-64 object-cover rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
-                  onClick={() => window.open(team.groupPhoto, '_blank')}
-                />
-              </div>
+              {team.groupPhoto && (
+                <div className="flex flex-col">
+                  <p className="text-accent text-sm font-body mb-3 font-semibold">Team Group Photo</p>
+                  {getFilePreview(team.groupPhoto, 'Team Group Photo')}
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

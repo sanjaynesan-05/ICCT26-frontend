@@ -113,6 +113,33 @@ class ApiService {
   }
 
   /**
+   * Register a team using multipart/form-data
+   */
+  async registerTeamMultipart(formData: FormData): Promise<any> {
+    const url = this.getUrl('/api/register/team')
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        // Don't set Content-Type header - browser will set it with boundary
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          detail: `HTTP ${response.status}: ${response.statusText}`,
+        }))
+        throw new Error(errorData.detail || JSON.stringify(errorData))
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Multipart registration error:', error)
+      throw error
+    }
+  }
+
+  /**
    * Get registration status
    */
   async getRegistrationStatus(): Promise<any> {
@@ -194,6 +221,60 @@ class ApiService {
    */
   async getPlayersFromDatabase(): Promise<any> {
     return this.request('/api/players')
+  }
+
+  /**
+   * Update team using multipart/form-data (supports partial file updates)
+   */
+  async updateTeamMultipart(teamId: string, formData: FormData): Promise<any> {
+    const url = this.getUrl(`/api/teams/${teamId}`)
+    
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        body: formData,
+        // Don't set Content-Type header - browser will set it with boundary
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          detail: `HTTP ${response.status}: ${response.statusText}`,
+        }))
+        throw new Error(errorData.detail || JSON.stringify(errorData))
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Team update error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Update player using multipart/form-data (supports partial file updates)
+   */
+  async updatePlayerMultipart(playerId: string, formData: FormData): Promise<any> {
+    const url = this.getUrl(`/api/players/${playerId}`)
+    
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        body: formData,
+        // Don't set Content-Type header - browser will set it with boundary
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          detail: `HTTP ${response.status}: ${response.statusText}`,
+        }))
+        throw new Error(errorData.detail || JSON.stringify(errorData))
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Player update error:', error)
+      throw error
+    }
   }
 }
 

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Plus, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react'
 import PlayerFormCard from '../components/PlayerFormCard'
 import FileUpload from '../components/FileUpload'
-import { apiService, type TeamRegistrationPayload } from '../services/api'
+import { apiService } from '../services/api'
 
 interface CaptainInfo {
   name: string
@@ -16,23 +16,18 @@ interface PlayerData {
   name: string
   role: string
   aadharFile: File | null
-  aadharFileBase64: string | null
   subscriptionFile: File | null
-  subscriptionFileBase64: string | null
 }
 
 interface FormData {
   churchName: string
   teamName: string
   pastorLetter: File | null
-  pastorLetterBase64: string | null
   groupPhoto: File | null
-  groupPhotoBase64: string | null
   captain: CaptainInfo
   viceCaptain: CaptainInfo
   players: PlayerData[]
   paymentReceipt: File | null
-  paymentReceiptBase64: string | null
 }
 
 const CHURCH_NAMES = [
@@ -54,7 +49,6 @@ const Registration = () => {
   const [currentStep, setCurrentStep] = useState(0) // Start at step 0 for rules
   const [showSuccess, setShowSuccess] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [convertingFiles, setConvertingFiles] = useState(false)
   const [validationError, setValidationError] = useState<string>('')
   const [acceptTerms, setAcceptTerms] = useState(false)
 
@@ -62,23 +56,18 @@ const Registration = () => {
     name: '',
     role: '',
     aadharFile: null,
-    aadharFileBase64: null,
     subscriptionFile: null,
-    subscriptionFileBase64: null,
   })
 
   const [formData, setFormData] = useState<FormData>({
     churchName: '',
     teamName: '',
     pastorLetter: null,
-    pastorLetterBase64: null,
     groupPhoto: null,
-    groupPhotoBase64: null,
     captain: { name: '', phone: '', whatsapp: '', email: '' },
     viceCaptain: { name: '', phone: '', whatsapp: '', email: '' },
     players: Array.from({ length: 11 }).map(() => emptyPlayer()),
     paymentReceipt: null,
-    paymentReceiptBase64: null,
   })
 
   const totalSteps = 6
@@ -105,8 +94,8 @@ const Registration = () => {
       case 1:
         if (!formData.churchName.trim()) return 'Please select a church name'
         if (!formData.teamName.trim()) return 'Please enter a team name'
-        if (!formData.pastorLetterBase64) return 'Please upload a church letter'
-        if (!formData.groupPhotoBase64) return 'Please upload team group photo'
+        if (!formData.pastorLetter) return 'Please upload a church letter'
+        if (!formData.groupPhoto) return 'Please upload team group photo'
         break
 
       case 2:
@@ -136,8 +125,8 @@ const Registration = () => {
           const player = formData.players[i]
           if (!player.name.trim()) return `Player ${i + 1}: Please enter name`
           if (player.role && !VALID_ROLES.includes(player.role)) return `Player ${i + 1}: Invalid role '${player.role}'`
-          if (!player.aadharFileBase64) return `Player ${i + 1}: Please upload Aadhar/ID`
-          if (!player.subscriptionFileBase64) return `Player ${i + 1}: Please upload subscription/consent`
+          if (!player.aadharFile) return `Player ${i + 1}: Please upload Aadhar/ID`
+          if (!player.subscriptionFile) return `Player ${i + 1}: Please upload subscription/consent`
         }
         break
 
@@ -146,7 +135,7 @@ const Registration = () => {
         break
 
       case 5:
-        if (!formData.paymentReceiptBase64) return 'Please upload payment receipt'
+        if (!formData.paymentReceipt) return 'Please upload payment receipt'
         break
 
       default:
@@ -182,7 +171,6 @@ const Registration = () => {
     if (currentStep > 0) setCurrentStep((s) => s - 1)
   }
 
-  // Base64 helper for files
   const updatePlayer = (index: number, data: Partial<PlayerData>) => {
     clearValidationError()
     const players = [...formData.players]
@@ -202,19 +190,16 @@ const Registration = () => {
     }
   }
 
-  // Robust submit which:
-  // - validates full form
-  // - builds payload matching backend schema with Base64 files
-  // - calls apiService.registerTeam(payload)
+  // Submit handler using multipart/form-data
   const handleSubmit = async () => {
     setIsSubmitting(true)
-    setConvertingFiles(false)
     setValidationError('')
     try {
       // Full-form validation
       if (!formData.churchName.trim()) throw new Error('Please select a church name')
       if (!formData.teamName.trim()) throw new Error('Please enter a team name')
-      if (!formData.pastorLetterBase64) throw new Error('Please upload a church letter')
+      if (!formData.pastorLetter) throw new Error('Please upload a church letter')
+      if (!formData.groupPhoto) throw new Error('Please upload team group photo')
 
       if (!formData.captain.name.trim()) throw new Error('Please enter captain name')
       if (!formData.captain.phone.trim() || formData.captain.phone.length !== 10)
@@ -239,50 +224,53 @@ const Registration = () => {
       formData.players.forEach((p, idx) => {
         if (!p.name.trim()) throw new Error(`Player ${idx + 1}: Please enter name`)
         if (p.role && !VALID_ROLES.includes(p.role)) throw new Error(`Player ${idx + 1}: Invalid role '${p.role}'`)
-        if (!p.aadharFileBase64) throw new Error(`Player ${idx + 1}: Please upload Aadhar/ID`)
-        if (!p.subscriptionFileBase64) throw new Error(`Player ${idx + 1}: Please upload subscription/consent`)
+        if (!p.aadharFile) throw new Error(`Player ${idx + 1}: Please upload Aadhar/ID`)
+        if (!p.subscriptionFile) throw new Error(`Player ${idx + 1}: Please upload subscription/consent`)
       })
 
-      if (!formData.paymentReceiptBase64) throw new Error('Please upload payment receipt')
+      if (!formData.paymentReceipt) throw new Error('Please upload payment receipt')
 
-      // Build payload with Base64 strings matching backend schema (nested objects)
-      const payload: TeamRegistrationPayload = {
-        team_name: formData.teamName,
-        church_name: formData.churchName,
-        captain: {
-          name: formData.captain.name,
-          phone: formData.captain.phone,
-          email: formData.captain.email,
-          whatsapp: formData.captain.whatsapp || "",
-        },
-        viceCaptain: {
-          name: formData.viceCaptain.name,
-          phone: formData.viceCaptain.phone,
-          email: formData.viceCaptain.email,
-          whatsapp: formData.viceCaptain.whatsapp || "",
-        },
-        payment_receipt: formData.paymentReceiptBase64!,
-        pastor_letter: formData.pastorLetterBase64!,
-        groupPhoto: formData.groupPhotoBase64!,
-        players: formData.players.map((p) => ({
-          name: p.name,
-          role: p.role,
-          aadhar_file: p.aadharFileBase64!,
-          subscription_file: p.subscriptionFileBase64!,
-        })),
-      }
+      // Build FormData for multipart/form-data upload
+      const multipartData = new FormData()
+      
+      // Team details
+      multipartData.append('team_name', formData.teamName)
+      multipartData.append('church_name', formData.churchName)
+      
+      // Captain details
+      multipartData.append('captain[name]', formData.captain.name)
+      multipartData.append('captain[phone]', formData.captain.phone)
+      multipartData.append('captain[email]', formData.captain.email)
+      multipartData.append('captain[whatsapp]', formData.captain.whatsapp || '')
+      
+      // Vice-captain details
+      multipartData.append('viceCaptain[name]', formData.viceCaptain.name)
+      multipartData.append('viceCaptain[phone]', formData.viceCaptain.phone)
+      multipartData.append('viceCaptain[email]', formData.viceCaptain.email)
+      multipartData.append('viceCaptain[whatsapp]', formData.viceCaptain.whatsapp || '')
+      
+      // Team-level files
+      multipartData.append('pastor_letter', formData.pastorLetter)
+      multipartData.append('payment_receipt', formData.paymentReceipt)
+      multipartData.append('group_photo', formData.groupPhoto)
+      
+      // Players data
+      formData.players.forEach((p, index) => {
+        multipartData.append(`players[${index}][name]`, p.name)
+        multipartData.append(`players[${index}][role]`, p.role || '')
+        multipartData.append(`players[${index}][aadhar_file]`, p.aadharFile!)
+        multipartData.append(`players[${index}][subscription_file]`, p.subscriptionFile!)
+      })
 
-      // Debug logging for payload verification
-      console.log('📤 Registration Payload:', JSON.stringify(payload, null, 2))
+      console.log('📤 Submitting multipart/form-data to backend...')
 
-      // Call API
-      await apiService.registerTeam(payload)
+      // Call API with multipart/form-data
+      await apiService.registerTeamMultipart(multipartData)
 
       // Show success modal
       setShowSuccess(true)
     } catch (err: unknown) {
-      // Parse and show better error messages
-      console.error('Submit error (raw):', err)
+      console.error('Submit error:', err)
 
       let message = 'Registration failed'
       try {
@@ -305,23 +293,22 @@ const Registration = () => {
       setValidationError(message)
     } finally {
       setIsSubmitting(false)
-      setConvertingFiles(false)
     }
   }
 
-  const handleFileChange = (base64: string | null) => {
+  const handleFileChange = (file: File | null) => {
     clearValidationError()
-    setFormData({ ...formData, paymentReceiptBase64: base64, paymentReceipt: base64 ? new File([], 'receipt') : null })
+    setFormData({ ...formData, paymentReceipt: file })
   }
 
-  const handlePastorLetterChange = (base64: string | null) => {
+  const handlePastorLetterChange = (file: File | null) => {
     clearValidationError()
-    setFormData({ ...formData, pastorLetterBase64: base64, pastorLetter: base64 ? new File([], 'letter') : null })
+    setFormData({ ...formData, pastorLetter: file })
   }
 
-  const handleGroupPhotoChange = (base64: string | null) => {
+  const handleGroupPhotoChange = (file: File | null) => {
     clearValidationError()
-    setFormData({ ...formData, groupPhotoBase64: base64, groupPhoto: base64 ? new File([], 'photo') : null })
+    setFormData({ ...formData, groupPhoto: file })
   }
 
   return (
@@ -657,11 +644,11 @@ const Registration = () => {
                 Previous
               </button>
 
-              <button onClick={handleNext} disabled={isSubmitting || convertingFiles} className={`flex items-center gap-2 btn-gold ${(isSubmitting || convertingFiles) ? 'opacity-60 cursor-not-allowed' : ''}`}>
-                {(isSubmitting || convertingFiles) ? (
+              <button onClick={handleNext} disabled={isSubmitting} className={`flex items-center gap-2 btn-gold ${isSubmitting ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                {isSubmitting ? (
                   <span className="inline-flex items-center gap-2">
                     <svg className="w-4 h-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                    {convertingFiles ? 'Converting files...' : 'Processing...'}
+                    Processing...
                   </span>
                 ) : (
                   <>
