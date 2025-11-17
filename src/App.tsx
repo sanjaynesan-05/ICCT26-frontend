@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import CricketLoader from './components/CricketLoader'
+import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -30,24 +31,25 @@ function App() {
   }
 
   return (
-    <AdminProvider>
-      <Router>
-        <Routes>
-          {/* Admin Routes (No Navbar/Footer) */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route
-            path="/admin/dashboard"
-            element={
-              <ProtectedRoute>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/team/:teamId"
-            element={
-              <ProtectedRoute>
-                <TeamDetail />
+    <ErrorBoundary>
+      <AdminProvider>
+        <Router>
+          <Routes>
+            {/* Admin Routes (No Navbar/Footer) */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/team/:teamId"
+              element={
+                <ProtectedRoute>
+                  <TeamDetail />
               </ProtectedRoute>
             }
           />
@@ -87,6 +89,7 @@ function App() {
         </Routes>
       </Router>
     </AdminProvider>
+    </ErrorBoundary>
   )
 }
 
