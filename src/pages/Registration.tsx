@@ -116,7 +116,7 @@ const Registration = () => {
   const emptyPlayer = (): PlayerData => ({
     name: '',
     role: '',
-    aadharFile: null,
+    aadharFile: null, 
     subscriptionFile: null,
   })
 
