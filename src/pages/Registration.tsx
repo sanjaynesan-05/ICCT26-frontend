@@ -10,6 +10,7 @@ import { Plus, CheckCircle, ChevronRight, ChevronLeft, Copy, AlertTriangle } fro
 import PlayerFormCard from '../components/PlayerFormCard'
 import FileUpload from '../components/FileUpload'
 import { DetailedProgressBar } from '../components/ProgressBar'
+import { SearchableSelect } from '../components/SearchableSelect'
 
 // Import production utilities
 import {
@@ -82,19 +83,89 @@ interface RegistrationResponse {
 // ============================================================================
 
 const CHURCH_NAMES = [
-  "CSI St. Peter's Church",
-  'CSI Christ Church',
-  'CSI Grace Church',
-  'CSI Zion Church',
-  'CSI Emmanuel Church',
-  'CSI Trinity Church',
-  'CSI Holy Cross Church',
-  'CSI Bethel Church',
-  'CSI Calvary Church',
-  'CSI Vision Church',
+  'CSI Immanuel Church, Cbe',
+  'CSI Christ Church, Trichy Road',
+  'CSI Christ Church, Gandhipuram',
+  'CSI All Souls Church, Race Course',
+  'CSI Ramanathapuram Pastorate',
+  'CSI Christ Church, NGGO Colony',
+  'CSI Christ Church, TVS Nagar',
+  'CSI Christ Church, Madukkarai',
+  'CSI Christ Church, Police Qrts.',
+  'CSI Christ Church, Sundarapuram',
+  'CSI Christ Church, Kovaipudur',
+  'CSI Singanallur Pastorate',
+  'CSI Ondipudur Pastorate',
+  'CSI Rathinapuri Pastorate',
+  'CSI Sowripalayam Pastorate',
+  'CSI Varadarajapuram Pastorate',
+  'CSI Good Shep. Church, Cheran Ma Ngr',
+  'CSI Union Church, Podanur',
+  'CSI Addis Pastorate',
+  'CSI Kavundampalayam Pastorate',
+  "CSI Holy Redeemer's Church, SB Colony",
+  'CSI Pollachi Pastorate',
+  'CSI Perur Pastorate',
+  'CSI Vadavalli Pastorate',
+  'CSI Christ Church, Mathuvarayapuram',
+  'CSI Malumichampatti Pastorate',
+  'CSI Visuvasapuram Pastorate',
+  'CSI Church, Airport',
+  "CSI St.Mark's Church, Podanur",
+  'CSI Church, Irugur',
+  'CSI Chettipalayam Pastorate',
+  'CSI New Mullai Nagar Pastorate',
+  'CSI Pattanam Pastorate',
+  'CSI Wals Memorial Church Thadagam',
+  "CSI St.Paul's Church, Tirupur",
+  "CSI St.Luke's Church, Tiruppur",
+  'CSI Tirupur Rural Pastorate',
+  'CSI Pitchampalayam Pastorate',
+  'CSI Church, Peruntholuvu',
+  'CSI Church, Nallur',
+  'CSI Christ Church, Press Colony',
+  'CSI Sirumugai Pastorate',
+  'CSI Mettupalayam Pastorate',
+  'CSI Karamadai Pastorate',
+  'CSI Christ Church, Somanur',
+  'CSI Sulur Pastorate',
+  'CSI Annur Pastorate',
+  'CSI Avinashi Pastorate',
+  'CSI Kaniyur-Mooperipalayam Pastorate',
+  'CSI Church, Nambiyur-Kedarai',
+  'CSI Perumanallur-Kunnathur Pastorate',
+  "CSI St.John's Church, Palladam",
+  'CSI Annur Rural Pastorate',
+  'CSI Iduvai-Divine Nagar Pastorate',
+  'CSI Church, Chinniampalayam',
+  'CSI Gudalur Pastorate',
+  'CSI Devarshola Pastorate',
+  'CSI Pandalur Pastorate',
+  'CSI Masinagudi Pastorate',
+  'CSI Naduvattam Pastorate',
+  'CSI Holy Trinity Church, Ooty',
+  'CSI Lovedale Pastorate',
+  "CSI St.Stephen's Church, Ooty",
+  'CSI Wesley Church, Ooty',
+  'CSI Wesley Church, Ketti',
+  'CSI St.George\'s Ch, Wellington',
+  'CSI Aruvankadu Pastorate',
+  'CSI Selas Pastorate',
+  'CSI Kundha Pastorate',
+  'CSI Hulical Pastorate',
+  'CSI Nonsuch Pastorate',
+  'CSI Wesley Church, Coonoor',
+  "CSI St.John's Church, Coonoor",
+  'CSI All Saints Church, Coonoor',
+  'CSI Kullakamby Pastorate',
+  'CSI Adderley Pastorate',
+  "CSI St.Luke's Church, Kotagiri",
+  'CSI Wesley Church, Kotagiri',
+  'CSI Masakkal & Thanthanadu',
+  'CSI Burnside Pastorate',
+  'CSI Kil-Kotagiri Pastorate',
+  'CSI Milidhane Pastorate',
 ]
-
-const VALID_ROLES = ['Batsman', 'Bowler', 'All-rounder', 'Wicketkeeper']
 
 // ============================================================================
 // MAIN COMPONENT
@@ -277,7 +348,7 @@ const Registration = () => {
           hasErrors = true
         }
 
-        formData.players.forEach((player, index) => {
+        formData.players.forEach((player: PlayerData, index: number) => {
           const playerNameValidation = isValidName(player.name)
           if (!playerNameValidation.isValid) {
             addValidationError(`player_${index}_name`, `Player ${index + 1}: ${playerNameValidation.error}`)
@@ -356,7 +427,7 @@ const Registration = () => {
     }
 
     if (currentStep < totalSteps - 1) {
-      setCurrentStep(s => s + 1)
+      setCurrentStep((s: number) => s + 1)
     } else {
       void handleSubmit()
     }
@@ -365,7 +436,7 @@ const Registration = () => {
   const handlePrevious = () => {
     clearValidationErrors()
     if (currentStep > 0) {
-      setCurrentStep(s => s - 1)
+      setCurrentStep((s: number) => s - 1)
     }
   }
 
@@ -486,7 +557,7 @@ const Registration = () => {
       multipartData.append('group_photo', sanitizedGroupPhoto)
 
       // Players (FLATTENED)
-      formData.players.forEach((p, index) => {
+      formData.players.forEach((p: PlayerData, index: number) => {
         multipartData.append(`player_${index}_name`, p.name.trim())
         multipartData.append(`player_${index}_role`, p.role?.trim() || '')
 
@@ -824,28 +895,18 @@ const Registration = () => {
                 >
                   <h3 className="font-heading text-3xl text-primary mb-6">Team Information</h3>
                   <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Church Name *
-                      </label>
-                      <select
-                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                        value={formData.churchName}
-                        onChange={(e) => {
-                          clearValidationErrors()
-                          setFormData({ ...formData, churchName: e.target.value })
-                        }}
-                        disabled={isSubmitting}
-                        required
-                      >
-                        <option value="">Select your church...</option>
-                        {CHURCH_NAMES.map((church) => (
-                          <option key={church} value={church}>
-                            {church}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <SearchableSelect
+                      options={CHURCH_NAMES}
+                      value={formData.churchName}
+                      onChange={(value) => {
+                        clearValidationErrors()
+                        setFormData({ ...formData, churchName: value })
+                      }}
+                      label="Church Name"
+                      placeholder="Search and select your church..."
+                      disabled={isSubmitting}
+                      required
+                    />
 
                     <div>
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">

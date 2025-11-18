@@ -6,6 +6,8 @@
 import {
   Instagram,
   Facebook,
+  Youtube,
+  Globe,
 } from 'lucide-react'
 import type { Organizer, SocialLink, Venue } from '../types'
 
@@ -51,14 +53,26 @@ export const SOCIAL_LINKS: SocialLink[] = [
   {
     name: 'Instagram',
     icon: Instagram,
-    url: 'https://www.instagram.com/st_peters_youth_fellowship?igsh=MWZtZDd3MWc3ZHYxOQ==',
+    url: 'https://www.instagram.com/st_peters_youth_fellowship/',
     color: 'from-purple-500 to-pink-500',
   },
   {
     name: 'Facebook',
     icon: Facebook,
-    url: 'https://facebook.com/icct26',
+    url: 'https://www.facebook.com/share/1D5bQK3wHk/',
     color: 'from-blue-600 to-blue-400',
+  },
+  {
+    name: 'YouTube',
+    icon: Youtube,
+    url: 'https://www.youtube.com/@CSIStPetersChurchRathinapuri',
+    color: 'from-red-600 to-red-400',
+  },
+  {
+    name: 'Website',
+    icon: Globe,
+    url: 'https://www.csichurchrathinapuri.com/',
+    color: 'from-cyan-500 to-blue-500',
   },
 ]
 
