@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { Download } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import { apiService } from '../../services/api'
 
 interface Player {
@@ -39,7 +41,12 @@ const TeamDetail = () => {
 
   // Sanitize file URLs to handle legacy data (null, {}, local paths)
   const cleanFileUrl = (url: any): string => {
-    if (!url || typeof url !== 'string' || url.trim() === '') return ''
+    if (!url) return ''
+    if (typeof url === 'object') {
+      console.warn('⚠️ Group photo is stored as object, not URL:', url)
+      return ''
+    }
+    if (typeof url !== 'string' || url.trim() === '') return ''
     if (url.startsWith('data:') || url.startsWith('file:') || url.startsWith('C:') || url.startsWith('/')) return ''
     if (!url.startsWith('http://') && !url.startsWith('https://')) return ''
     return url.trim()
@@ -99,6 +106,92 @@ const TeamDetail = () => {
     fetchTeamDetails()
   }, [teamId])
 
+  // Export team data to Excel
+  const exportToExcel = () => {
+    if (!team) return
+
+    // Sheet 1: Team Information
+    const teamInfo = [
+      ['ICCT26 Tournament - Team Report'],
+      [''],
+      ['Team Information'],
+      ['Team ID', team.teamId],
+      ['Team Name', team.teamName],
+      ['Church Name', team.churchName],
+      ['Registration Date', team.registrationDate],
+      [''],
+      ['Captain Information'],
+      ['Name', team.captainName],
+      ['Phone', team.captainPhone],
+      ['WhatsApp', team.captainWhatsapp],
+      ['Email', team.captainEmail],
+      [''],
+      ['Vice Captain Information'],
+      ['Name', team.viceCaptainName],
+      ['Phone', team.viceCaptainPhone],
+      ['WhatsApp', team.viceCaptainWhatsapp],
+      ['Email', team.viceCaptainEmail],
+      [''],
+      ['Submitted Documents'],
+      ['Pastor Letter', cleanFileUrl(team.pastorLetter) || 'Not uploaded'],
+      ['Payment Receipt', cleanFileUrl(team.paymentReceipt) || 'Not uploaded'],
+      ['Group Photo', cleanFileUrl(team.groupPhoto) || 'Not uploaded'],
+    ]
+
+    // Sheet 2: Players Information
+    const playersHeader = [
+      ['Players Squad (' + (team.players?.length || 0) + ' players)'],
+      [''],
+      ['#', 'Player ID', 'Name', 'Role', 'Aadhar File URL', 'Subscription File URL']
+    ]
+    
+    const playersData = team.players?.map((player, index) => [
+      index + 1,
+      player.playerId,
+      player.name,
+      player.role || 'Not specified',
+      cleanFileUrl(player.aadharFile) || 'Not uploaded',
+      cleanFileUrl(player.subscriptionFile) || 'Not uploaded'
+    ]) || []
+
+    const playersSheet = [...playersHeader, ...playersData]
+
+    // Create workbook
+    const wb = XLSX.utils.book_new()
+    
+    // Add Team Info sheet
+    const ws1 = XLSX.utils.aoa_to_sheet(teamInfo)
+    
+    // Set column widths for Team Info
+    ws1['!cols'] = [
+      { wch: 25 }, // Column A
+      { wch: 50 }  // Column B
+    ]
+    
+    XLSX.utils.book_append_sheet(wb, ws1, 'Team Information')
+
+    // Add Players sheet
+    const ws2 = XLSX.utils.aoa_to_sheet(playersSheet)
+    
+    // Set column widths for Players
+    ws2['!cols'] = [
+      { wch: 5 },  // #
+      { wch: 15 }, // Player ID
+      { wch: 25 }, // Name
+      { wch: 15 }, // Role
+      { wch: 60 }, // Aadhar URL
+      { wch: 60 }  // Subscription URL
+    ]
+    
+    XLSX.utils.book_append_sheet(wb, ws2, 'Players')
+
+    // Generate filename with team name and date
+    const fileName = `ICCT26_${team.teamName.replace(/\s+/g, '_')}_${team.teamId}_${new Date().toISOString().split('T')[0]}.xlsx`
+
+    // Download file
+    XLSX.writeFile(wb, fileName)
+  }
+
   const fetchTeamDetails = async () => {
     try {
       setLoading(true)
@@ -152,6 +245,12 @@ const TeamDetail = () => {
             }))
           : []
       }
+
+      // Debug: Log what we're receiving from backend
+      console.log('Backend team data:', fetchedTeam)
+      console.log('Processed team data:', safeTeam)
+      console.log('Group photo value:', safeTeam.groupPhoto)
+      console.log('Cleaned group photo:', cleanFileUrl(safeTeam.groupPhoto))
 
       setTeam(safeTeam)
     } catch (err) {
@@ -208,12 +307,23 @@ const TeamDetail = () => {
               <p className="font-body text-accent text-xs sm:text-sm truncate">{team.teamId}</p>
             </div>
           </div>
-          <button
-            onClick={() => navigate('/admin/dashboard')}
-            className="bg-accent/20 hover:bg-accent/30 text-accent px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap self-end sm:self-auto"
-          >
-            Back to Dashboard
-          </button>
+          <div className="flex gap-2 self-end sm:self-auto">
+            <button
+              onClick={exportToExcel}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap flex items-center gap-2"
+              title="Download team data as Excel"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Download Excel</span>
+              <span className="sm:hidden">Excel</span>
+            </button>
+            <button
+              onClick={() => navigate('/admin/dashboard')}
+              className="bg-accent/20 hover:bg-accent/30 text-accent px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap"
+            >
+              Back
+            </button>
+          </div>
         </div>
       </header>
 
@@ -317,10 +427,20 @@ const TeamDetail = () => {
               )}
 
               {/* Group Photo */}
-              {team.groupPhoto && (
+              {team.groupPhoto ? (
                 <div className="flex flex-col">
                   <p className="text-accent text-sm font-body mb-3 font-semibold">Team Group Photo</p>
                   {getFilePreview(team.groupPhoto, 'Team Group Photo')}
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  <p className="text-accent text-sm font-body mb-3 font-semibold">Team Group Photo</p>
+                  <div className="glass-effect rounded-xl p-4 border border-yellow-500/50 bg-yellow-500/10 h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-yellow-200 font-body text-sm mb-2">⚠️ Group photo not yet uploaded</p>
+                      <p className="text-yellow-300/70 font-body text-xs">Raw value: {typeof team.groupPhoto === 'object' ? JSON.stringify(team.groupPhoto) : String(team.groupPhoto)}</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

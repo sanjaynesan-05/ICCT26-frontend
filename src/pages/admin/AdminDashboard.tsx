@@ -294,17 +294,6 @@ const AdminDashboard = () => {
                 >
                   <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                     <div className="flex items-start gap-3 sm:gap-4 w-full">
-                      <div className="flex-shrink-0">
-                        <img 
-                          src={team.groupPhoto} 
-                          alt="Team photo" 
-                          className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border-2 border-accent/50 hover:border-accent transition-colors cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            window.open(team.groupPhoto, '_blank')
-                          }}
-                        />
-                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3">
                           <span className="bg-accent/20 text-accent px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-body font-semibold">

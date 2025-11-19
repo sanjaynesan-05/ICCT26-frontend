@@ -6,7 +6,8 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Plus, CheckCircle, ChevronRight, ChevronLeft, Copy, AlertTriangle } from 'lucide-react'
+import { Plus, CheckCircle, ChevronRight, ChevronLeft, Copy, AlertTriangle, Sparkles } from 'lucide-react'
+import confetti from 'canvas-confetti'
 import PlayerFormCard from '../components/PlayerFormCard'
 import FileUpload from '../components/FileUpload'
 import { DetailedProgressBar } from '../components/ProgressBar'
@@ -630,6 +631,33 @@ const Registration = () => {
 
       setShowProgress(false)
       setShowSuccess(true)
+      
+      // 🎉 Trigger confetti celebration
+      setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        })
+        // Second burst
+        setTimeout(() => {
+          confetti({
+            particleCount: 50,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 }
+          })
+        }, 200)
+        // Third burst
+        setTimeout(() => {
+          confetti({
+            particleCount: 50,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 }
+          })
+        }, 400)
+      }, 300)
     } catch (error) {
       console.error('❌ Submit error:', error)
 
@@ -956,6 +984,9 @@ const Registration = () => {
                       </label>
                       <p className="text-xs text-gray-500 mb-2">
                         Upload a group photo of your team (JPEG or PNG)
+                      </p>
+                      <p className="text-xs bg-yellow-50 text-yellow-700 border border-yellow-200 rounded p-2 mb-2">
+                        ⚠️ <strong>Note:</strong> Group photo upload is experiencing backend issues. Your file will be received but may not be stored. Our team is working on a fix.
                       </p>
                       <div>
                         <FileUpload
@@ -1446,46 +1477,132 @@ const Registration = () => {
             className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4"
           >
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              initial={{ scale: 0.8, opacity: 0, rotate: -5 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="glass-card rounded-2xl p-8 max-w-md w-full text-center"
+              transition={{ type: 'spring', duration: 0.6 }}
+              className="glass-card rounded-2xl p-8 max-w-lg w-full text-center relative overflow-hidden"
             >
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-12 h-12 text-green-600" />
-              </div>
-              <h2 className="font-heading text-4xl text-primary mb-4">
-                Registration Successful!
-              </h2>
-              <p className="font-subheading text-gray-700 mb-6">
-                Your team has been successfully registered for ICCT26
-              </p>
+              {/* Animated background elements */}
+              <motion.div
+                className="absolute top-0 left-0 w-full h-full"
+                animate={{
+                  background: [
+                    'radial-gradient(circle at 20% 30%, rgba(255, 204, 41, 0.15) 0%, transparent 50%)',
+                    'radial-gradient(circle at 80% 70%, rgba(255, 204, 41, 0.15) 0%, transparent 50%)',
+                    'radial-gradient(circle at 20% 30%, rgba(255, 204, 41, 0.15) 0%, transparent 50%)'
+                  ]
+                }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              
+              {/* Success icon with animation */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                className="w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl relative"
+              >
+                <CheckCircle className="w-14 h-14 text-white" />
+                <motion.div
+                  className="absolute inset-0 rounded-full border-4 border-green-400"
+                  animate={{ scale: [1, 1.3, 1], opacity: [1, 0, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              </motion.div>
+              
+              {/* Sparkles decoration */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex items-center justify-center gap-2 mb-4"
+              >
+                <Sparkles className="w-5 h-5 text-accent" />
+                <Sparkles className="w-4 h-4 text-accent" />
+                <Sparkles className="w-5 h-5 text-accent" />
+              </motion.div>
+              
+              <motion.h2
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="font-heading text-5xl text-primary mb-3 tracking-wide"
+              >
+                WELCOME TO
+              </motion.h2>
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="font-heading text-6xl bg-gradient-to-r from-accent via-yellow-500 to-accent bg-clip-text text-transparent mb-6 tracking-wider"
+                style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+              >
+                ICCT 2026
+              </motion.div>
+              <motion.p
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="font-subheading text-lg text-gray-700 mb-8"
+              >
+                🎉 Your team has been successfully registered! 🏏
+              </motion.p>
 
               {/* Team ID Display with Copy Button */}
-              <div className="bg-accent/20 rounded-lg p-4 mb-6">
-                <p className="text-sm text-gray-600 mb-2">Your Team ID</p>
-                <div className="flex items-center justify-center gap-2">
-                  <p className="font-heading text-3xl text-primary">{registeredTeamId}</p>
-                  <button
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="bg-gradient-to-r from-accent/30 via-accent/40 to-accent/30 rounded-xl p-6 mb-6 border-2 border-accent/50 shadow-lg"
+              >
+                <p className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Your Team ID</p>
+                <div className="flex items-center justify-center gap-3">
+                  <motion.p
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.7, type: 'spring' }}
+                    className="font-heading text-5xl text-primary tracking-wider"
+                  >
+                    {registeredTeamId}
+                  </motion.p>
+                  <motion.button
                     onClick={copyTeamId}
-                    className="p-2 hover:bg-accent/30 rounded-lg transition-colors"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-3 bg-primary hover:bg-primary/90 rounded-lg transition-colors shadow-md"
                     title="Copy Team ID"
                   >
-                    <Copy className="w-5 h-5 text-primary" />
-                  </button>
+                    <Copy className="w-5 h-5 text-accent" />
+                  </motion.button>
                 </div>
-              </div>
+                <p className="text-xs text-gray-600 mt-3 italic">Save this ID for future reference</p>
+              </motion.div>
 
-              {/* Email Notice Removed */}
-              <div className="mb-6 p-3 rounded-lg bg-blue-50">
-                <p className="text-sm text-blue-700">
-                  ✅ Registration completed successfully. Your confirmation email feature is disabled.
+              {/* Confirmation Message */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.8 }}
+                className="mb-6 p-4 rounded-lg bg-gradient-to-r from-green-50 to-blue-50 border border-green-200"
+              >
+                <p className="text-sm text-gray-700 font-medium">
+                  ✅ Your registration is confirmed!<br/>
+                  <span className="text-xs text-gray-600 mt-1 inline-block">We look forward to seeing you at the tournament!</span>
                 </p>
-              </div>
+              </motion.div>
 
-              <button onClick={closeSuccess} className="btn-gold w-full">
+              <motion.button
+                onClick={closeSuccess}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.9 }}
+                className="btn-gold w-full text-lg py-4 shadow-lg"
+              >
                 Close
-              </button>
+              </motion.button>
             </motion.div>
           </motion.div>
         )}
