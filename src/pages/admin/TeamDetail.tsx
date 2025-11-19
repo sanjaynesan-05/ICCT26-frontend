@@ -385,10 +385,6 @@ const TeamDetail = () => {
                             <p className="text-accent text-xs sm:text-sm font-body mb-1">Role</p>
                             <p className="text-white font-body text-sm sm:text-base">{p.role}</p>
                           </div>
-                          <div>
-                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Player ID</p>
-                            <p className="text-white font-body text-sm sm:text-base">{p.playerId}</p>
-                          </div>
                         </div>
                       </div>
                       <svg className="w-5 h-5 sm:w-6 sm:h-6 text-accent group-hover:translate-x-1 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

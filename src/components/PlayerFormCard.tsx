@@ -47,8 +47,8 @@ const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRem
             <option value="">Select Role (Optional)</option>
             <option value="Batsman">Batsman</option>
             <option value="Bowler">Bowler</option>
-            <option value="All-rounder">All-Rounder</option>
-            <option value="Wicketkeeper">Wicket-Keeper</option>
+            <option value="All-Rounder">All-Rounder</option>
+            <option value="Wicket-Keeper">Wicket-Keeper</option>
           </select>
         </div>
       </div>
