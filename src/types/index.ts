@@ -88,6 +88,7 @@ export interface Announcement {
   id: number
   text: string
   emoji: string
+  image?: string
 }
 
 /**

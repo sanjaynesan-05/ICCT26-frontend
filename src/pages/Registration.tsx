@@ -608,10 +608,19 @@ const Registration = () => {
         return
       }
 
-      // Success!
-      const data = response.data
+      // Handle backend success response safely
+      const data = response?.data ?? response ?? null
+
+      if (!data || !data.team_id) {
+        console.error('Invalid backend response:', response)
+        addValidationError('submit', 'Server error: Missing team ID')
+        setIsSubmitting(false)
+        setShowProgress(false)
+        return
+      }
+
       setRegisteredTeamId(data.team_id)
-      setEmailSent(data.email_sent)
+      setEmailSent(false) // email removed from backend
 
       // Save to localStorage
       saveIdempotencyRecord(idempotencyKey, 'success', data.team_id)
@@ -1467,12 +1476,10 @@ const Registration = () => {
                 </div>
               </div>
 
-              {/* Email Status */}
-              <div className={`mb-6 p-3 rounded-lg ${emailSent ? 'bg-green-50' : 'bg-yellow-50'}`}>
-                <p className={`text-sm ${emailSent ? 'text-green-700' : 'text-yellow-700'}`}>
-                  {emailSent
-                    ? '✅ Confirmation email sent successfully!'
-                    : '⚠️ Email delivery pending. Check your inbox later.'}
+              {/* Email Notice Removed */}
+              <div className="mb-6 p-3 rounded-lg bg-blue-50">
+                <p className="text-sm text-blue-700">
+                  ✅ Registration completed successfully. Your confirmation email feature is disabled.
                 </p>
               </div>
 

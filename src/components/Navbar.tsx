@@ -17,7 +17,7 @@ const Navbar = () => {
 
   return (
     <nav
-      className="w-full transition-all duration-300 glass-effect shadow-lg"
+      className="w-full transition-all duration-300 bg-primary shadow-lg"
     >
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex items-center justify-between h-20">
@@ -79,7 +79,7 @@ const Navbar = () => {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden glass-effect overflow-hidden"
+            className="md:hidden bg-primary overflow-hidden"
           >
             <div className="container mx-auto px-4 py-6 space-y-4">
               {navLinks.map((link) => (

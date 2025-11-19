@@ -1,17 +1,14 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Facebook, Instagram, Youtube } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Countdown from '../components/Countdown'
 import RegistrationCountdown from '../components/RegistrationCountdown'
-import AnnouncementTicker from '../components/AnnouncementTicker'
+import ImageCarousel from '../components/ImageCarousel'
 import { ANNOUNCEMENTS, HERO_SECTION, TOURNAMENT_HIGHLIGHTS } from '../data/home'
+import { SOCIAL_LINKS } from '../data/contact'
 import { apiService } from '../services/api'
 
 const Home = () => {
-  // Convert ANNOUNCEMENTS to array of strings for ticker
-  const announcementTexts = ANNOUNCEMENTS.map(a => a.text)
-  
   // State for teams count
   const [teamsCount, setTeamsCount] = useState<number>(0)
   const [loadingCount, setLoadingCount] = useState<boolean>(true)
@@ -152,8 +149,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Announcement Ticker */}
-      <AnnouncementTicker announcements={announcementTexts} />
+      {/* Image Carousel - Full Width Continuous Loop */}
+      <ImageCarousel announcements={ANNOUNCEMENTS} />
 
       {/* Highlights Section */}
       <section className="py-20 px-4 lg:px-8">
@@ -172,7 +169,7 @@ const Home = () => {
               const Icon = highlight.icon;
               // Use dynamic count for Teams Registered
               const displayValue = highlight.title === 'Teams Registered' 
-                ? (loadingCount ? 'Loading...' : `${teamsCount} Teams`)
+                ? (loadingCount ? 'Loading...' : `${teamsCount} TEAMS`)
                 : highlight.value;
               
               return (
@@ -234,72 +231,64 @@ const Home = () => {
       </section>
 
       {/* Follow Us Section */}
-      <section className="py-20 px-4 lg:px-8">
-        <div className="container mx-auto max-w-4xl text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="font-heading text-5xl md:text-6xl text-accent mb-12"
-          >
-            Follow Us
-          </motion.h2>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="flex justify-center gap-8 md:gap-12"
-          >
-            {/* Facebook */}
-            <motion.a
-              href="https://facebook.com/icct26"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.1, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex flex-col items-center group"
+      <section className="py-20 px-4 lg:px-8 bg-gradient-to-b from-bg-start via-primary to-secondary">
+        <div className="container mx-auto max-w-4xl">
+          {/* Glass effect card container */}
+          <div className="glass-effect rounded-2xl p-12 glow-border relative overflow-hidden">
+            {/* Animated background effect */}
+            <div className="absolute inset-0 pointer-events-none z-0">
+              <div className="w-full h-full bg-gradient-to-br from-pink-500/10 via-blue-500/10 to-purple-500/10 animate-pulse"></div>
+            </div>
+            
+            {/* Content */}
+            <motion.h2
+              className="font-heading text-4xl md:text-5xl mb-12 text-center relative z-10"
+              initial={{ scale: 0.9, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ type: 'spring', stiffness: 120 }}
             >
-              <div className="glass-effect glow-border rounded-2xl p-6 group-hover:shadow-lg transition-all duration-300">
-                <Facebook className="w-12 h-12 text-blue-500 group-hover:text-blue-400 transition-colors" />
-              </div>
-              <span className="text-gray-300 font-subheading text-sm mt-4 group-hover:text-accent transition-colors">
-                Facebook
+              <span className="inline-block bg-gradient-to-r from-pink-500 via-blue-500 to-purple-500 bg-clip-text text-transparent drop-shadow-lg animate-gradient-x">
+                Follow Us
               </span>
-            </motion.a>
-            {/* Instagram */}
-            <motion.a
-              href="https://www.instagram.com/st_peters_youth_fellowship?igsh=MWZtZDd3MWc3ZHYxOQ=="
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.1, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex flex-col items-center group"
+            </motion.h2>
+            
+            <div className="flex justify-center gap-8 md:gap-12 mb-12 flex-wrap relative z-10">
+              {SOCIAL_LINKS.map((social, idx) => {
+                const IconComponent = social.icon
+                return (
+                  <motion.a
+                    key={social.name}
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.2, rotate: 8, y: -8 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`w-20 h-20 rounded-full bg-gradient-to-br ${social.color} flex items-center justify-center shadow-lg hover:shadow-2xl transition-all group border-4 border-accent/30 animate-bounce-slow`}
+                    aria-label={social.name}
+                    style={{ boxShadow: '0 0 24px 4px rgba(236,72,153,0.15)' }}
+                  >
+                    <motion.div
+                      whileHover={{ y: -6, scale: 1.25 }}
+                      transition={{ type: 'spring', stiffness: 300 }}
+                    >
+                      <IconComponent className="w-10 h-10 text-white group-hover:scale-125 transition-transform" />
+                    </motion.div>
+                  </motion.a>
+                )
+              })}
+            </div>
+            
+            <motion.p
+              className="text-center text-gray-300 font-subheading relative z-10"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
             >
-              <div className="glass-effect glow-border rounded-2xl p-6 group-hover:shadow-lg transition-all duration-300">
-                <Instagram className="w-12 h-12 text-pink-500 group-hover:text-pink-400 transition-colors" />
-              </div>
-              <span className="text-gray-300 font-subheading text-sm mt-4 group-hover:text-accent transition-colors">
-                Instagram
-              </span>
-            </motion.a>
-            {/* YouTube */}
-            <motion.a
-              href="https://youtube.com/icct26"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.1, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex flex-col items-center group"
-            >
-              <div className="glass-effect glow-border rounded-2xl p-6 group-hover:shadow-lg transition-all duration-300">
-                <Youtube className="w-12 h-12 text-red-500 group-hover:text-red-400 transition-colors" />
-              </div>
-              <span className="text-gray-300 font-subheading text-sm mt-4 group-hover:text-accent transition-colors">
-                YouTube
-              </span>
-            </motion.a>
-          </motion.div>
+              Connect with us on social media for updates and announcements
+            </motion.p>
+          </div>
         </div>
       </section>
     </motion.div>

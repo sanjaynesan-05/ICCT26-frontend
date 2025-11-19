@@ -312,6 +312,102 @@ export default function CricketLoader() {
                   />
                 )}
               </motion.div>
+
+              {/* Cricket Stumps at the end */}
+              <motion.div
+                className="absolute -top-6 sm:-top-8 right-0"
+              >
+                {/* Stumps container */}
+                <div className="relative w-12 h-16">
+                  {/* Stumps (stay standing or fall) */}
+                  <motion.svg
+                    width="40"
+                    height="60"
+                    viewBox="0 0 40 80"
+                    xmlns="http://www.w3.org/2000/svg"
+                    animate={{
+                      rotate: progress === 100 ? 15 : 0,
+                      y: progress === 100 ? 20 : 0,
+                    }}
+                    transition={{
+                      duration: progress === 100 ? 0.6 : 0.1,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    {/* Left stump */}
+                    <rect x="4" y="10" width="4" height="50" fill="#8B4513" rx="2" />
+                    {/* Middle stump */}
+                    <rect x="16" y="8" width="4" height="52" fill="#A0522D" rx="2" />
+                    {/* Right stump */}
+                    <rect x="28" y="10" width="4" height="50" fill="#8B4513" rx="2" />
+                  </motion.svg>
+
+                  {/* Bails flying in air when hit */}
+                  {progress === 100 && (
+                    <>
+                      {/* Left bail */}
+                      <motion.div
+                        className="absolute w-8 h-1.5 bg-[#D2B48C] rounded-full"
+                        style={{ top: "6px", left: "5px" }}
+                        initial={{ x: 0, y: 0, opacity: 1, rotate: 0 }}
+                        animate={{
+                          x: -40,
+                          y: -60,
+                          opacity: 0,
+                          rotate: -180,
+                        }}
+                        transition={{
+                          duration: 0.8,
+                          ease: "easeOut",
+                        }}
+                      />
+                      
+                      {/* Right bail */}
+                      <motion.div
+                        className="absolute w-8 h-1.5 bg-[#D2B48C] rounded-full"
+                        style={{ top: "6px", left: "5px" }}
+                        initial={{ x: 0, y: 0, opacity: 1, rotate: 0 }}
+                        animate={{
+                          x: 40,
+                          y: -60,
+                          opacity: 0,
+                          rotate: 180,
+                        }}
+                        transition={{
+                          duration: 0.8,
+                          ease: "easeOut",
+                        }}
+                      />
+                    </>
+                  )}
+                </div>
+
+                {/* Stump destruction particles when hit */}
+                {progress === 100 && (
+                  <>
+                    {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                      <motion.div
+                        key={`particle-${i}`}
+                        className="absolute w-1.5 h-1.5 bg-[#8B4513] rounded-full"
+                        style={{
+                          left: "20px",
+                          top: "30px",
+                        }}
+                        initial={{ x: 0, y: 0, opacity: 1 }}
+                        animate={{
+                          x: (Math.random() - 0.5) * 100,
+                          y: (Math.random() - 0.5) * 100,
+                          opacity: 0,
+                        }}
+                        transition={{
+                          duration: 0.8,
+                          ease: "easeOut",
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+              </motion.div>
             </motion.div>
 
             {/* Percentage counter */}
