@@ -37,7 +37,7 @@ const PlayerDetail = () => {
     const cleanUrl = cleanFileUrl(url)
     if (!cleanUrl) return null
 
-    const ext = url.split('.').pop()?.toLowerCase()
+    const ext = cleanUrl.split('.').pop()?.toLowerCase()
 
     if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')) {
       return (

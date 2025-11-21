@@ -582,6 +582,17 @@ const Registration = () => {
       console.log('📤 Submitting with idempotency key:', idempotencyKey)
       console.log('📦 Total files:', 3 + (formData.players.length * 2))
 
+      // 🔍 DEBUG: Log all FormData entries
+      console.log('🔍 === COMPLETE FORMDATA DEBUG ===')
+      for (let [key, value] of multipartData.entries()) {
+        if (value instanceof File) {
+          console.log(`✅ ${key}: File(name: ${value.name}, size: ${value.size} bytes, type: ${value.type})`)
+        } else {
+          console.log(`📝 ${key}: ${value}`)
+        }
+      }
+      console.log('🔍 === END FORMDATA DEBUG ===')
+
       // Upload with retry logic and progress tracking
       const response: BackendResponse<RegistrationResponse> = await uploadMultipartWithRetry(
         '/api/register/team',

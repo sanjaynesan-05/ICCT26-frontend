@@ -49,7 +49,7 @@ const AdminDashboard = () => {
       return <span className="text-red-500 font-semibold text-xs">No File</span>
     }
 
-    const ext = url.split('.').pop()?.toLowerCase()
+    const ext = cleanUrl.split('.').pop()?.toLowerCase()
 
     if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')) {
       return (

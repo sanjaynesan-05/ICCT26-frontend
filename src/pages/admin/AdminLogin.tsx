@@ -18,7 +18,7 @@ const AdminLogin = () => {
     if (success) {
       navigate('/admin/dashboard')
     } else {
-      setError('Invalid credentials. Try username: admin, password: admin123')
+      setError('Invalid credentials.')
     }
   }
 
