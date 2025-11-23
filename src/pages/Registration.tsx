@@ -1364,9 +1364,9 @@ const Registration = () => {
                     </div>
 
                     <div className="flex flex-col items-center justify-center">
-                      <div className="bg-white p-4 rounded-xl shadow-lg mb-4">
+                      <div className="bg-white p-4 rounded-xl shadow-lg mb-4 border-2 border-primary">
                         <img
-                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=icct26@upi&pn=ICCT26&am=2000&tn=ICCT26%20Registration%20Fee"
+                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=sanjaynesan007@oksbi&pn=ICCT26&am=2000&tn=ICCT26%20Registration%20Fee"
                           alt="Payment QR Code"
                           className="w-64 h-64 object-cover rounded-lg"
                         />
@@ -1374,6 +1374,12 @@ const Registration = () => {
                       <p className="text-center font-subheading text-gray-600 mb-4">
                         Scan with any UPI app to pay ₹2,000
                       </p>
+                      <a
+                        href="upi://pay?pa=sanjaynesan007@oksbi&pn=ICCT26&am=2000&tn=ICCT26%20Registration%20Fee"
+                        className="text-lg font-semibold text-primary hover:text-blue-700 transition-colors"
+                      >
+                        Click to Pay
+                      </a>
                     </div>
 
                     <div>
