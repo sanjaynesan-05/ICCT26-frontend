@@ -26,7 +26,7 @@ export const ORGANIZERS: Organizer[] = [
       role: 'Head Co-Ordinator',
       name: 'Mr. Sam Richard',
       phone: '+91 9543656533',
-      whatsapp: '919543656533',
+      whatsapp: '917092341518',
       
     },
     {

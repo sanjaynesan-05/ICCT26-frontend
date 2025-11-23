@@ -1,64 +1,54 @@
-import { motion } from 'framer-motion'
-import type { Announcement } from '../types'
+import { useState } from 'react'
 
-interface ImageCarouselProps {
-  announcements: Announcement[]
-}
+// Dynamically import all sponsor images from src/assets/sponsor folder
+// To add new sponsor images, simply place them in src/assets/sponsor/
+// They will automatically appear in the carousel without code changes
+const sponsorImages = import.meta.glob('/src/assets/sponsor/*', { eager: true, query: '?url', import: 'default' })
 
-const ImageCarousel = ({ announcements }: ImageCarouselProps) => {
+// Convert the imported images to an array of URLs
+const SPONSOR_IMAGES = Object.values(sponsorImages) as string[]
+
+const ImageCarousel = () => {
+  const [isHovered, setIsHovered] = useState(false)
   // Create a much longer continuous strip by repeating images multiple times
-  const repeatedImages = Array(15).fill(announcements).flat()
+  const repeatedImages = Array(5).fill(SPONSOR_IMAGES).flat()
 
   return (
-    <div className="w-full bg-primary overflow-hidden relative">
-      {/* Continuous fast scrolling strip of images */}
-      <motion.div
-        className="flex gap-0 h-36"
-        animate={{
-          x: [0, -3840], // Full scroll distance
-        }}
-        transition={{
-          x: {
-            repeat: Infinity,
-            repeatType: 'loop',
-            duration: 20, // Fast speed - 20 seconds for full cycle
-            ease: 'linear',
-          },
-        }}
-      >
-        {repeatedImages.map((image, index) => (
-          <div
-            key={index}
-            className="flex-shrink-0 w-80 h-36 relative group overflow-hidden"
-          >
-            <img
-              src={image.image}
-              alt={image.text}
-              className="w-full h-full object-cover"
-            />
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            {/* Text overlay on hover */}
-            <motion.div
-              className="absolute bottom-0 left-0 right-0 p-4 text-white bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              initial={{ y: 10 }}
-              whileHover={{ y: 0 }}
+    <div className="w-full bg-primary overflow-hidden relative py-8">
+      <div className="container mx-auto px-4 mb-6">
+        <h2 className="font-heading text-3xl md:text-4xl text-accent text-center">CO SPONSORS</h2>
+      </div>
+      {/* Continuous fast scrolling strip of sponsor images */}
+      <div className="overflow-hidden relative">
+        <div
+          className="flex gap-0 h-40"
+          style={{
+            animation: 'scroll 45s linear infinite',
+            animationPlayState: isHovered ? 'paused' : 'running',
+          }}
+        >
+          {repeatedImages.map((image, index) => (
+            <div
+              key={index}
+              className="flex-shrink-0 w-40 h-40 relative group overflow-hidden bg-white/5 border border-accent/20 rounded-lg flex items-center justify-center"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
             >
-              <div className="flex items-start gap-2">
-                <span className="text-2xl flex-shrink-0">{image.emoji}</span>
-                <p className="font-subheading text-sm font-semibold line-clamp-3">
-                  {image.text}
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        ))}
-      </motion.div>
+              <img
+                src={image}
+                alt={`Sponsor ${index + 1}`}
+                className="w-full h-full object-contain p-3"
+              />
+              {/* Hover effect overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+            </div>
+          ))}
+        </div>
 
-      {/* Fade overlay on edges for smooth effect */}
-      <div className="absolute top-0 left-0 w-16 h-36 bg-gradient-to-r from-primary to-transparent pointer-events-none z-10" />
-      <div className="absolute top-0 right-0 w-16 h-36 bg-gradient-to-l from-primary to-transparent pointer-events-none z-10" />
+        {/* Fade overlay on edges for smooth effect */}
+        <div className="absolute top-0 left-0 w-20 h-40 bg-gradient-to-r from-primary to-transparent pointer-events-none z-10" />
+        <div className="absolute top-0 right-0 w-20 h-40 bg-gradient-to-l from-primary to-transparent pointer-events-none z-10" />
+      </div>
     </div>
   )
 }

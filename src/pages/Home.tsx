@@ -7,6 +7,7 @@ import ImageCarousel from '../components/ImageCarousel'
 import { ANNOUNCEMENTS, HERO_SECTION, TOURNAMENT_HIGHLIGHTS } from '../data/home'
 import { SOCIAL_LINKS } from '../data/contact'
 import { apiService } from '../services/api'
+import titleSponsorLogo from '../assets/sponsor/0 Title_Sponsors.png'
 
 const Home = () => {
   // State for teams count
@@ -121,23 +122,105 @@ const Home = () => {
             </p>
           </motion.div>
 
-          {/* Countdowns */}
+          {/* Register Now Button - Mobile Only */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="md:hidden mb-8"
+          >
+            <Link
+              to="/registration"
+              className="inline-block btn-gold text-sm transition-shadow"
+              style={{ boxShadow: '0 0 18px rgba(255,214,92,0.32)' }}
+            >
+              Register Now
+            </Link>
+          </motion.div>
+
+          {/* Countdowns with Title Sponsor - Reorganized for Mobile */}
           <motion.div
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
             className="mb-12"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-8">
-              {/* Match Countdown */}
+            {/* Title Sponsor - Appears first on mobile */}
+            <div className="lg:hidden mb-8">
+              <div className="flex flex-col items-center justify-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.6 }}
+                  className="flex flex-col items-center"
+                >
+                  <motion.h3 
+                    className="font-heading text-4xl md:text-5xl text-accent mb-4 tracking-wider uppercase font-bold"
+                    animate={{ 
+                      textShadow: [
+                        '0 0 10px rgba(255, 204, 41, 0.5)',
+                        '0 0 20px rgba(255, 204, 41, 0.8)',
+                        '0 0 30px rgba(255, 204, 41, 0.6)',
+                        '0 0 10px rgba(255, 204, 41, 0.5)',
+                      ]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    Title Sponsor
+                  </motion.h3>
+                  <div className="bg-white/10 border-2 border-accent/30 rounded-xl p-4 max-w-xs hover:border-accent/60 transition-all duration-300 scale-90">
+                    <img
+                      src={titleSponsorLogo}
+                      alt="Title Sponsors"
+                      className="w-full h-auto object-contain"
+                    />
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 items-center">
+              {/* Match Countdown - Left */}
               <div className="flex flex-col items-center">
-                <h3 className="font-subheading text-lg md:text-xl text-accent mb-6 uppercase tracking-wider">
+                <h3 className="font-subheading text-lg md:text-xl text-blue-400 mb-6 uppercase tracking-wider">
                   Match Countdown
                 </h3>
                 <Countdown />
               </div>
               
-              {/* Registration Countdown */}
+              {/* Title Sponsor - Middle (Desktop only) */}
+              <div className="hidden lg:flex flex-col items-center justify-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.6 }}
+                  className="flex flex-col items-center"
+                >
+                  <motion.h3 
+                    className="font-heading text-4xl md:text-5xl text-accent mb-4 tracking-wider uppercase font-bold"
+                    animate={{ 
+                      textShadow: [
+                        '0 0 10px rgba(255, 204, 41, 0.5)',
+                        '0 0 20px rgba(255, 204, 41, 0.8)',
+                        '0 0 30px rgba(255, 204, 41, 0.6)',
+                        '0 0 10px rgba(255, 204, 41, 0.5)',
+                      ]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    Title Sponsor
+                  </motion.h3>
+                  <div className="bg-white/10 border-2 border-accent/30 rounded-xl p-4 max-w-xs hover:border-accent/60 transition-all duration-300 scale-90">
+                    <img
+                      src={titleSponsorLogo}
+                      alt="Title Sponsors"
+                      className="w-full h-auto object-contain"
+                    />
+                  </div>
+                </motion.div>
+              </div>
+              
+              {/* Registration Countdown - Right */}
               <div className="flex flex-col items-center">
                 <h3 className="font-subheading text-lg md:text-xl text-blue-400 mb-6 uppercase tracking-wider">
                   Registration Countdown
@@ -149,8 +232,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Image Carousel - Full Width Continuous Loop */}
-      <ImageCarousel announcements={ANNOUNCEMENTS} />
+      {/* Image Carousel - Sponsor Logos */}
+      <ImageCarousel />
 
       {/* Highlights Section */}
       <section className="py-20 px-4 lg:px-8">
@@ -197,8 +280,20 @@ const Home = () => {
       </section>
 
       {/* About Section */}
-      <section className="py-20 px-4 lg:px-8 bg-gradient-to-b from-transparent to-secondary/50">
-        <div className="container mx-auto max-w-4xl text-center">
+      <section className="relative py-20 px-4 lg:px-8 overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-fixed"
+            style={{
+              backgroundImage: "url('/about.jpg')",
+            }}
+          />
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 container mx-auto max-w-4xl text-center">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -214,7 +309,7 @@ const Home = () => {
             transition={{ delay: 0.2 }}
             className="font-body text-lg md:text-xl text-gray-300 leading-relaxed mb-6"
           >
-            Welcome to the ICCT26 Cricket Tournament, the most thrilling Red Tennis Ball cricket championship 
+            Welcome to the ICCT26 Inter Church Cricket Tournament, the most thrilling Red Tennis Ball cricket championship 
             organized by CSI St. Peter's Church, Coimbatore. Join us for an unforgettable experience of sportsmanship, 
             competition, and glory.
           </motion.p>

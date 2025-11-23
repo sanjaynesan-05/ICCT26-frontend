@@ -8,6 +8,7 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import Schedule from './pages/Schedule'
 import Registration from './pages/Registration'
+import Gallery from './pages/Gallery'
 import Rules from './pages/Rules'
 import Contact from './pages/Contact'
 import { AdminProvider } from './contexts/AdminContext'
@@ -78,6 +79,7 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/schedule" element={<Schedule />} />
                     <Route path="/registration" element={<Registration />} />
+                    <Route path="/gallery" element={<Gallery />} />
                     <Route path="/rules" element={<Rules />} />
                     <Route path="/contact" element={<Contact />} />
                   </Routes>

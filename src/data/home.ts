@@ -53,7 +53,7 @@ export const ANNOUNCEMENTS: Announcement[] = [
  */
 export const HERO_SECTION = {
   mainTitle: "ICCT'26",
-  subTitle: 'Cricket Tournament',
+  subTitle: 'Inter Church Cricket Tournament',
   tagline: 'Experience the Ultimate Cricket Championship',
   description:
     '',

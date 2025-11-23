@@ -1438,9 +1438,9 @@ const Registration = () => {
                 }`}
               >
                 {isSubmitting ? (
-                  <span className="inline-flex items-center gap-2">
+                  <span className="inline-flex items-center gap-2 text-black">
                     <svg
-                      className="w-4 h-4 animate-spin text-white"
+                      className="w-4 h-4 animate-spin text-black"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
