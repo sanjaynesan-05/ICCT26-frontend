@@ -357,11 +357,6 @@ const Registration = () => {
             hasErrors = true
           }
 
-          if (!player.role || player.role.trim() === '') {
-            addValidationError(`player_${index}_role`, `Player ${index + 1}: ${VALIDATION_MESSAGES.ROLE_REQUIRED}`)
-            hasErrors = true
-          }
-
           if (!player.aadharFile) {
             addValidationError(`player_${index}_aadhar`, `Player ${index + 1}: Aadhar card is required`)
             hasErrors = true

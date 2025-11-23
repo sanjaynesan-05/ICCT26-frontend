@@ -449,15 +449,7 @@ export function validateTeamRegistration(data: {
       })
     }
 
-    // Player role
-    if (!player.role || player.role.trim() === '') {
-      errors.push({ 
-        field: `player_${index}_role`, 
-        error: `Player ${index + 1}: ${VALIDATION_MESSAGES.ROLE_REQUIRED}` 
-      })
-    }
-
-    // Player Aadhar file
+    // Player Aadhar file (role is optional)
     if (!player.aadharFile) {
       errors.push({ 
         field: `player_${index}_aadhar`, 
