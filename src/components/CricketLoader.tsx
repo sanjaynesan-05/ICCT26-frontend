@@ -46,6 +46,7 @@ export default function CricketLoader() {
       Array.from({ length: 12 }, (_, i) => ({
         key: `spark-${i}`,
         x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920),
+        y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1080),
         delay: Math.random() * 3,
         duration: 3 + Math.random() * 2,
       })),
@@ -83,13 +84,13 @@ export default function CricketLoader() {
           {sparks.map((spark) => (
             <motion.div
               key={spark.key}
-              initial={{ 
-                x: spark.x, 
-                y: window.innerHeight + 50,
-                opacity: 0 
+              initial={{
+                x: spark.x,
+                y: spark.y,
+                opacity: 0
               }}
               animate={{
-                y: -100,
+                y: spark.y - 200,
                 opacity: [0, 1, 1, 0],
               }}
               transition={{
@@ -103,28 +104,28 @@ export default function CricketLoader() {
           ))}
 
           {/* Main content container */}
-          <div className="relative z-10 flex flex-col items-center">
+          <div className="relative z-10 flex flex-col items-center justify-center px-4 sm:px-6 md:px-8">
             {/* Church Name - Top Highlighted */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="mb-6 flex items-center justify-center"
+              className="mb-6 sm:mb-8 md:mb-10 flex flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8"
             >
-              {/* Church Logo on Left */}
+              {/* Church Logo */}
               <motion.img
                 src="/churchlogo.png"
                 alt="Church Logo"
-                className="w-20 h-20 mr-6"
+                className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 flex-shrink-0"
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.1, duration: 0.6 }}
               />
-              
+
               {/* Text Block */}
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center text-center">
                 <motion.div
-                  className="font-bold text-xl sm:text-2xl md:text-3xl font-bebas tracking-wider text-center mb-1"
+                  className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bebas tracking-wider whitespace-nowrap mb-1"
                 >
                   <motion.span
                     style={{
@@ -147,7 +148,7 @@ export default function CricketLoader() {
                   </motion.span>
                 </motion.div>
                 <motion.div
-                  className="font-bold text-xl sm:text-2xl md:text-3xl font-bebas tracking-wider text-center"
+                  className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bebas tracking-wider whitespace-nowrap"
                 >
                   <motion.span
                     style={{
@@ -170,12 +171,12 @@ export default function CricketLoader() {
                   </motion.span>
                 </motion.div>
               </div>
-              
-              {/* Adonai Logo on Right */}
+
+              {/* Adonai Logo */}
               <motion.img
                 src="/adonailogo.png"
                 alt="Adonai Logo"
-                className="w-20 h-20 ml-6"
+                className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex-shrink-0"
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.1, duration: 0.6 }}
@@ -187,23 +188,23 @@ export default function CricketLoader() {
               initial={{ opacity: 0, scale: 0.8, y: -20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 1, ease: "easeOut" }}
-              className="relative mb-8 sm:mb-12"
+              className="relative mb-6 sm:mb-8 md:mb-10"
             >
               {/* Glow behind logo */}
               <div className="absolute inset-0 bg-[#FFCC29] blur-3xl opacity-20 scale-150" />
-              
+
               {/* ICCT26 Logo */}
-              <div className="relative">
-                <motion.h1 
-                  className="text-7xl sm:text-8xl md:text-9xl font-bebas font-bold bg-gradient-to-br from-[#FFD65C] via-[#FFCC29] to-[#D4A017] bg-clip-text text-transparent tracking-wider"
+              <div className="relative text-center">
+                <motion.h1
+                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bebas font-bold bg-gradient-to-br from-[#FFD65C] via-[#FFCC29] to-[#D4A017] bg-clip-text text-transparent tracking-wider"
                   style={{
                     textShadow: "0 0 40px rgba(255, 204, 41, 0.5), 0 0 20px rgba(255, 204, 41, 0.3)"
                   }}
                 >
                   ICCT'26
                 </motion.h1>
-                <motion.p 
-                  className="text-white/80 text-xs sm:text-sm font-quicksand tracking-[0.3em] text-center mt-2"
+                <motion.p
+                  className="text-white/80 text-xs sm:text-sm md:text-base font-quicksand tracking-[0.2em] sm:tracking-[0.3em] text-center mt-2"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
@@ -218,7 +219,7 @@ export default function CricketLoader() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="relative w-72 sm:w-80 md:w-96 mb-6"
+              className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mb-6 sm:mb-8"
             >
               {/* Progress bar background */}
               <div className="relative h-3 sm:h-4 bg-[#0D1B2A] rounded-full overflow-hidden shadow-lg border border-[#FFCC29]/20">
@@ -251,7 +252,7 @@ export default function CricketLoader() {
               {/* Rolling cricket ball */}
               <motion.div
                 className="absolute -top-6 sm:-top-8"
-                animate={{ 
+                animate={{
                   left: `${progress}%`,
                   rotate: progress * 7.2 // Full rotation every ~50%
                 }}
@@ -259,10 +260,10 @@ export default function CricketLoader() {
               >
                 {/* Ball glow */}
                 <div className="absolute inset-0 bg-[#FFD65C] blur-xl opacity-50 scale-150" />
-                
+
                 {/* Cricket ball SVG */}
                 <svg
-                  className="w-9 h-9 sm:w-12 sm:h-12 relative drop-shadow-[0_0_12px_#FFD65C]"
+                  className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 relative drop-shadow-[0_0_12px_#FFD65C]"
                   viewBox="0 0 100 100"
                   xmlns="http://www.w3.org/2000/svg"
                 >
@@ -275,7 +276,7 @@ export default function CricketLoader() {
                     </radialGradient>
                   </defs>
                   <circle cx="50" cy="50" r="48" fill="url(#ballGradient)" />
-                  
+
                   {/* Stitching */}
                   <path
                     d="M 30 20 Q 50 30 70 20"
@@ -297,7 +298,7 @@ export default function CricketLoader() {
                   <line x1="28" y1="78" x2="26" y2="74" stroke="#FFF" strokeWidth="1.5" />
                   <line x1="50" y1="82" x2="50" y2="78" stroke="#FFF" strokeWidth="1.5" />
                   <line x1="72" y1="78" x2="74" y2="74" stroke="#FFF" strokeWidth="1.5" />
-                  
+
                   {/* Shine effect */}
                   <ellipse cx="38" cy="35" rx="12" ry="8" fill="white" opacity="0.3" />
                 </svg>
@@ -305,7 +306,7 @@ export default function CricketLoader() {
                 {/* Motion trail */}
                 {progress > 0 && (
                   <motion.div
-                    className="absolute top-1/2 right-full w-16 h-1 bg-gradient-to-l from-[#FFD65C] to-transparent blur-sm"
+                    className="absolute top-1/2 right-full w-12 sm:w-16 h-1 bg-gradient-to-l from-[#FFD65C] to-transparent blur-sm"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: [0.6, 0.3, 0.6] }}
                     transition={{ duration: 0.5, repeat: Infinity }}
@@ -319,13 +320,13 @@ export default function CricketLoader() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="flex items-center justify-center mb-4"
+              className="flex items-center justify-center mb-4 sm:mb-6"
             >
               <motion.p
                 key={progress}
                 initial={{ scale: 1 }}
                 animate={{ scale: progress % 10 === 0 ? [1, 1.1, 1] : 1 }}
-                className="text-[#FFCC29] font-bold text-3xl sm:text-4xl tracking-widest font-bebas"
+                className="text-[#FFCC29] font-bold text-2xl sm:text-3xl md:text-4xl tracking-widest font-bebas"
                 style={{
                   textShadow: "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.4)"
                 }}
@@ -342,7 +343,7 @@ export default function CricketLoader() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.4 }}
-                className="text-white/80 text-sm sm:text-base font-quicksand font-medium tracking-wide text-center"
+                className="text-white/80 text-sm sm:text-base md:text-lg font-quicksand font-medium tracking-wide text-center px-4"
               >
                 {taglines[taglineIndex]}
               </motion.p>

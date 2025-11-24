@@ -1,72 +1,129 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Download, RefreshCw, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Download, X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface GalleryImage {
-  public_id: string
-  url: string
-  secure_url: string
+  id: string
   filename: string
+  src: string
   width: number
   height: number
-  bytes: number
-  uploaded_at: string
-  format: string
 }
 
-interface ApiResponse {
-  success: boolean
-  count: number
-  images: GalleryImage[]
+// Metaglob function - automatically discovers all images in gallery folder
+const loadGalleryImages = (): GalleryImage[] => {
+  // Use Vite's import.meta.glob to automatically discover all images
+  const imageModules = import.meta.glob('/gallery/*.{jpg,jpeg,png,gif,webp}', {
+    eager: true,
+    query: '?url',
+    import: 'default'
+  })
+
+  const images: GalleryImage[] = []
+
+  // Process each discovered image
+  Object.entries(imageModules).forEach(([path, src], index) => {
+    // Extract filename from path
+    const filename = path.split('/').pop() || `image-${index}.jpg`
+
+    // Create image object with default dimensions (will be updated when loaded)
+    images.push({
+      id: String(index + 1),
+      filename,
+      src: src as string,
+      width: 800, // Default width
+      height: 600, // Default height
+    })
+  })
+
+  return images
 }
+
+// Load images using metaglob
+const GALLERY_IMAGES = loadGalleryImages()
 
 const Gallery = () => {
-  const [images, setImages] = useState<GalleryImage[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null)
   const [downloading, setDownloading] = useState(false)
+  const [images, setImages] = useState<GalleryImage[]>(GALLERY_IMAGES)
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
-  // Fetch images from API
-  const fetchImages = async () => {
-    setLoading(true)
-    setError(null)
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/gallery/collection/images?limit=100`)
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      const data: ApiResponse = await response.json()
-      
-      if (data.success && data.images) {
-        setImages(data.images)
-      } else {
-        throw new Error('Invalid API response format')
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch images')
-      console.error('Error fetching images:', err)
-    } finally {
-      setLoading(false)
-    }
+  // Function to get actual image dimensions
+  const updateImageDimensions = (filename: string, width: number, height: number) => {
+    setImages(prevImages =>
+      prevImages.map(img =>
+        img.filename === filename ? { ...img, width, height } : img
+      )
+    )
   }
 
-  useEffect(() => {
-    fetchImages()
+  // Mark image as loaded
+  const markImageLoaded = useCallback((filename: string) => {
+    setLoadedImages(prev => new Set(prev).add(filename))
   }, [])
+
+  // Preload images and get their dimensions
+  useEffect(() => {
+    GALLERY_IMAGES.forEach(image => {
+      const img = new Image()
+      img.onload = () => {
+        updateImageDimensions(image.filename, img.naturalWidth, img.naturalHeight)
+        markImageLoaded(image.filename)
+      }
+      img.src = image.src
+    })
+  }, [markImageLoaded])
+
+  // Preload adjacent images for better navigation
+  useEffect(() => {
+    if (currentImageIndex !== null) {
+      const preloadIndices = [
+        currentImageIndex - 1,
+        currentImageIndex + 1,
+        currentImageIndex - 2,
+        currentImageIndex + 2
+      ].filter(i => i >= 0 && i < images.length)
+
+      preloadIndices.forEach(index => {
+        const img = new Image()
+        img.src = images[index].src
+      })
+    }
+  }, [currentImageIndex, images])
+
+  // Touch gesture handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > 50
+    const isRightSwipe = distance < -50
+
+    if (isLeftSwipe && currentImageIndex !== null && currentImageIndex < images.length - 1) {
+      nextImage()
+    }
+    if (isRightSwipe && currentImageIndex !== null && currentImageIndex > 0) {
+      prevImage()
+    }
+  }
 
   // Download image
   const downloadImage = (image: GalleryImage) => {
     setDownloading(true)
     const a = document.createElement('a')
-    a.href = image.secure_url
+    a.href = image.src
     a.download = image.filename
-    a.target = '_blank'
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -92,14 +149,32 @@ const Gallery = () => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (currentImageIndex === null) return
       
-      if (e.key === 'ArrowRight') nextImage()
-      if (e.key === 'ArrowLeft') prevImage()
-      if (e.key === 'Escape') setCurrentImageIndex(null)
+      switch (e.key) {
+        case 'ArrowRight':
+          e.preventDefault()
+          nextImage()
+          break
+        case 'ArrowLeft':
+          e.preventDefault()
+          prevImage()
+          break
+        case 'Escape':
+          e.preventDefault()
+          setCurrentImageIndex(null)
+          break
+        case 'd':
+        case 'D':
+          e.preventDefault()
+          if (currentImageIndex !== null) {
+            downloadImage(images[currentImageIndex])
+          }
+          break
+      }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [currentImageIndex, images.length])
+  }, [currentImageIndex, images])
 
   // Organize images into columns for masonry layout
   const getColumnLayout = () => {
@@ -147,28 +222,16 @@ const Gallery = () => {
           </p>
         </motion.div>
 
-        {/* Refresh Button */}
-        <div className="flex justify-center mb-8">
-          <button
-            onClick={fetchImages}
-            disabled={loading}
-            className="flex items-center gap-2 px-6 py-3 bg-accent hover:bg-yellow-500 text-black rounded-lg transition-colors disabled:opacity-50 font-semibold"
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh Gallery
-          </button>
-        </div>
-
         {/* Error Message */}
-        {error && (
+        {false && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="glass-effect border-2 border-red-500/30 rounded-xl p-6 mb-8 text-center"
           >
-            <p className="text-red-400 font-semibold mb-4">Error: {error}</p>
+            <p className="text-red-400 font-semibold mb-4">Error loading gallery</p>
             <button
-              onClick={fetchImages}
+              onClick={() => window.location.reload()}
               className="px-6 py-2 bg-accent hover:bg-yellow-500 text-black rounded-lg transition-colors font-semibold"
             >
               Try Again
@@ -177,28 +240,28 @@ const Gallery = () => {
         )}
 
         {/* Loading State */}
-        {loading && (
+        {false && (
           <div className="flex flex-col items-center justify-center py-20">
-            <RefreshCw className="w-12 h-12 text-accent animate-spin mb-4" />
             <p className="text-gray-300 font-subheading">Loading gallery...</p>
           </div>
         )}
 
         {/* Empty State */}
-        {!loading && images.length === 0 && !error && (
+        {images.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20">
-            <p className="text-gray-400 font-subheading text-lg mb-4">No images found</p>
+            <p className="text-gray-400 font-subheading text-lg mb-4">No images found in gallery folder</p>
+            <p className="text-gray-500 text-sm mb-4">Add images to /public/gallery/ folder</p>
             <button
-              onClick={fetchImages}
+              onClick={() => window.location.reload()}
               className="px-6 py-2 bg-accent hover:bg-yellow-500 text-black rounded-lg transition-colors font-semibold"
             >
-              Reload
+              Refresh Gallery
             </button>
           </div>
         )}
 
         {/* Image Grid */}
-        {!loading && images.length > 0 && (
+        {images.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -217,24 +280,42 @@ const Gallery = () => {
                 sizeClass = 'md:row-span-2 md:col-span-1 row-span-2 col-span-1'
               }
 
+              const isLoaded = loadedImages.has(image.filename)
+
               return (
                 <motion.div
-                  key={image.public_id}
+                  key={image.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.03 }}
                   className={`relative overflow-hidden rounded-lg cursor-pointer group ${sizeClass}`}
-                  onClick={() => setCurrentImageIndex(images.indexOf(image))}
+                  onClick={() => setCurrentImageIndex(index)}
                 >
                   <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900">
+                    {!isLoaded && (
+                      <div className="absolute inset-0 bg-gray-700 animate-pulse flex items-center justify-center">
+                        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
                     <img
-                      src={image.secure_url}
+                      src={image.src}
                       alt={`Gallery image ${index + 1}`}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-110 ${
+                        isLoaded ? 'opacity-100' : 'opacity-0'
+                      }`}
                       loading="lazy"
+                      onLoad={() => markImageLoaded(image.filename)}
                     />
                   </div>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      Click to view
+                    </div>
+                  </div>
+                  {/* Image counter badge */}
+                  <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {index + 1}
+                  </div>
                 </motion.div>
               )
             })}
@@ -251,11 +332,15 @@ const Gallery = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center"
             onClick={() => setCurrentImageIndex(null)}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {/* Close Button */}
             <button
               onClick={() => setCurrentImageIndex(null)}
               className="absolute top-4 right-4 z-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+              aria-label="Close gallery"
             >
               <X className="w-6 h-6 text-white" />
             </button>
@@ -267,10 +352,10 @@ const Gallery = () => {
                 downloadImage(images[currentImageIndex])
               }}
               disabled={downloading}
-              className="absolute top-4 right-20 z-10 flex items-center gap-2 px-4 py-2 bg-accent hover:bg-yellow-500 text-black rounded-lg transition-colors disabled:opacity-50 font-semibold"
+              className="absolute top-4 right-20 z-10 w-12 h-12 flex items-center justify-center bg-accent hover:bg-yellow-500 text-black rounded-full transition-colors disabled:opacity-50"
+              aria-label="Download image"
             >
               <Download className="w-5 h-5" />
-              Download
             </button>
 
             {/* Image Counter */}
@@ -280,7 +365,7 @@ const Gallery = () => {
               </p>
             </div>
 
-            {/* Previous Button */}
+            {/* Navigation Buttons */}
             {currentImageIndex > 0 && (
               <button
                 onClick={(e) => {
@@ -288,12 +373,12 @@ const Gallery = () => {
                   prevImage()
                 }}
                 className="absolute left-4 z-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+                aria-label="Previous image"
               >
                 <ChevronLeft className="w-8 h-8 text-white" />
               </button>
             )}
 
-            {/* Next Button */}
             {currentImageIndex < images.length - 1 && (
               <button
                 onClick={(e) => {
@@ -301,22 +386,28 @@ const Gallery = () => {
                   nextImage()
                 }}
                 className="absolute right-4 z-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+                aria-label="Next image"
               >
                 <ChevronRight className="w-8 h-8 text-white" />
               </button>
             )}
 
-            {/* Image */}
-            <motion.img
-              key={currentImageIndex}
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              src={images[currentImageIndex].secure_url}
-              alt={`Gallery image ${currentImageIndex + 1}`}
-              className="max-w-[90vw] max-h-[90vh] object-contain"
+            {/* Main Image */}
+            <motion.div
+              className="relative max-w-[90vw] max-h-[90vh] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
-            />
+            >
+              <motion.img
+                key={currentImageIndex}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                src={images[currentImageIndex].src}
+                alt={`Gallery image ${currentImageIndex + 1}`}
+                className="max-w-full max-h-full object-contain cursor-grab active:cursor-grabbing"
+                draggable={false}
+              />
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
