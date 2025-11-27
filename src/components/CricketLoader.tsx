@@ -196,20 +196,21 @@ export default function CricketLoader() {
               {/* ICCT26 Logo */}
               <div className="relative text-center">
                 <motion.h1
-                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bebas font-bold bg-gradient-to-br from-[#FFD65C] via-[#FFCC29] to-[#D4A017] bg-clip-text text-transparent tracking-wider"
+                  className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] font-bebas font-black bg-gradient-to-br from-[#FFD65C] via-[#FFCC29] to-[#D4A017] bg-clip-text text-transparent tracking-wider"
                   style={{
-                    textShadow: "0 0 40px rgba(255, 204, 41, 0.5), 0 0 20px rgba(255, 204, 41, 0.3)"
+                    textShadow: "0 0 50px rgba(255, 204, 41, 0.6), 0 0 30px rgba(255, 204, 41, 0.4), 0 0 80px rgba(255, 204, 41, 0.3)"
                   }}
                 >
                   ICCT'26
                 </motion.h1>
                 <motion.p
-                  className="text-white/80 text-xs sm:text-sm md:text-base font-quicksand tracking-[0.2em] sm:tracking-[0.3em] text-center mt-2"
+                  className="text-white/80 text-xs sm:text-sm md:text-base font-quicksand tracking-[0.2em] sm:tracking-[0.3em] text-center mt-2 leading-tight"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
                 >
-                  INTER CHURCH CRICKET TOURNAMENT
+                  <span className="block sm:inline">INTER CHURCH</span>
+                  <span className="block sm:inline sm:ml-2">CRICKET TOURNAMENT</span>
                 </motion.p>
               </div>
             </motion.div>

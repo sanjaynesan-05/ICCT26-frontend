@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Countdown from '../components/Countdown'
 import RegistrationCountdown from '../components/RegistrationCountdown'
 import ImageCarousel from '../components/ImageCarousel'
-import { ANNOUNCEMENTS, HERO_SECTION, TOURNAMENT_HIGHLIGHTS } from '../data/home'
+import { HERO_SECTION, TOURNAMENT_HIGHLIGHTS } from '../data/home'
 import { SOCIAL_LINKS } from '../data/contact'
 import { apiService } from '../services/api'
 import titleSponsorLogo from '../assets/sponsor/0 Title_Sponsors.png'
@@ -349,7 +349,7 @@ const Home = () => {
             </motion.h2>
             
             <div className="flex justify-center gap-8 md:gap-12 mb-12 flex-wrap relative z-10">
-              {SOCIAL_LINKS.map((social, idx) => {
+              {SOCIAL_LINKS.map((social) => {
                 const IconComponent = social.icon
                 return (
                   <motion.a

@@ -83,6 +83,9 @@ interface RegistrationResponse {
 // CONSTANTS
 // ============================================================================
 
+// Set to true to close/lock registration
+const REGISTRATION_CLOSED = true
+
 const CHURCH_NAMES = [
   "CSI Immanuel Church Coimbatore",
   "CSI Christ Church Trichy Road",
@@ -184,7 +187,6 @@ const Registration = () => {
   const [showProgress, setShowProgress] = useState(false)
   const [currentIdempotencyKey, setCurrentIdempotencyKey] = useState<string>('')
   const [registeredTeamId, setRegisteredTeamId] = useState<string>('')
-  const [emailSent, setEmailSent] = useState(false)
 
   const emptyPlayer = (): PlayerData => ({
     name: '',
@@ -627,7 +629,6 @@ const Registration = () => {
       }
 
       setRegisteredTeamId(data.team_id)
-      setEmailSent(false) // email removed from backend
 
       // Save to localStorage
       saveIdempotencyRecord(idempotencyKey, 'success', data.team_id)
@@ -701,6 +702,85 @@ const Registration = () => {
   }
 
   // ========== RENDER ==========
+  
+  // Show coming soon message if flag is true
+  if (REGISTRATION_CLOSED) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
+      >
+        <div className="container mx-auto max-w-6xl">
+          {/* Header */}
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="text-center mb-12"
+          >
+            <h1 className="font-heading text-6xl md:text-7xl text-accent mb-4">
+              Team Registration
+            </h1>
+            <p className="font-subheading text-xl text-gray-300">
+              Opening Soon
+            </p>
+          </motion.div>
+
+          {/* Coming Soon Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="rounded-2xl p-12 md:p-16 text-center border-2 border-accent/40 shadow-2xl shadow-accent/30 bg-gradient-to-br from-accent/20 via-accent/10 to-transparent backdrop-blur-xl glass-effect"
+          >
+            {/* Animated Icon */}
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 3, repeat: Infinity }}
+              className="mb-8"
+            >
+              <div className="inline-block">
+                <div className="text-6xl md:text-8xl font-heading text-accent mb-6">⏳</div>
+              </div>
+            </motion.div>
+
+            {/* Main Message */}
+            <h2 className="font-heading text-4xl md:text-5xl text-accent mb-6">
+              Registration Coming Soon
+            </h2>
+            
+            <p className="font-body text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl mx-auto">
+              Team registration for ICCT26 Cricket Tournament will open soon. Stay tuned for updates on registration dates, deadlines, and guidelines!
+            </p>
+
+            {/* Tournament Info Box */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            >
+              <div className="rounded-xl px-8 py-4 border-2 border-accent/60 bg-accent/10 backdrop-blur-lg shadow-lg shadow-accent/20 glass-effect hover:shadow-xl transition-all">
+                <p className="font-subheading font-bold text-accent">🏏 Registration Date TBD</p>
+              </div>
+            </motion.div>
+
+            {/* Follow Updates */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="font-body text-gray-400 text-sm md:text-base mt-12"
+            >
+              Follow us on social media for latest announcements and updates
+            </motion.p>
+          </motion.div>
+        </div>
+      </motion.div>
+    )
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}

@@ -196,7 +196,13 @@ const AdminDashboard = () => {
               <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white tracking-wider">ICCT'26 ADMIN</h1>
               <p className="font-body text-accent text-xs sm:text-sm">Team Management Dashboard</p>
             </div>
-            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto flex-wrap">
+              <button
+                onClick={() => navigate('/admin/schedule')}
+                className="font-body text-sm sm:text-base text-accent hover:text-yellow-300 transition-colors border border-accent/40 hover:border-accent px-4 py-2 rounded-lg"
+              >
+                📅 Schedule Manager
+              </button>
               <button
                 onClick={() => navigate('/')}
                 className="font-body text-sm sm:text-base text-white/80 hover:text-accent transition-colors"

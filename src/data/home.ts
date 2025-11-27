@@ -72,7 +72,7 @@ export const TOURNAMENT_HIGHLIGHTS = [
   {
     icon: MapPin,
     title: 'Venue',
-    value: 'TBH',
+    value: 'TBD',
     color: 'text-blue-400',
   },
   {

@@ -17,6 +17,7 @@ import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import TeamDetail from './pages/admin/TeamDetail'
 import PlayerDetail from './pages/admin/PlayerDetail'
+import ScheduleManager from './pages/admin/ScheduleManager'
 
 function App() {
   const [loading, setLoading] = useState(true)
@@ -54,16 +55,22 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/player/:playerId"
-            element={
-              <ProtectedRoute>
-                <PlayerDetail />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Public Routes (With Navbar/Footer) */}
+            <Route
+              path="/admin/player/:playerId"
+              element={
+                <ProtectedRoute>
+                  <PlayerDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/schedule"
+              element={
+                <ProtectedRoute>
+                  <ScheduleManager />
+                </ProtectedRoute>
+              }
+            />          {/* Public Routes (With Navbar/Footer) */}
           <Route
             path="/*"
             element={
