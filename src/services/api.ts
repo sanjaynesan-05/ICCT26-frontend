@@ -224,6 +224,208 @@ class ApiService {
   }
 
   /**
+   * MATCH SCHEDULE API METHODS
+   */
+
+  /**
+   * Get all matches
+   */
+  async getAllMatches(skip: number = 0, limit: number = 100): Promise<any> {
+    return this.request(`/api/schedule/matches?skip=${skip}&limit=${limit}`)
+  }
+
+  /**
+   * Get single match by ID
+   */
+  async getMatchById(matchId: number): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}`)
+  }
+
+  /**
+   * Create a new match
+   */
+  async createMatch(matchData: {
+    round: string
+    round_number: number
+    match_number: number
+    team1: string
+    team2: string
+    scheduled_start_time?: string
+  }): Promise<any> {
+    return this.request('/api/schedule/matches', {
+      method: 'POST',
+      body: JSON.stringify(matchData)
+    })
+  }
+
+  /**
+   * Update entire match (full update)
+   */
+  async updateMatch(matchId: number, matchData: {
+    round?: string
+    round_number?: number
+    match_number?: number
+    team1?: string
+    team2?: string
+    scheduled_start_time?: string
+  }): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}`, {
+      method: 'PUT',
+      body: JSON.stringify(matchData)
+    })
+  }
+
+  /**
+   * Update match status
+   */
+  async updateMatchStatus(matchId: number, status: 'scheduled' | 'live' | 'completed'): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status })
+    })
+  }
+
+  /**
+   * Update toss details
+   */
+  async updateMatchToss(matchId: number, tossData: {
+    toss_winner: string
+    toss_choice: 'bat' | 'bowl'
+  }): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}/toss`, {
+      method: 'PUT',
+      body: JSON.stringify(tossData)
+    })
+  }
+
+  /**
+   * Update match timing
+   */
+  async updateMatchTiming(matchId: number, timingData: {
+    scheduled_start_time?: string | null
+    actual_start_time?: string | null
+    match_end_time?: string | null
+  }): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}/timing`, {
+      method: 'PUT',
+      body: JSON.stringify(timingData)
+    })
+  }
+
+  /**
+   * Update innings scores with separate runs and wickets
+   */
+  async updateMatchScores(matchId: number, scoresData: {
+    team1_runs?: number | null
+    team1_wickets?: number | null
+    team2_runs?: number | null
+    team2_wickets?: number | null
+  }): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}/scores`, {
+      method: 'PUT',
+      body: JSON.stringify(scoresData)
+    })
+  }
+
+  /**
+   * Update match scorecard URL (NEW)
+   */
+  async updateMatchScoreUrl(matchId: number, scoreUrl: string): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}/score-url`, {
+      method: 'PUT',
+      body: JSON.stringify({ match_score_url: scoreUrl })
+    })
+  }
+
+  /**
+   * Set match result
+   */
+  async setMatchResult(matchId: number, resultData: {
+    winner: string
+    margin: number
+    marginType: 'runs' | 'wickets'
+    wonByBattingFirst: boolean
+  }): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}/result`, {
+      method: 'POST',
+      body: JSON.stringify(resultData)
+    })
+  }
+
+  /**
+   * Delete match
+   */
+  async deleteMatch(matchId: number): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  /**
+   * 4-STAGE MATCH WORKFLOW ENDPOINTS
+   */
+
+  /**
+   * Stage 2: Start Match (scheduled → live)
+   * Add toss info, score URL, and actual start time
+   */
+  async startMatch(matchId: number, startData: {
+    toss_winner: string
+    toss_choice: 'bat' | 'bowl'
+    match_score_url: string
+    actual_start_time: string
+  }): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}/start`, {
+      method: 'PUT',
+      body: JSON.stringify(startData)
+    })
+  }
+
+  /**
+   * Stage 3A: Record First Innings Score (status stays live)
+   */
+  async recordFirstInningsScore(matchId: number, scoreData: {
+    batting_team: string
+    runs: number
+    wickets: number
+  }): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}/first-innings-score`, {
+      method: 'PUT',
+      body: JSON.stringify(scoreData)
+    })
+  }
+
+  /**
+   * Stage 3B: Record Second Innings Score (status stays live)
+   */
+  async recordSecondInningsScore(matchId: number, scoreData: {
+    batting_team: string
+    runs: number
+    wickets: number
+  }): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}/second-innings-score`, {
+      method: 'PUT',
+      body: JSON.stringify(scoreData)
+    })
+  }
+
+  /**
+   * Stage 4: Finish Match (live → completed)
+   * Record winner, margin, and match end time
+   */
+  async finishMatch(matchId: number, finishData: {
+    winner: string
+    margin: number
+    margin_type: 'runs' | 'wickets'
+    match_end_time: string
+  }): Promise<any> {
+    return this.request(`/api/schedule/matches/${matchId}/finish`, {
+      method: 'PUT',
+      body: JSON.stringify(finishData)
+    })
+  }
+
+  /**
    * Update team using multipart/form-data (supports partial file updates)
    */
   async updateTeamMultipart(teamId: string, formData: FormData): Promise<any> {

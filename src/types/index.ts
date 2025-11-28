@@ -7,13 +7,35 @@
  */
 export interface Match {
   id: number
-  match: string
-  date: string
-  time: string
-  venue: string
-  teamA: string
-  teamB: string
-  status: 'upcoming' | 'live' | 'completed'
+  round: string
+  round_number: number
+  match_number: number
+  team1: string
+  team2: string
+  status: 'scheduled' | 'live' | 'completed'
+  toss_winner?: string | null
+  toss_choice?: 'bat' | 'bowl' | null
+  scheduled_start_time?: string | null
+  actual_start_time?: string | null
+  match_end_time?: string | null
+  team1_first_innings_score?: number | null
+  team2_first_innings_score?: number | null
+  match_score_url?: string | null
+  first_innings_team?: string | null
+  second_innings_team?: string | null
+  result?: MatchResult | null
+  created_at?: string
+  updated_at?: string
+}
+
+/**
+ * Match result interface
+ */
+export interface MatchResult {
+  winner: string
+  margin: number
+  marginType: 'runs' | 'wickets'
+  wonByBattingFirst: boolean
 }
 
 /**

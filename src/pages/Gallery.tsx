@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Download, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface GalleryImage {
   id: string
@@ -57,7 +57,6 @@ const GALLERY_IMAGES = loadGalleryImages()
 
 const Gallery = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null)
-  const [downloading, setDownloading] = useState(false)
   const [images, setImages] = useState<GalleryImage[]>(GALLERY_IMAGES)
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
   const [touchStart, setTouchStart] = useState<number | null>(null)
@@ -131,18 +130,6 @@ const Gallery = () => {
     }
   }
 
-  // Download image
-  const downloadImage = (image: GalleryImage) => {
-    setDownloading(true)
-    const a = document.createElement('a')
-    a.href = image.src
-    a.download = image.filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    setTimeout(() => setDownloading(false), 1000)
-  }
-
   // Navigate to next image
   const nextImage = () => {
     if (currentImageIndex !== null && currentImageIndex < images.length - 1) {
@@ -174,13 +161,6 @@ const Gallery = () => {
         case 'Escape':
           e.preventDefault()
           setCurrentImageIndex(null)
-          break
-        case 'd':
-        case 'D':
-          e.preventDefault()
-          if (currentImageIndex !== null) {
-            downloadImage(images[currentImageIndex])
-          }
           break
       }
     }
@@ -325,19 +305,6 @@ const Gallery = () => {
               aria-label="Close gallery"
             >
               <X className="w-6 h-6 text-white" />
-            </button>
-
-            {/* Download Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                downloadImage(images[currentImageIndex])
-              }}
-              disabled={downloading}
-              className="absolute top-4 right-20 z-10 w-12 h-12 flex items-center justify-center bg-accent hover:bg-yellow-500 text-black rounded-full transition-colors disabled:opacity-50"
-              aria-label="Download image"
-            >
-              <Download className="w-5 h-5" />
             </button>
 
             {/* Image Counter */}

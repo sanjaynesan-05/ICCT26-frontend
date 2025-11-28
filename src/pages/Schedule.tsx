@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Calendar, Trophy, Clock, MapPin } from 'lucide-react'
+import { Calendar, Trophy, Clock, MapPin, ExternalLink } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 interface Match {
@@ -10,6 +10,20 @@ interface Match {
   team1: string
   team2: string
   status: 'scheduled' | 'live' | 'completed'
+  toss_winner?: string | null
+  toss_choice?: 'bat' | 'bowl' | null
+  scheduled_start_time?: string | null
+  actual_start_time?: string | null
+  match_end_time?: string | null
+  team1_first_innings_score?: number | null
+  team2_first_innings_score?: number | null
+  team1_first_innings_runs?: number | null
+  team1_first_innings_wickets?: number | null
+  team2_first_innings_runs?: number | null
+  team2_first_innings_wickets?: number | null
+  match_score_url?: string | null
+  first_innings_team?: string | null
+  second_innings_team?: string | null
   result?: {
     winner: string
     margin: number
@@ -26,6 +40,15 @@ const Schedule = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || 'https://icct26-backend.onrender.com'
 
+  // Helper function to format score as "runs/wickets"
+  const formatScore = (runs?: number | null, wickets?: number | null): string => {
+    if (runs === null || runs === undefined) {
+      return '-'
+    }
+    const w = wickets ?? 0
+    return `${runs}/${w}`
+  }
+
   // Fetch matches from backend
   useEffect(() => {
     const fetchMatches = async () => {
@@ -39,7 +62,22 @@ const Schedule = () => {
         }
 
         const data = await response.json()
-        setMatches(data.data || [])
+        // Normalize status: convert 'done' to 'completed' for consistent filtering
+        const normalizedMatches = (data.data || []).map((match: any) => ({
+          ...match,
+          status: match.status === 'done' ? 'completed' : match.status,
+          // Ensure scheduled_start_time is properly preserved
+          scheduled_start_time: match.scheduled_start_time || null,
+          actual_start_time: match.actual_start_time || null,
+          match_end_time: match.match_end_time || null
+        }))
+        console.log('📅 Fetched matches with timings:', normalizedMatches.map((m: Match) => ({
+          id: m.id,
+          match: `${m.team1} vs ${m.team2}`,
+          scheduled_start_time: m.scheduled_start_time,
+          status: m.status
+        })))
+        setMatches(normalizedMatches)
         setError(null)
       } catch (err: any) {
         console.error('Error fetching matches:', err)
@@ -282,31 +320,30 @@ const Schedule = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="flex justify-center mb-8 md:mb-12 px-2"
+                className="flex justify-center mb-6 md:mb-8 px-2"
               >
-                <div className="bg-secondary/80 backdrop-blur-xl rounded-2xl p-1 md:p-2 border-2 border-accent/30 shadow-2xl shadow-accent/20 w-full max-w-md">
-                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                <div className="bg-secondary/60 backdrop-blur-md rounded-xl p-1 border border-accent/40 shadow-lg w-full max-w-2xl">
+                  <div className="grid grid-cols-3 gap-1">
                     {[
-                      { id: 'ongoing', label: 'LIVE NOW', count: ongoingMatches.length, color: 'bg-red-500', icon: '🔴' },
+                      { id: 'ongoing', label: 'LIVE', count: ongoingMatches.length, color: 'bg-red-500', icon: '🔴' },
                       { id: 'upcoming', label: 'UPCOMING', count: upcomingMatches.length, color: 'bg-accent', icon: '⏳' },
                       { id: 'done', label: 'COMPLETED', count: doneMatches.length, color: 'bg-green-500', icon: '✅' }
                     ].map((tab) => (
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as 'ongoing' | 'upcoming' | 'done')}
-                        className={`px-3 md:px-6 py-2 md:py-3 rounded-xl font-heading font-bold transition-all duration-300 flex items-center justify-center gap-1 md:gap-2 uppercase tracking-wider text-xs md:text-sm flex-1 ${
+                        className={`px-2 md:px-4 py-2 rounded-lg font-bold transition-all duration-200 flex flex-col md:flex-row md:items-center md:justify-center gap-1 text-xs md:text-sm ${
                           activeTab === tab.id
-                            ? `${tab.color} text-white shadow-lg shadow-accent/50 transform scale-100 md:scale-105`
-                            : 'text-gray-400 hover:text-accent border border-gray-500/30 hover:border-accent/50'
+                            ? `${tab.color} text-white shadow-md`
+                            : 'text-gray-400 hover:text-gray-200 bg-black/20 hover:bg-black/40'
                         }`}
                       >
-                        <span className="text-lg">{tab.icon}</span>
-                        <span className="hidden sm:inline">{tab.label}</span>
-                        <span className={`ml-1 px-2 py-1 rounded-full text-xs font-bold ${
-                          activeTab === tab.id
-                            ? 'bg-white/20 text-white'
-                            : 'bg-gray-700/50 text-gray-300'
-                        }`}>
+                        <span className="text-sm md:text-base">{tab.icon}</span>
+                        <span className="hidden md:inline">{tab.label}</span>
+                        <span className="inline md:hidden text-xs font-bold">{tab.label.slice(0, 3)}</span>
+                        <span className={`text-xs font-bold ${
+                          activeTab === tab.id ? 'bg-white/30' : 'bg-black/40'
+                        } px-1.5 py-0.5 rounded`}>
                           {tab.count}
                         </span>
                       </button>
@@ -325,7 +362,7 @@ const Schedule = () => {
                   transition={{ duration: 0.3 }}
                 >
                   {/* Matches List */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {(() => {
                       const currentMatches = activeTab === 'ongoing' ? ongoingMatches :
                                            activeTab === 'upcoming' ? upcomingMatches : doneMatches
@@ -357,47 +394,60 @@ const Schedule = () => {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05 }}
                           whileHover={{ scale: 1.01, x: 0 }}
-                          className={`backdrop-blur-xl rounded-2xl p-4 md:p-6 lg:p-8 border-2 transition-all hover:shadow-2xl ${
+                          className={`backdrop-blur-md rounded-xl p-3 md:p-4 border transition-all hover:shadow-lg ${
                             activeTab === 'ongoing' 
-                              ? 'bg-gradient-to-br from-red-500/20 to-red-600/10 border-red-400/50 hover:border-red-400 hover:shadow-red-500/30'
+                              ? 'bg-red-500/15 border-red-400/40 hover:border-red-400 hover:shadow-red-500/20'
                               : activeTab === 'upcoming' 
-                              ? 'bg-gradient-to-br from-accent/15 to-accent/5 border-accent/30 hover:border-accent/60 hover:shadow-accent/40'
-                              : 'bg-gradient-to-br from-green-500/15 to-green-600/5 border-green-400/40 hover:border-green-400 hover:shadow-green-500/30'
+                              ? 'bg-accent/10 border-accent/30 hover:border-accent/50 hover:shadow-accent/30'
+                              : 'bg-green-500/10 border-green-400/30 hover:border-green-400 hover:shadow-green-500/20'
                           }`}
                         >
                           {/* Match Header */}
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 md:mb-6">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 ${
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-quicksand font-semibold text-white flex-shrink-0 text-sm ${
                                 activeTab === 'ongoing' ? 'bg-gradient-to-br from-red-500 to-red-600' :
                                 activeTab === 'upcoming' ? 'bg-gradient-to-br from-accent to-yellow-500' : 'bg-gradient-to-br from-green-500 to-green-600'
                               }`}>
                                 {match.match_number}
                               </div>
                               <div className="min-w-0">
-                                <h3 className={`font-heading text-base md:text-lg font-bold truncate ${
+                                <h3 className={`font-quicksand text-sm md:text-base font-semibold truncate ${
                                   activeTab === 'ongoing' ? 'text-red-300' :
                                   activeTab === 'upcoming' ? 'text-accent' : 'text-green-300'
                                 }`}>
                                   Match {match.match_number}
                                 </h3>
-                                <p className="text-gray-400 text-xs md:text-sm">{match.round}</p>
+                                <p className="text-gray-400 text-xs">{match.round}</p>
                               </div>
                             </div>
-                            <div className="text-left sm:text-right">
+                            <div className="text-left sm:text-right flex flex-col gap-1">
                               {getStatusBadge(match.status)}
+                              {/* Match Timing */}
+                              {match.scheduled_start_time && (
+                                <div className="text-xs text-gray-300 flex items-center gap-1 justify-end">
+                                  <Clock className="w-3 h-3 text-accent" />
+                                  <span>{new Date(match.scheduled_start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                </div>
+                              )}
+                              {activeTab === 'ongoing' && match.actual_start_time && !match.scheduled_start_time && (
+                                <div className="text-xs text-red-400 flex items-center gap-1 justify-end">
+                                  <Clock className="w-3 h-3 text-red-400" />
+                                  <span>Started</span>
+                                </div>
+                              )}
                             </div>
                           </div>
 
                           {/* Teams */}
-                          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-4 mb-4 md:mb-6">
+                          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-3">
                             <div className="w-full sm:flex-1">
                               <div className={`border-2 rounded-xl px-2 md:px-4 py-3 md:py-4 text-center transition-all ${
                                 activeTab === 'ongoing' ? 'bg-red-500/10 border-red-400/60 hover:bg-red-500/20' :
                                 activeTab === 'upcoming' ? 'bg-accent/10 border-accent/40 hover:bg-accent/20' :
                                 'bg-green-500/10 border-green-400/60 hover:bg-green-500/20'
                               }`}>
-                                <p className={`font-heading font-bold text-sm md:text-base lg:text-lg truncate ${
+                                <p className={`font-body font-semibold text-sm md:text-base lg:text-lg truncate ${
                                   activeTab === 'ongoing' ? 'text-red-200' :
                                   activeTab === 'upcoming' ? 'text-accent' : 'text-green-200'
                                 }`}>
@@ -406,7 +456,7 @@ const Schedule = () => {
                               </div>
                             </div>
                             <div className="flex items-center justify-center flex-shrink-0">
-                              <div className={`text-white px-3 md:px-4 py-1 md:py-2 rounded-lg font-bold text-xs md:text-sm uppercase tracking-wider whitespace-nowrap ${
+                              <div className={`text-white px-2 md:px-3 py-1 rounded-lg font-bold text-xs uppercase tracking-wider whitespace-nowrap ${
                                 activeTab === 'ongoing' ? 'bg-gradient-to-r from-red-500 to-red-600 shadow-lg shadow-red-500/50' :
                                 activeTab === 'upcoming' ? 'bg-gradient-gold shadow-lg shadow-accent/50' : 'bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-500/50'
                               }`}>
@@ -414,12 +464,12 @@ const Schedule = () => {
                               </div>
                             </div>
                             <div className="w-full sm:flex-1">
-                              <div className={`border-2 rounded-xl px-2 md:px-4 py-3 md:py-4 text-center transition-all ${
+                              <div className={`border rounded-lg px-2 md:px-3 py-2 text-center transition-all text-sm ${
                                 activeTab === 'ongoing' ? 'bg-red-500/10 border-red-400/60 hover:bg-red-500/20' :
                                 activeTab === 'upcoming' ? 'bg-accent/10 border-accent/40 hover:bg-accent/20' :
                                 'bg-green-500/10 border-green-400/60 hover:bg-green-500/20'
                               }`}>
-                                <p className={`font-heading font-bold text-sm md:text-base lg:text-lg truncate ${
+                                <p className={`font-body font-semibold text-sm md:text-base lg:text-lg truncate ${
                                   activeTab === 'ongoing' ? 'text-red-200' :
                                   activeTab === 'upcoming' ? 'text-accent' : 'text-green-200'
                                 }`}>
@@ -429,30 +479,144 @@ const Schedule = () => {
                             </div>
                           </div>
 
-                          {/* Match Footer */}
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 md:pt-6 border-t border-white/10">
-                            <div className="flex flex-wrap items-center gap-2">
-                              {activeTab === 'done' && match.result && (
-                                <div className={`flex items-center gap-2 px-2 md:px-3 py-2 rounded-lg text-xs font-bold backdrop-blur ${
-                                  match.result.wonByBattingFirst 
-                                    ? 'bg-blue-500/30 text-blue-200 border border-blue-400/50'
-                                    : 'bg-purple-500/30 text-purple-200 border border-purple-400/50'
-                                }`}>
-                                  <Trophy className="w-3 h-3 flex-shrink-0" />
-                                  <span className="truncate">{match.result.winner} won by {match.result.margin} {match.result.marginType}</span>
+                          {/* Time only shown for upcoming matches (date removed) */}
+                          {match.scheduled_start_time && activeTab === 'upcoming' && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className={`mb-3 px-4 py-2 rounded-lg font-bold text-center border-2 bg-accent/20 border-accent/60 text-accent`}
+                            >
+                              <div className="flex items-center justify-center gap-2">
+                                <span className="text-lg">⏰</span>
+                                <span className="text-sm md:text-base font-bold">
+                                  {new Date(match.scheduled_start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                </span>
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {/* Match Footer - Elegant Design */}
+                          <div className="pt-4 border-t border-white/10 space-y-3">
+                            
+                            {/* Toss Section */}
+                            {match.toss_winner && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="group relative overflow-hidden rounded-lg p-3 bg-gradient-to-r from-yellow-500/15 via-yellow-500/10 to-transparent border border-yellow-400/50 hover:border-yellow-400 transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/20"
+                              >
+                                <div className="flex items-center justify-between relative z-10">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xl group-hover:animate-bounce">🪙</span>
+                                    <span className="text-xs font-bold text-yellow-300/80 uppercase tracking-widest">Toss Won</span>
+                                  </div>
+                                  <span className="text-sm font-bold text-yellow-200 bg-yellow-500/30 px-3 py-1 rounded-full">{match.toss_winner}</span>
                                 </div>
-                              )}
-                              <div className={`px-3 md:px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap ${
-                                activeTab === 'ongoing'
-                                  ? 'bg-red-500/40 text-red-200 border border-red-400/50 animate-pulse'
-                                  : activeTab === 'upcoming'
-                                  ? 'bg-accent/30 text-accent border border-accent/50'
-                                  : 'bg-green-500/40 text-green-200 border border-green-400/50'
-                              }`}>
+                              </motion.div>
+                            )}
+
+                            {/* Batting & Score Grid */}
+                            {(activeTab === 'done' || activeTab === 'ongoing') && (match.team1_first_innings_runs !== null || match.team2_first_innings_runs !== null) && (
+                              <div className="grid grid-cols-2 gap-2">
+                                {/* Batting First */}
+                                {match.team1_first_innings_runs !== null && (
+                                  <motion.div
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className="group relative overflow-hidden rounded-lg p-3 bg-gradient-to-br from-blue-500/15 to-cyan-500/10 border border-blue-400/50 hover:border-blue-400 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20"
+                                  >
+                                    <div className="flex flex-col gap-2 relative z-10">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-lg">🏏</span>
+                                        <span className="text-xs font-bold text-blue-300/80 uppercase tracking-widest">1st Innings</span>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <p className="text-xs text-blue-200/70">{match.first_innings_team || match.team1}</p>
+                                        <p className="text-2xl font-bold text-blue-100">{formatScore(match.team1_first_innings_runs, match.team1_first_innings_wickets)}</p>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                )}
+
+                                {/* Batting Second */}
+                                {match.team2_first_innings_runs !== null && (
+                                  <motion.div
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className="group relative overflow-hidden rounded-lg p-3 bg-gradient-to-br from-purple-500/15 to-pink-500/10 border border-purple-400/50 hover:border-purple-400 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20"
+                                  >
+                                    <div className="flex flex-col gap-2 relative z-10">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-lg">🏏</span>
+                                        <span className="text-xs font-bold text-purple-300/80 uppercase tracking-widest">2nd Innings</span>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <p className="text-xs text-purple-200/70">{match.second_innings_team || match.team2}</p>
+                                        <p className="text-2xl font-bold text-purple-100">{formatScore(match.team2_first_innings_runs, match.team2_first_innings_wickets)}</p>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Result Section */}
+                            {activeTab === 'done' && match.result && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="group relative overflow-hidden rounded-lg p-3 bg-gradient-to-r from-emerald-500/15 via-green-500/10 to-transparent border border-emerald-400/50 hover:border-emerald-400 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20"
+                              >
+                                <div className="flex items-center justify-between relative z-10">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xl group-hover:scale-125 transition-transform">🏆</span>
+                                    <div className="flex flex-col">
+                                      <span className="text-xs font-bold text-emerald-300/80 uppercase tracking-widest">Winner</span>
+                                      <span className="text-sm font-bold text-emerald-200">{match.result.winner}</span>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="text-xs text-emerald-300/60 uppercase tracking-widest">By</span>
+                                    <p className="text-sm font-bold text-emerald-100">{match.result.margin} {match.result.marginType}</p>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+
+                            {/* Status & Actions Row */}
+                            <div className="flex gap-2 pt-2">
+                              {/* Status Badge */}
+                              <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold uppercase text-center border transition-all ${
+                                  activeTab === 'ongoing'
+                                    ? 'bg-red-500/40 text-red-200 border-red-400/50 animate-pulse shadow-lg shadow-red-500/30'
+                                    : activeTab === 'upcoming'
+                                    ? 'bg-accent/30 text-accent border-accent/50 shadow-lg shadow-accent/20'
+                                    : 'bg-emerald-500/40 text-emerald-200 border-emerald-400/50 shadow-lg shadow-emerald-500/20'
+                                }`}
+                              >
                                 {activeTab === 'ongoing' && '🔴 LIVE'}
                                 {activeTab === 'upcoming' && '⏳ SCHEDULED'}
                                 {activeTab === 'done' && '✅ COMPLETED'}
-                              </div>
+                              </motion.div>
+
+                              {/* Scorecard Link */}
+                              {match.match_score_url && (
+                                <motion.a
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  whileHover={{ scale: 1.05 }}
+                                  href={match.match_score_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-cyan-500/30 to-blue-500/20 hover:from-cyan-500/40 hover:to-blue-500/30 border border-cyan-400/50 hover:border-cyan-400 rounded-lg text-cyan-300 hover:text-cyan-200 transition-all text-xs font-bold shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/20"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline">Scorecard</span>
+                                </motion.a>
+                              )}
                             </div>
                           </div>
                         </motion.div>
