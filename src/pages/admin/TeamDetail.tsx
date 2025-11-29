@@ -46,10 +46,24 @@ const TeamDetail = () => {
       console.warn('⚠️ Group photo is stored as object, not URL:', url)
       return ''
     }
-    if (typeof url !== 'string' || url.trim() === '') return ''
-    if (url.startsWith('data:') || url.startsWith('file:') || url.startsWith('C:') || url.startsWith('/')) return ''
-    if (!url.startsWith('http://') && !url.startsWith('https://')) return ''
-    return url.trim()
+    if (typeof url !== 'string' || url.trim() === '') {
+      return ''
+    }
+    
+    const trimmedUrl = url.trim()
+    
+    // Reject invalid local paths
+    if (trimmedUrl.startsWith('data:') || trimmedUrl.startsWith('file:') || trimmedUrl.startsWith('C:')) {
+      return ''
+    }
+    
+    // Accept HTTP/HTTPS URLs (Cloudinary, etc.)
+    if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+      console.log('✅ Group photo URL accepted:', trimmedUrl.substring(0, 80) + '...')
+      return trimmedUrl
+    }
+    
+    return ''
   }
 
   // Unified file preview helper for Cloudinary URLs
@@ -218,6 +232,16 @@ const TeamDetail = () => {
         setTeam(null)
         return
       }
+
+      // Debug: Log all available fields to find group photo
+      console.log('📋 All available fields in fetchedTeam:', Object.keys(fetchedTeam))
+      console.log('🖼️ Group photo field values:')
+      console.log('  - groupPhoto:', fetchedTeam.groupPhoto)
+      console.log('  - group_photo:', fetchedTeam.group_photo)
+      console.log('  - groupPhotoUrl:', fetchedTeam.groupPhotoUrl)
+      console.log('  - group_photo_url:', fetchedTeam.group_photo_url)
+      console.log('  - photo:', fetchedTeam.photo)
+      console.log('  - full object:', JSON.stringify(fetchedTeam, null, 2))
 
       const safeTeam: TeamDetails = {
         teamId: fetchedTeam.teamId || fetchedTeam.team_id || 'UNKNOWN-ID',
@@ -423,7 +447,7 @@ const TeamDetail = () => {
               )}
 
               {/* Group Photo */}
-              {team.groupPhoto ? (
+              {cleanFileUrl(team.groupPhoto) ? (
                 <div className="flex flex-col">
                   <p className="text-accent text-sm font-body mb-3 font-semibold">Team Group Photo</p>
                   {getFilePreview(team.groupPhoto, 'Team Group Photo')}
@@ -433,8 +457,7 @@ const TeamDetail = () => {
                   <p className="text-accent text-sm font-body mb-3 font-semibold">Team Group Photo</p>
                   <div className="glass-effect rounded-xl p-4 border border-yellow-500/50 bg-yellow-500/10 h-full flex items-center justify-center">
                     <div className="text-center">
-                      <p className="text-yellow-200 font-body text-sm mb-2">⚠️ Group photo not yet uploaded</p>
-                      <p className="text-yellow-300/70 font-body text-xs">Raw value: {typeof team.groupPhoto === 'object' ? JSON.stringify(team.groupPhoto) : String(team.groupPhoto)}</p>
+                      <p className="text-yellow-200 font-body text-sm mb-2">📸 Group photo not yet uploaded</p>
                     </div>
                   </div>
                 </div>

@@ -34,12 +34,23 @@ const AdminDashboard = () => {
 
   // Sanitize file URLs to handle legacy data (null, {}, local paths)
   const cleanFileUrl = (url: any): string => {
-    if (!url || typeof url !== 'string' || url.trim() === '') return ''
-    // Filter out local file paths and invalid URLs
-    if (url.startsWith('data:') || url.startsWith('file:') || url.startsWith('C:') || url.startsWith('/')) return ''
-    // Only accept valid HTTP/HTTPS URLs (Cloudinary)
-    if (!url.startsWith('http://') && !url.startsWith('https://')) return ''
-    return url.trim()
+    if (!url) return ''
+    if (typeof url === 'object') return ''
+    if (typeof url !== 'string' || url.trim() === '') return ''
+    
+    const trimmedUrl = url.trim()
+    
+    // Reject invalid local paths
+    if (trimmedUrl.startsWith('data:') || trimmedUrl.startsWith('file:') || trimmedUrl.startsWith('C:')) {
+      return ''
+    }
+    
+    // Accept HTTP/HTTPS URLs (Cloudinary, etc.)
+    if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+      return trimmedUrl
+    }
+    
+    return ''
   }
 
   // Unified file status helper for Cloudinary URLs

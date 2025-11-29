@@ -804,28 +804,34 @@ const ScheduleManager = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4"
+          className="mb-8 flex flex-col xs:flex-row gap-2 xs:gap-3 sm:gap-4 items-stretch xs:items-center"
         >
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-gold text-primary font-bold rounded-xl hover:shadow-lg hover:shadow-accent/50 transition-all hover:scale-105"
+            className="flex items-center justify-center gap-1 xs:gap-2 px-3 xs:px-4 sm:px-6 py-2 sm:py-3 bg-gradient-gold text-primary font-bold rounded-lg sm:rounded-xl hover:shadow-lg hover:shadow-accent/50 transition-all hover:scale-105 text-xs xs:text-sm sm:text-base whitespace-nowrap"
           >
-            <Plus className="w-5 h-5" />
-            Create New Match
+            <Plus className="w-4 sm:w-5 h-4 sm:h-5 flex-shrink-0" />
+            <span className="hidden xs:inline">Create New Match</span>
+            <span className="xs:hidden">Create</span>
           </button>
 
-          <div className="flex gap-2 bg-secondary border-2 border-accent/40 rounded-xl p-2">
+          <div className="flex flex-row gap-1 xs:gap-1.5 sm:gap-2 bg-secondary border-2 border-accent/40 rounded-lg sm:rounded-xl p-1 sm:p-2 flex-1 xs:flex-initial">
             {(['all', 'scheduled', 'live', 'completed'] as const).map(status => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status as any)}
-                className={`flex-1 px-4 py-2 rounded-lg font-bold transition-all uppercase text-xs tracking-wider ${
+                className={`flex-1 xs:flex-auto px-1 xs:px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg font-bold transition-all uppercase text-xs tracking-wider whitespace-nowrap ${
                   filterStatus === status
                     ? 'bg-accent text-primary shadow-lg'
                     : 'text-gray-400 hover:text-accent border border-gray-600/30'
                 }`}
               >
-                {status === 'live' ? '🔴 Live' : status === 'completed' ? '✅ Completed' : status === 'scheduled' ? '⏳ Upcoming' : 'All'}
+                <span className="hidden sm:inline">
+                  {status === 'live' ? '🔴 Live' : status === 'completed' ? '✅ Completed' : status === 'scheduled' ? '⏳ Upcoming' : 'All'}
+                </span>
+                <span className="sm:hidden">
+                  {status === 'live' ? '🔴' : status === 'completed' ? '✅' : status === 'scheduled' ? '⏳' : 'All'}
+                </span>
               </button>
             ))}
           </div>
