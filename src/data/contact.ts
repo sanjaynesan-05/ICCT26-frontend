@@ -80,14 +80,14 @@ export const SOCIAL_LINKS: SocialLink[] = [
  * Venue Information
  */
 export const VENUE: Venue = {
-  name: 'CSI St. Peter\'s Church',
-  address: '1234 Church Street, R.S. Puram',
-  city: 'Coimbatore',
-  state: 'Tamil Nadu',
-  zipCode: '641002',
-  country: 'India',
+  name: "Don Bosco Sport Academy (Cricket ground)",
+  address: "Thudiyalur - Saravanampatti Rd, Fathima Nagar, Vellakinar",
+  city: "Coimbatore",
+  state: "Tamil Nadu",
+  zipCode: "641029",
+  country: "India",
   mapEmbedUrl:
-    'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3916.3384789234567!2d76.9558!3d11.0168!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTHCsDAxJzAwLjUiTiA3NsKwNTcnMjAuOSJF!5e0!3m2!1sen!2sin!4v1234567890123!5m2!1sen!2sin',
+    'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1033.827757739101!2d76.96839547578858!3d11.081894026594052!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8f7bc8e9c32c5%3A0x4ad24d5bea5c250d!2sDon%20Bosco%20Sport%20Academy%20(Cricket%20ground)!5e0!3m2!1sen!2sin!4v1765175449153!5m2!1sen!2sin',
 }
 
 /**

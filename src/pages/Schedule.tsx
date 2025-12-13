@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, Trophy, Clock, MapPin, ExternalLink } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface Match {
   id: number
@@ -37,6 +37,11 @@ const Schedule = () => {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Use refs to track cache and prevent unnecessary refreshes
+  const matchesCache = useRef<Match[]>([])
+  const lastFetchTime = useRef<number>(0)
+  const isInitialLoad = useRef<boolean>(true)
 
   const API_URL = import.meta.env.VITE_API_URL || 'https://icct26-backend.onrender.com'
 
@@ -49,10 +54,17 @@ const Schedule = () => {
     return `${runs}/${w}`
   }
 
-  // Fetch matches from backend
+  // Fetch matches from backend with caching logic
   useEffect(() => {
     const fetchMatches = async () => {
       try {
+        const now = Date.now()
+        
+        // Only fetch if it's the initial load or 30+ seconds have passed since last fetch
+        if (!isInitialLoad.current && now - lastFetchTime.current < 30000) {
+          return
+        }
+
         setLoading(true)
         const response = await fetch(`${API_URL}/api/schedule/matches`)
         
@@ -71,25 +83,33 @@ const Schedule = () => {
           actual_start_time: match.actual_start_time || null,
           match_end_time: match.match_end_time || null
         }))
-        console.log('📅 Fetched matches with timings:', normalizedMatches.map((m: Match) => ({
-          id: m.id,
-          match: `${m.team1} vs ${m.team2}`,
-          scheduled_start_time: m.scheduled_start_time,
-          status: m.status
-        })))
-        setMatches(normalizedMatches)
+        
+        // Only update state if data actually changed (prevent unnecessary re-renders)
+        const dataChanged = JSON.stringify(matchesCache.current) !== JSON.stringify(normalizedMatches)
+        if (dataChanged) {
+          console.log('📅 Fetched matches - data changed')
+          setMatches(normalizedMatches)
+          matchesCache.current = normalizedMatches
+        } else {
+          console.log('📅 Fetched matches - no changes detected, skipping update')
+        }
+        
         setError(null)
+        lastFetchTime.current = now
+        isInitialLoad.current = false
       } catch (err: any) {
         console.error('Error fetching matches:', err)
         setError(err.message || 'Failed to load schedule')
+        isInitialLoad.current = false
       } finally {
         setLoading(false)
       }
     }
 
+    // Fetch immediately on first load
     fetchMatches()
     
-    // Refresh every 30 seconds for live updates
+    // Set up interval for periodic updates (only for live matches)
     const interval = setInterval(fetchMatches, 30000)
     return () => clearInterval(interval)
   }, [API_URL])

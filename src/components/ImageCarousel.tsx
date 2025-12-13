@@ -6,7 +6,10 @@ import { useState } from 'react'
 const sponsorImages = import.meta.glob('/src/assets/sponsor/*', { eager: true, query: '?url', import: 'default' })
 
 // Convert the imported images to an array of URLs
-const SPONSOR_IMAGES = Object.values(sponsorImages) as string[]
+const SPONSOR_IMAGES = [
+  ...Object.values(sponsorImages) as string[],
+  '/sponsor/Life Events.png'
+]
 
 const ImageCarousel = () => {
   const [isHovered, setIsHovered] = useState(false)

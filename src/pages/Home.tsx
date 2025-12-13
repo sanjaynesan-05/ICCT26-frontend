@@ -46,7 +46,7 @@ const Home = () => {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-bg-start via-primary to-bg-end">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1920')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-[url('/stadium.jpg')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
         </div>
 
         {/* Floating Cricket Ball */}
@@ -233,7 +233,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Schedule Preview Section */}
+            {/* Schedule Preview Section */}
       <SchedulePreview />
 
       {/* Image Carousel - Sponsor Logos */}
@@ -273,7 +273,7 @@ const Home = () => {
                   <h3 className="font-subheading text-lg text-gray-300 mb-3">
                     {highlight.title}
                   </h3>
-                  <p className="font-body text-xl text-white font-bold">
+                  <p className="font-body text-xl text-white font-bold whitespace-pre-wrap">
                     {displayValue}
                   </p>
                 </motion.div>
@@ -293,7 +293,7 @@ const Home = () => {
               backgroundImage: "url('/about.jpg')",
             }}
           />
-          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-black/65" />
         </div>
 
         {/* Content */}

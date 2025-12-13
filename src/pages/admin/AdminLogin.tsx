@@ -108,7 +108,6 @@ const AdminLogin = () => {
           {/* Demo Credentials Hint */}
           <div className="mt-6 text-center">
             <p className="text-white/60 text-sm font-body">
-              Demo: admin / admin123
             </p>
           </div>
         </div>
