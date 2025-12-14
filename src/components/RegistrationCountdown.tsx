@@ -10,7 +10,7 @@ interface TimeLeft {
 
 const RegistrationCountdown = () => {
   // Registration deadline: January 20, 2026 (4 days before tournament)
-  const targetDate = new Date('2025-12-26T18:00:00').getTime()
+  const targetDate = new Date('2025-12-25T19:00:00').getTime()
 
   const calculateTimeLeft = (): TimeLeft => {
     const now = new Date().getTime()

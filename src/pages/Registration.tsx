@@ -766,7 +766,7 @@ const Registration = () => {
               className="flex flex-col sm:flex-row gap-4 justify-center items-center"
             >
               <div className="rounded-xl px-8 py-4 border-2 border-accent/60 bg-accent/10 backdrop-blur-lg shadow-lg shadow-accent/20 glass-effect hover:shadow-xl transition-all">
-                <p className="font-subheading font-bold text-accent">🏏 Registration Date 26/12/2025</p>
+                <p className="font-subheading font-bold text-accent">🏏 Registration Date 25/12/2025</p>
               </div>
             </motion.div>
 
