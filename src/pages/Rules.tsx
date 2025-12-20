@@ -15,6 +15,9 @@ import {
 } from 'lucide-react'
 import { TOURNAMENT_RULES } from '../data/rules'
 
+// Set to true to close/lock rules page
+const RULES_CLOSED = true
+
 const iconMap = {
   ClipboardList,
   Users,
@@ -29,6 +32,69 @@ const iconMap = {
 const Rules = () => {
   const [openAccordion, setOpenAccordion] = useState<number | null>(1)
   const rules = TOURNAMENT_RULES
+
+  // Show coming soon message if flag is true
+  if (RULES_CLOSED) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
+      >
+        <div className="container mx-auto max-w-5xl">
+          {/* Header */}
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="text-center mb-12"
+          >
+            <h1 className="font-heading text-6xl md:text-7xl text-accent mb-4">
+              Rules & Regulations
+            </h1>
+            <p className="font-subheading text-xl text-gray-300">
+              Opening Soon
+            </p>
+          </motion.div>
+
+          {/* Coming Soon Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="rounded-2xl p-12 md:p-16 text-center border-2 border-accent/40 shadow-2xl shadow-accent/30 bg-gradient-to-br from-accent/20 via-accent/10 to-transparent backdrop-blur-xl glass-effect"
+          >
+            {/* Animated Icon */}
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 3, repeat: Infinity }}
+              className="mb-8"
+            >
+              <div className="inline-block">
+                <div className="text-6xl md:text-8xl font-heading text-accent mb-6">⏳</div>
+              </div>
+            </motion.div>
+
+            {/* Message */}
+            <h2 className="font-heading text-3xl md:text-4xl text-white mb-4">
+              Rules Coming Soon
+            </h2>
+            <p className="font-subheading text-lg text-gray-300 mb-8">
+              The tournament rules and regulations will be available shortly. 
+              Stay tuned for updates!
+            </p>
+
+            {/* Decorative Line */}
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent to-accent/50"></div>
+              <span className="text-accent font-heading">ICCT26</span>
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent to-accent/50"></div>
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <motion.div

@@ -84,7 +84,7 @@ interface RegistrationResponse {
 // ============================================================================
 
 // Set to true to close/lock registration
-const REGISTRATION_CLOSED = true
+const REGISTRATION_CLOSED = false
 
 const CHURCH_NAMES = [
   "CSI St. Peters Church Rathinapuri",
@@ -860,7 +860,7 @@ const Registration = () => {
             )}
 
             <AnimatePresence mode="wait">
-              {/* Step 0: Rules & Regulations */}
+              {/* Step 0: Document Authenticity */}
               {currentStep === 0 && (
                 <motion.div
                   key="step0"
@@ -871,141 +871,70 @@ const Registration = () => {
                   className="glass-card rounded-2xl p-8 mb-8"
                 >
                   <div className="text-center mb-8">
-                    <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4">
-                      Rules & Regulations
+                    <h2 className="font-heading text-4xl md:text-5xl text-red-600 mb-4">
+                      Document Authenticity
                     </h2>
                     <p className="text-gray-600 font-subheading">
-                      Please read and accept the rules before proceeding with registration
+                      Please read and confirm before proceeding with registration
                     </p>
                   </div>
 
                   <div className="space-y-6 text-gray-800 max-h-96 overflow-y-auto mb-8">
-                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                      <p className="font-semibold text-yellow-800 mb-2">⚠️ Important Notice:</p>
-                      <p className="text-yellow-700">
-                        Ensure all the details you filled is correct & it must be matches with
-                        your Photo, Subscription card & Aadhaar Card details, after that your
-                        team will be qualify for registration.
+                    {/* Warning Box */}
+                    <div className="bg-red-50 border-2 border-red-400 rounded-lg p-4">
+                      <p className="text-red-800 font-semibold text-sm mb-2">⚠️ IMPORTANT</p>
+                      <p className="text-red-700 text-sm mb-2">
+                        All documents must be:
                       </p>
-                    </div>
-
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                      <h3 className="font-heading text-xl text-blue-800 mb-4">
-                        1. Team Registration
-                      </h3>
-                      <ul className="list-disc list-inside space-y-2 text-blue-700">
-                        <li>Only one team is allowed to represent a single church.</li>
-                        <li>
-                          The first 16 teams that complete their registration with the required
-                          documents will be eligible to participate.
-                        </li>
+                      <ul className="list-disc list-inside space-y-1 text-red-700 text-sm">
+                        <li><strong>Original & genuine</strong></li>
+                        <li><strong>Valid & current</strong></li>
+                        <li><strong>Relevant</strong></li>
+                        <li><strong>Clear & legible</strong></li>
                       </ul>
                     </div>
 
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                      <h3 className="font-heading text-xl text-green-800 mb-4">
-                        2. Documents Required
-                      </h3>
-                      <p className="text-green-700 mb-3">To register, each team must submit the following:</p>
-                      <ul className="list-disc list-inside space-y-2 text-green-700">
-                        <li>Passport-sized photo of each player.</li>
-                        <li>Subscription card.</li>
-                        <li>Aadhar card.</li>
+                    {/* Verification Commitment */}
+                    <div className="bg-blue-50 border-2 border-blue-400 rounded-lg p-4">
+                      <p className="text-blue-800 font-semibold text-sm mb-2">✓ COMMITMENT</p>
+                      <p className="text-blue-700 text-sm">
+                        I will upload only <strong>authentic</strong> documents and accept full responsibility.
+                      </p>
+                    </div>
+
+                    {/* Requirements */}
+                    <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4">
+                      <p className="text-green-800 font-semibold text-sm mb-3">📋 DOCUMENT REQUIREMENTS</p>
+                      <ul className="list-disc list-inside space-y-2 text-green-700 text-sm">
+                        <li>Each player must submit: Aadhar Card, Subscription Card, and Photo</li>
+                        <li>Documents must be clear, legible, and complete</li>
+                        <li>All information must match exactly across all documents</li>
+                        <li>No alterations or modifications are permitted</li>
+                        <li>Files must be in JPG/JPEG/PNG format (max 5MB each)</li>
                       </ul>
-                      <p className="text-green-800 font-semibold mt-3">
-                        Note: Each document must be submitted as a separate IMAGE (jpg) file,
-                        labeled with the respective player's name.
-                      </p>
                     </div>
 
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
-                      <h3 className="font-heading text-xl text-purple-800 mb-4">
-                        3. Umpire's Decision
-                      </h3>
-                      <p className="text-purple-700">
-                        The umpire's decision is final and binding on all teams.
-                      </p>
-                    </div>
-
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
-                      <h3 className="font-heading text-xl text-orange-800 mb-4">
-                        4. Power-Play Rules
-                      </h3>
-                      <p className="text-orange-700 mb-3">It's a 10 overs match.</p>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="font-semibold text-orange-800">First Power-Play: Overs 1-2</p>
-                          <p className="text-orange-700">
-                            Only two fielders are allowed outside the 30-yard circle.
-                          </p>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-orange-800">
-                            Second Power-Play: Can be taken in any one of the 6th, 7th, or 8th over.
-                          </p>
-                          <p className="text-orange-700">
-                            Only five fielders are allowed outside the 30-yard circle during this
-                            period.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                      <h3 className="font-heading text-xl text-red-800 mb-4">
-                        5. Bowling Restrictions
-                      </h3>
-                      <p className="text-red-700">
-                        Only One bowler is allowed to bowl a maximum of 3 overs.
-                      </p>
-                    </div>
-
-                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
-                      <h3 className="font-heading text-xl text-indigo-800 mb-4">
-                        6. Tie-Breaker Rule
-                      </h3>
-                      <p className="text-indigo-700">
-                        In the event of a tie, a super over will be provided.
-                      </p>
-                    </div>
-
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                      <h3 className="font-heading text-xl text-blue-800 mb-4">
-                        7. Important Notice to all Teams:
-                      </h3>
-                      <ul className="list-disc list-inside space-y-3 text-blue-700">
-                        <li>Main 11 players need to be submit all the above required details.</li>
-                        <li>
-                          If your team has only main 11 players you don't need to fill the last 4
-                          players details.
-                        </li>
-                        <li>
-                          While match you cannot change over the substitute if you submit only main
-                          11 players.
-                        </li>
-                        <li>
-                          If the player name is submitted without the required details that
-                          application is not accepted even you get the registration successful.
-                        </li>
-                      </ul>
-                      <p className="mt-4 text-blue-800 font-semibold">
-                        These are the rules and regulations of the event.
+                    {/* Legal Notice */}
+                    <div className="bg-purple-50 border-2 border-purple-400 rounded-lg p-4">
+                      <p className="text-purple-800 font-semibold text-sm mb-2">⚖️ LEGAL NOTICE</p>
+                      <p className="text-purple-700 text-sm">
+                        By submitting this registration, you declare that all documents are authentic and original. 
+                        The tournament committee reserves the right to verify documents and take any actions if it is appropriate.
                       </p>
                     </div>
                   </div>
 
                   <div className="border-t border-gray-200 pt-6">
-                    <div className="flex items-start gap-3 mb-6">
+                    <div className="flex items-start gap-3 mb-6 p-3 bg-red-50 rounded-lg border-2 border-red-200">
                       <input
                         type="checkbox"
                         id="acceptTerms"
                         checked={acceptTerms}
                         onChange={(e) => setAcceptTerms(e.target.checked)}
-                        className="mt-1 w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                        className="mt-1 w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-600"
                       />
-                      <label htmlFor="acceptTerms" className="text-gray-700 font-medium">
-                        I have read and understood all the rules and regulations. I agree to abide
-                        by these terms and conditions.
+                      <label htmlFor="acceptTerms" className="text-gray-800 font-medium text-sm">
+                        I confirm that all documents I will submit are <span className="text-red-600 font-bold">genuine and authentic</span>.
                       </label>
                     </div>
                   </div>

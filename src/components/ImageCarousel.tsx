@@ -1,14 +1,23 @@
 import { useState } from 'react'
 
-// Dynamically import all sponsor images from src/assets/sponsor folder
-// To add new sponsor images, simply place them in src/assets/sponsor/
-// They will automatically appear in the carousel without code changes
-const sponsorImages = import.meta.glob('/src/assets/sponsor/*', { eager: true, query: '?url', import: 'default' })
-
-// Convert the imported images to an array of URLs
+// Sponsor images - Add or remove sponsor logos here by updating the file paths
+// Simply add new image paths to the array when you update the sponsors folder
 const SPONSOR_IMAGES = [
-  ...Object.values(sponsorImages) as string[],
-  '/sponsor/Life Events.png'
+  '/sponsor/Johnpolimers.jpg',
+  '/sponsor/JSInfotech.png',
+  '/sponsor/SPORTSLANDLOGO.jpg',
+  '/sponsor/StPetersSchool.png',
+  '/sponsor/SASHAINC.jpg',
+  '/sponsor/NEWSYSTEM.jpg',
+  '/sponsor/Alpha.jpg',
+  '/sponsor/SKAMBULANCE.jpg',
+  '/sponsor/LifeEvents.png',
+  '/sponsor/adrievents.webp',
+  '/sponsor/agalyapets.webp',
+  '/sponsor/galaxylabsolutions.webp',
+  '/sponsor/joycatering.jpeg',
+  '/sponsor/jvdandkalani.webp',
+  '/sponsor/williamconcepts.webp',
 ]
 
 const ImageCarousel = () => {
