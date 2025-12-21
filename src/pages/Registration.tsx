@@ -420,8 +420,8 @@ const Registration = () => {
         addValidationError('terms', 'Please accept the terms and conditions to proceed.')
         return
       }
-      // Show document confirmation modal after terms are accepted
-      setShowDocumentConfirmation(true)
+      // Move to step 1
+      setCurrentStep(1)
       return
     } else {
       if (!validateCurrentStep()) {
@@ -1495,137 +1495,6 @@ const Registration = () => {
           </motion.div>
         </div>
       </div>
-
-      {/* Document Confirmation Modal */}
-      <AnimatePresence>
-        {showDocumentConfirmation && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-3 py-4 overflow-y-auto"
-            onClick={() => setShowDocumentConfirmation(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0, rotate: -5 }}
-              animate={{ scale: 1, opacity: 1, rotate: 0 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: 'spring', duration: 0.5 }}
-              className="glass-card rounded-xl md:rounded-2xl p-4 md:p-6 max-w-lg w-full relative my-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Warning Icon */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                className="w-14 h-14 md:w-18 md:h-18 bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 shadow-xl"
-              >
-                <AlertTriangle className="w-8 h-8 md:w-10 md:h-10 text-white" />
-              </motion.div>
-
-              {/* Title */}
-              <motion.h2
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="font-heading text-xl md:text-2xl text-red-600 mb-2 md:mb-3 text-center"
-              >
-                Document Authenticity
-              </motion.h2>
-
-              {/* Main Warning Content */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="space-y-2 md:space-y-3 mb-4 md:mb-6 max-h-80 overflow-y-auto"
-              >
-                {/* Warning Box */}
-                <div className="bg-red-50 border-2 border-red-400 rounded-lg p-3 md:p-4">
-                  <p className="text-red-800 font-semibold text-xs md:text-sm mb-1 md:mb-2">⚠️ IMPORTANT</p>
-                  <p className="text-red-700 text-xs leading-relaxed mb-1">
-                    All documents must be:
-                  </p>
-                  <ul className="list-disc list-inside space-y-0.5 text-red-700 text-xs">
-                    <li><strong>Original & genuine</strong></li>
-                    <li><strong>Valid & current</strong></li>
-                    <li><strong>Relevant</strong></li>
-                    <li><strong>Clear & legible</strong></li>
-                  </ul>
-                </div>
-
-                {/* Disqualification Warning */}
-                <div className="bg-yellow-50 border-2 border-yellow-600 rounded-lg p-3 md:p-4">
-                  <p className="text-yellow-800 font-bold text-xs md:text-sm mb-1">🚫 DISQUALIFICATION</p>
-                  <p className="text-yellow-900 text-xs leading-relaxed">
-                    Fake documents = <strong>immediate disqualification & NO REFUND</strong>.
-                  </p>
-                </div>
-
-                {/* Verification Commitment */}
-                <div className="bg-blue-50 border-2 border-blue-400 rounded-lg p-3 md:p-4">
-                  <p className="text-blue-800 font-semibold text-xs md:text-sm mb-1">✓ COMMITMENT</p>
-                  <p className="text-blue-700 text-xs leading-relaxed">
-                    I will upload only <strong>authentic</strong> documents and accept full responsibility.
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Confirmation Checkbox */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="mb-4 md:mb-5 flex items-start gap-2 p-2 md:p-3 bg-accent/15 rounded-lg border-2 border-accent/40"
-              >
-                <input
-                  type="checkbox"
-                  id="documentConfirm"
-                  checked={documentConfirmed}
-                  onChange={(e) => setDocumentConfirmed(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 text-green-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-green-500 cursor-pointer flex-shrink-0"
-                />
-                <label htmlFor="documentConfirm" className="text-gray-800 font-medium cursor-pointer flex-1 text-xs leading-tight">
-                  I confirm documents will be <span className="text-red-600">genuine</span>. Fake documents = <span className="text-red-600">disqualification</span>.
-                </label>
-              </motion.div>
-
-              {/* Action Buttons */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="flex gap-2 md:gap-3"
-              >
-                <button
-                  onClick={() => {
-                    setShowDocumentConfirmation(false)
-                    setDocumentConfirmed(false)
-                  }}
-                  className="flex-1 px-3 md:px-5 py-2 rounded-lg font-subheading font-semibold text-xs bg-gray-300 text-gray-700 hover:bg-gray-400 transition-all duration-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDocumentConfirmation(false)
-                    setCurrentStep(1)
-                  }}
-                  disabled={!documentConfirmed}
-                  className={`flex-1 px-3 md:px-5 py-2 rounded-lg font-subheading font-semibold text-xs transition-all duration-300 ${
-                    documentConfirmed
-                      ? 'bg-gradient-gold text-black hover:shadow-lg hover:shadow-accent/50 cursor-pointer'
-                      : 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50'
-                  }`}
-                >
-                  Approve
-                </button>
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Success Modal */}
       <AnimatePresence>
