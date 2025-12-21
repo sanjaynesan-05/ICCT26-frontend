@@ -624,21 +624,28 @@ const Registration = () => {
       // Handle backend success response safely
       const data = response?.data ?? response ?? null
 
-      if (!data || !data.team_id) {
+      if (!data) {
         console.error('Invalid backend response:', response)
-        addValidationError('submit', 'Server error: Missing team ID')
+        addValidationError('submit', 'Server error: Invalid response from server')
         setIsSubmitting(false)
         setShowProgress(false)
         return
       }
 
-      setRegisteredTeamId(data.team_id)
+      // NEW FLOW: Backend returns pending status (no team_id shown to user)
+      // Team ID will be sent via email after admin approval
+      const registrationStatus = data.registration_status || data.status || 'pending'
+      
+      // For backward compatibility, handle if team_id is returned
+      const teamId = data.team_id || 'PENDING'
+      
+      setRegisteredTeamId(teamId)
 
       // Save to localStorage
-      saveIdempotencyRecord(idempotencyKey, 'success', data.team_id)
-      saveLastSubmission(data.team_id, formData.teamName, idempotencyKey)
+      saveIdempotencyRecord(idempotencyKey, 'success', teamId)
+      saveLastSubmission(teamId, formData.teamName, idempotencyKey)
 
-      console.log('✅ Registration successful:', data.team_id)
+      console.log('✅ Registration submitted successfully. Status:', registrationStatus)
 
       setShowProgress(false)
       setShowSuccess(true)
@@ -1368,7 +1375,7 @@ const Registration = () => {
                   <div className="space-y-6">
                     <div className="bg-blue-50 border-l-4 border-primary p-4 rounded">
                       <p className="font-subheading text-primary font-semibold mb-2">
-                        Registration Fee: ₹2,000
+                        Registration Fee: ₹1
                       </p>
                       <p className="text-sm text-gray-700">Scan the QR code below to make payment</p>
                     </div>
@@ -1376,16 +1383,16 @@ const Registration = () => {
                     <div className="flex flex-col items-center justify-center">
                       <div className="bg-white p-4 rounded-xl shadow-lg mb-4 border-2 border-primary">
                         <img
-                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=sanjaynesan007@oksbi&pn=ICCT26&am=2000&tn=ICCT26%20Registration%20Fee"
+                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=sanjaynesan007@okaxis&pn=ICCT26&am=1&cu=INR"
                           alt="Payment QR Code"
                           className="w-64 h-64 object-cover rounded-lg"
                         />
                       </div>
                       <p className="text-center font-subheading text-gray-600 mb-4">
-                        Scan with any UPI app to pay ₹2,000
+                        Scan with any UPI app to pay ₹1
                       </p>
                       <a
-                        href="upi://pay?pa=sanjaynesan007@oksbi&pn=ICCT26&am=2000&tn=ICCT26%20Registration%20Fee"
+                        href="upi://pay?pa=sanjaynesan007@okaxis&pn=ICCT26&am=1&cu=INR"
                         className="text-lg font-semibold text-primary hover:text-blue-700 transition-colors"
                       >
                         Click to Pay
@@ -1680,18 +1687,18 @@ const Registration = () => {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="font-heading text-5xl text-primary mb-3 tracking-wide"
+                className="font-heading text-4xl text-primary mb-3 tracking-wide"
               >
-                WELCOME TO
+                Registration Submitted!
               </motion.h2>
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="font-heading text-6xl bg-gradient-to-r from-accent via-yellow-500 to-accent bg-clip-text text-transparent mb-6 tracking-wider"
+                className="font-heading text-5xl bg-gradient-to-r from-accent via-yellow-500 to-accent bg-clip-text text-transparent mb-6 tracking-wider"
                 style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
               >
-                ICCT 2026
+                {formData.teamName}
               </motion.div>
               <motion.p
                 initial={{ y: 20, opacity: 0 }}
@@ -1699,49 +1706,41 @@ const Registration = () => {
                 transition={{ delay: 0.5 }}
                 className="font-subheading text-lg text-gray-700 mb-8"
               >
-                🎉 Your team has been successfully registered! 🏏
+                🎉 Your registration has been received! 🏏
               </motion.p>
 
-              {/* Team ID Display with Copy Button */}
+              {/* Pending Status Notice */}
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.6 }}
-                className="bg-gradient-to-r from-accent/30 via-accent/40 to-accent/30 rounded-xl p-6 mb-6 border-2 border-accent/50 shadow-lg"
+                className="bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 rounded-xl p-6 mb-6 border-2 border-blue-300 shadow-lg"
               >
-                <p className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Your Team ID</p>
-                <div className="flex items-center justify-center gap-3">
-                  <motion.p
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.7, type: 'spring' }}
-                    className="font-heading text-5xl text-primary tracking-wider"
-                  >
-                    {registeredTeamId}
-                  </motion.p>
-                  <motion.button
-                    onClick={copyTeamId}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="p-3 bg-primary hover:bg-primary/90 rounded-lg transition-colors shadow-md"
-                    title="Copy Team ID"
-                  >
-                    <Copy className="w-5 h-5 text-accent" />
-                  </motion.button>
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                  <p className="text-sm font-bold text-blue-800 uppercase tracking-wider">Status: Pending Admin Approval</p>
+                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
                 </div>
-                <p className="text-xs text-gray-600 mt-3 italic">Save this ID for future reference</p>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  Your registration is currently under review by our admin team.
+                  You will receive a confirmation email with your <strong>Team ID</strong> once approved.
+                </p>
               </motion.div>
 
-              {/* Confirmation Message */}
+              {/* Email Confirmation Notice */}
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.8 }}
-                className="mb-6 p-4 rounded-lg bg-gradient-to-r from-green-50 to-blue-50 border border-green-200"
+                className="mb-6 p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-300"
               >
-                <p className="text-sm text-gray-700 font-medium">
-                  ✅ Your registration is confirmed!<br/>
-                  <span className="text-xs text-gray-600 mt-1 inline-block">We look forward to seeing you at the tournament!</span>
+                <p className="text-sm text-gray-700 font-medium mb-2">
+                  📧 <strong>Check Your Email</strong>
+                </p>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  Confirmation will be sent to: <strong className="text-primary">{formData.captain.email}</strong>
+                  <br/>
+                  <span className="text-blue-600 mt-1 inline-block">Please wait for admin approval. This may take 24-48 hours.</span>
                 </p>
               </motion.div>
 

@@ -8,6 +8,7 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import Schedule from './pages/Schedule'
 import Registration from './pages/Registration'
+import Teams from './pages/Teams'
 import Gallery from './pages/Gallery'
 import Rules from './pages/Rules'
 import Contact from './pages/Contact'
@@ -86,6 +87,7 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/schedule" element={<Schedule />} />
                     <Route path="/registration" element={<Registration />} />
+                    <Route path="/teams" element={<Teams />} />
                     <Route path="/gallery" element={<Gallery />} />
                     <Route path="/rules" element={<Rules />} />
                     <Route path="/contact" element={<Contact />} />
