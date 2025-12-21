@@ -184,8 +184,9 @@ class ApiService {
   /**
    * Admin: Get all registered teams
    */
-  async getAdminTeams(): Promise<any> {
-    return this.request('/admin/teams')
+  async getAdminTeams(status?: 'pending' | 'confirmed' | 'rejected'): Promise<any> {
+    const queryParam = status ? `?status=${status}` : ''
+    return this.request(`/admin/teams${queryParam}`)
   }
 
   /**
@@ -193,6 +194,24 @@ class ApiService {
    */
   async getAdminTeamById(teamId: string): Promise<any> {
     return this.request(`/admin/teams/${teamId}`)
+  }
+
+  /**
+   * Admin: Confirm/Approve team registration
+   */
+  async confirmTeam(teamId: string): Promise<any> {
+    return this.request(`/admin/teams/${teamId}/confirm`, {
+      method: 'PUT'
+    })
+  }
+
+  /**
+   * Admin: Reject team registration
+   */
+  async rejectTeam(teamId: string): Promise<any> {
+    return this.request(`/admin/teams/${teamId}/reject`, {
+      method: 'PUT'
+    })
   }
 
   /**

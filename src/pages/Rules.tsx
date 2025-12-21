@@ -42,7 +42,7 @@ const Rules = () => {
         exit={{ opacity: 0 }}
         className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
       >
-        <div className="container mx-auto max-w-5xl">
+        <div className="container mx-auto max-w-6xl">
           {/* Header */}
           <motion.div
             initial={{ y: 30, opacity: 0 }}
@@ -53,7 +53,7 @@ const Rules = () => {
               Rules & Regulations
             </h1>
             <p className="font-subheading text-xl text-gray-300">
-              Opening Soon
+              Coming Soon
             </p>
           </motion.div>
 
@@ -75,21 +75,24 @@ const Rules = () => {
               </div>
             </motion.div>
 
-            {/* Message */}
-            <h2 className="font-heading text-3xl md:text-4xl text-white mb-4">
+            {/* Main Message */}
+            <h2 className="font-heading text-4xl md:text-5xl text-accent mb-6">
               Rules Coming Soon
             </h2>
-            <p className="font-subheading text-lg text-gray-300 mb-8">
-              The tournament rules and regulations will be available shortly. 
-              Stay tuned for updates!
+            
+            <p className="font-body text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl mx-auto">
+              The tournament rules and regulations for ICCT26 Cricket Tournament will be available soon. Stay tuned for detailed guidelines!
             </p>
 
-            {/* Decorative Line */}
-            <div className="flex items-center justify-center gap-4 mb-8">
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent to-accent/50"></div>
-              <span className="text-accent font-heading">ICCT26</span>
-              <div className="h-px flex-1 bg-gradient-to-l from-transparent to-accent/50"></div>
-            </div>
+            {/* Follow Updates */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="font-body text-gray-400 text-sm md:text-base mt-12"
+            >
+              Follow us on social media for latest announcements and updates
+            </motion.p>
           </motion.div>
         </div>
       </motion.div>

@@ -18,6 +18,7 @@ interface Team {
   viceCaptainWhatsapp: string
   playerCount: number
   registrationDate: string
+  registrationStatus?: 'pending' | 'confirmed' | 'rejected'
   paymentReceipt: string
   pastorLetter: string
   groupPhoto: string
@@ -29,6 +30,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'rejected' | 'all'>('pending')
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
   const navigate = useNavigate()
   const { logout } = useAdmin()
 
@@ -87,7 +90,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchTeams()
-  }, [])
+  }, [activeTab])
 
   const fetchTeams = async () => {
     try {
@@ -97,22 +100,23 @@ const AdminDashboard = () => {
       let teamsList: any[] = []
 
       try {
-        const response = await apiService.getAllTeams()
-        const summaryTeams = response.teams || response.data || response
+        // Use new admin endpoint with status filter
+        const statusParam = activeTab === 'all' ? undefined : activeTab
+        const response = await apiService.getAdminTeams(statusParam)
+        const teamsData = response.data || response.teams || response
         
-        // Fetch complete details for each team
-        if (Array.isArray(summaryTeams) && summaryTeams.length > 0) {
-          console.log(`Fetching complete details for ${summaryTeams.length} teams...`)
+        // Fetch complete details for each team if needed
+        if (Array.isArray(teamsData) && teamsData.length > 0) {
+          console.log(`Fetching complete details for ${teamsData.length} teams...`)
           
-          const detailedTeamsPromises = summaryTeams.map(async (team: any) => {
+          const detailedTeamsPromises = teamsData.map(async (team: any) => {
             try {
               const teamId = team.teamId || team.team_id
-              const detailResponse = await apiService.getTeamById(teamId)
+              const detailResponse = await apiService.getAdminTeamById(teamId)
               
               // Backend returns { team: {...}, players: [...] }
-              // Merge them together
-              const teamData = detailResponse.team || detailResponse.data || detailResponse
-              const playersData = detailResponse.players || []
+              const teamData = detailResponse.team || detailResponse.data?.team || detailResponse.data || detailResponse
+              const playersData = detailResponse.players || detailResponse.data?.players || []
               
               return {
                 ...teamData,
@@ -129,7 +133,7 @@ const AdminDashboard = () => {
       } catch (adminError: any) {
         console.warn('Admin teams endpoint not available, trying fallback:', adminError.message)
         try {
-          const response = await apiService.getTeamsFromDatabase()
+          const response = await apiService.getAllTeams()
           teamsList = response.teams || response.data || response
         } catch (databaseError: any) {
           console.error('Teams endpoint not available:', databaseError.message)
@@ -146,6 +150,7 @@ const AdminDashboard = () => {
             teamId: team.teamId || team.team_id || 'UNKNOWN-ID',
             teamName: team.teamName || team.team_name || 'Unnamed Team',
             churchName: team.churchName || team.church_name || 'Unknown Church',
+            registrationStatus: team.registrationStatus || team.registration_status || 'pending',
             // Handle nested captain object OR flat properties
             captainName: team.captain?.name || team.captainName || team.captain_name || 'N/A',
             captainPhone: team.captain?.phone || team.captainPhone || team.captain_phone || '',
@@ -176,6 +181,56 @@ const AdminDashboard = () => {
     }
   }
 
+  const handleApprove = async (teamId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    if (!confirm('Approve this team registration? Files will be moved to confirmed folder and email will be sent.')) {
+      return
+    }
+    
+    setActionLoading(teamId)
+    try {
+      const response = await apiService.confirmTeam(teamId)
+      
+      if (response.success) {
+        alert(`✅ Team approved! Email ${response.email_notification || 'sent'}`)
+        fetchTeams() // Refresh list
+      } else {
+        alert('❌ Failed to approve team: ' + (response.message || 'Unknown error'))
+      }
+    } catch (error: any) {
+      console.error('Error approving team:', error)
+      alert('❌ Error approving team: ' + (error.message || 'Unknown error'))
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleReject = async (teamId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    if (!confirm('Are you sure you want to REJECT this team? All files will be deleted permanently from Cloudinary!')) {
+      return
+    }
+    
+    setActionLoading(teamId)
+    try {
+      const response = await apiService.rejectTeam(teamId)
+      
+      if (response.success) {
+        alert('❌ Team rejected. Files deleted from Cloudinary.')
+        fetchTeams() // Refresh list
+      } else {
+        alert('❌ Failed to reject team: ' + (response.message || 'Unknown error'))
+      }
+    } catch (error: any) {
+      console.error('Error rejecting team:', error)
+      alert('❌ Error rejecting team: ' + (error.message || 'Unknown error'))
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   const handleLogout = () => {
     logout()
     navigate('/admin/login')
@@ -196,6 +251,25 @@ const AdminDashboard = () => {
       captainName.includes(query)
     )
   })
+
+  // Count teams by status
+  const pendingCount = teams.filter(t => t.registrationStatus === 'pending').length
+  const confirmedCount = teams.filter(t => t.registrationStatus === 'confirmed').length
+  const rejectedCount = teams.filter(t => t.registrationStatus === 'rejected').length
+
+  // Get status badge color
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50'
+      case 'confirmed':
+        return 'bg-green-500/20 text-green-400 border-green-500/50'
+      case 'rejected':
+        return 'bg-red-500/20 text-red-400 border-red-500/50'
+      default:
+        return 'bg-gray-500/20 text-gray-400 border-gray-500/50'
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-primary">
@@ -233,17 +307,12 @@ const AdminDashboard = () => {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {[
             { label: 'Total Teams', value: teams.length },
-            {
-              label: 'Total Players',
-              value: teams.reduce((sum, team) => sum + (team.playerCount || 0), 0)
-            },
-            {
-              label: 'Churches',
-              value: new Set(teams.map(t => t.churchName || 'Unknown')).size
-            }
+            { label: 'Pending', value: pendingCount, color: 'text-yellow-400' },
+            { label: 'Confirmed', value: confirmedCount, color: 'text-green-400' },
+            { label: 'Rejected', value: rejectedCount, color: 'text-red-400' }
           ].map((stat, i) => (
             <motion.div
               key={stat.label}
@@ -253,10 +322,42 @@ const AdminDashboard = () => {
               className="glass-effect rounded-xl p-4 sm:p-6 glow-border"
             >
               <div className="text-accent font-body text-xs sm:text-sm mb-2">{stat.label}</div>
-              <div className="text-white font-heading text-3xl sm:text-4xl md:text-5xl tracking-wide">{stat.value}</div>
+              <div className={`font-heading text-3xl sm:text-4xl md:text-5xl tracking-wide ${stat.color || 'text-white'}`}>
+                {stat.value}
+              </div>
             </motion.div>
           ))}
         </div>
+
+        {/* Status Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="glass-effect rounded-xl p-2 mb-6"
+        >
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: 'pending', label: 'Pending', count: pendingCount },
+              { key: 'confirmed', label: 'Confirmed', count: confirmedCount },
+              { key: 'rejected', label: 'Rejected', count: rejectedCount },
+              { key: 'all', label: 'All Teams', count: teams.length }
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as any)}
+                className={`flex-1 min-w-[100px] px-4 py-3 rounded-lg font-body font-semibold text-sm transition-all ${
+                  activeTab === tab.key
+                    ? 'bg-accent text-black'
+                    : 'bg-white/10 text-white/70 hover:bg-white/20'
+                }`}
+              >
+                {tab.label}
+                <span className="ml-2 text-xs opacity-75">({tab.count})</span>
+              </button>
+            ))}
+          </div>
+        </motion.div>
 
         {/* Search & Filter */}
         <motion.div
@@ -316,6 +417,9 @@ const AdminDashboard = () => {
                           <span className="bg-accent/20 text-accent px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-body font-semibold">
                             {team.teamId}
                           </span>
+                          <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-body font-semibold border ${getStatusBadge(team.registrationStatus || 'pending')}`}>
+                            {(team.registrationStatus || 'pending').toUpperCase()}
+                          </span>
                           <h3 className="font-heading text-xl sm:text-2xl md:text-3xl text-white group-hover:text-accent transition-colors tracking-wide break-words">
                             {team.teamName || 'Unnamed Team'}
                           </h3>
@@ -372,6 +476,44 @@ const AdminDashboard = () => {
                     </div>
 
                     <div className="ml-auto sm:ml-4 flex-shrink-0 self-start flex flex-col gap-2">
+                      {/* Approve/Reject Buttons for Pending Teams */}
+                      {team.registrationStatus === 'pending' && (
+                        <>
+                          <button
+                            onClick={(e) => handleApprove(team.teamId, e)}
+                            disabled={actionLoading === team.teamId}
+                            className="bg-green-500/20 hover:bg-green-500/30 text-green-400 px-3 py-2 rounded-lg text-xs font-body transition-all flex items-center gap-1 whitespace-nowrap disabled:opacity-50"
+                          >
+                            {actionLoading === team.teamId ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin"></div>
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                ✅ Approve
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={(e) => handleReject(team.teamId, e)}
+                            disabled={actionLoading === team.teamId}
+                            className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-lg text-xs font-body transition-all flex items-center gap-1 whitespace-nowrap disabled:opacity-50"
+                          >
+                            {actionLoading === team.teamId ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                ❌ Reject
+                              </>
+                            )}
+                          </button>
+                        </>
+                      )}
+                      
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
