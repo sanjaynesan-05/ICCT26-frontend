@@ -1383,7 +1383,7 @@ const Registration = () => {
                     <div className="flex flex-col items-center justify-center">
                       <div className="bg-white p-4 rounded-xl shadow-lg mb-4 border-2 border-primary">
                         <img
-                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=sanjaynesan007@okaxis&pn=ICCT26&am=1&cu=INR"
+                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=sanjaynesan007@okaxis%26pn=ICCT26%26am=1%26cu=INR"
                           alt="Payment QR Code"
                           className="w-64 h-64 object-cover rounded-lg"
                         />
