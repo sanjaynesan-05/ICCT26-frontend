@@ -10,7 +10,7 @@ import { Users, MapPin } from 'lucide-react'
 import { apiService } from '../services/api'
 
 // Set to true to close/lock teams page
-const TEAMS_LOCKED = true
+const TEAMS_LOCKED = false
 
 interface Player {
   playerId?: string

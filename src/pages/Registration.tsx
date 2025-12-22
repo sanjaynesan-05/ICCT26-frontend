@@ -87,7 +87,7 @@ interface RegistrationResponse {
 const REGISTRATION_CLOSED = false
 
 const CHURCH_NAMES = [
-  "CSI St. Peters Church Rathinapuri",
+  "CSI St Peters Church Rathinapuri",
   "CSI Immanuel Church Coimbatore",
   "CSI Christ Church Trichy Road",
   "CSI Christ Church Gandhipuram",
@@ -1348,7 +1348,7 @@ const Registration = () => {
                       </div>
                       <div className="flex justify-between py-2 border-b">
                         <span className="font-subheading font-semibold">Registration Fee:</span>
-                        <span className="text-green-600 font-bold">₹2,000</span>
+                        <span className="text-green-600 font-bold">₹2,026</span>
                       </div>
                     </div>
 
@@ -1391,12 +1391,6 @@ const Registration = () => {
                       <p className="text-center font-subheading text-gray-600 mb-4">
                         Scan with any UPI app to pay ₹1
                       </p>
-                      <a
-                        href="upi://pay?pa=sanjaynesan007@okaxis&pn=ICCT26&am=1&cu=INR"
-                        className="text-lg font-semibold text-primary hover:text-blue-700 transition-colors"
-                      >
-                        Click to Pay
-                      </a>
                     </div>
 
                     <div>
