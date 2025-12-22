@@ -26,7 +26,8 @@ interface Team {
 }
 
 const AdminDashboard = () => {
-  const [teams, setTeams] = useState<Team[]>([])
+  const [allTeams, setAllTeams] = useState<Team[]>([])
+  const [displayedTeams, setDisplayedTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -88,11 +89,17 @@ const AdminDashboard = () => {
 
   // Removed unused viewFile function - click handlers are inline in JSX
 
+  // Fetch all teams once on component mount
   useEffect(() => {
-    fetchTeams()
-  }, [activeTab])
+    fetchAllTeams()
+  }, [])
 
-  const fetchTeams = async () => {
+  // Filter teams when activeTab or searchQuery changes
+  useEffect(() => {
+    filterTeams()
+  }, [activeTab, searchQuery, allTeams])
+
+  const fetchAllTeams = async () => {
     try {
       setLoading(true)
       setError('')
@@ -100,9 +107,8 @@ const AdminDashboard = () => {
       let teamsList: any[] = []
 
       try {
-        // Use new admin endpoint with status filter
-        const statusParam = activeTab === 'all' ? undefined : activeTab
-        const response = await apiService.getAdminTeams(statusParam)
+        // Always fetch ALL teams with all statuses
+        const response = await apiService.getAdminTeams()
         const teamsData = response.data || response.teams || response
         
         // Fetch complete details for each team if needed
@@ -138,7 +144,7 @@ const AdminDashboard = () => {
         } catch (databaseError: any) {
           console.error('Teams endpoint not available:', databaseError.message)
           setError('Failed to load teams from backend. Please ensure the backend server is running and accessible.')
-          setTeams([])
+          setAllTeams([])
           return
         }
       }
@@ -171,14 +177,43 @@ const AdminDashboard = () => {
           }))
         : []
 
-      setTeams(safeTeams)
+      setAllTeams(safeTeams)
     } catch (err) {
       console.error('Error fetching teams:', err)
       setError('Failed to load teams from backend. Connection error.')
-      setTeams([])
+      setAllTeams([])
     } finally {
       setLoading(false)
     }
+  }
+
+  // Filter teams based on activeTab and searchQuery
+  const filterTeams = () => {
+    let filtered = allTeams
+
+    // Filter by tab
+    if (activeTab !== 'all') {
+      filtered = filtered.filter(t => t.registrationStatus === activeTab)
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(team => {
+        const teamName = (team.teamName || '').toLowerCase()
+        const teamId = (team.teamId || '').toLowerCase()
+        const churchName = (team.churchName || '').toLowerCase()
+        const captainName = (team.captainName || '').toLowerCase()
+        return (
+          teamName.includes(query) ||
+          teamId.includes(query) ||
+          churchName.includes(query) ||
+          captainName.includes(query)
+        )
+      })
+    }
+
+    setDisplayedTeams(filtered)
   }
 
   const handleApprove = async (teamId: string, e: React.MouseEvent) => {
@@ -194,7 +229,7 @@ const AdminDashboard = () => {
       
       if (response.success) {
         alert(`✅ Team approved! Email ${response.email_notification || 'sent'}`)
-        fetchTeams() // Refresh list
+        fetchAllTeams() // Refresh list
       } else {
         alert('❌ Failed to approve team: ' + (response.message || 'Unknown error'))
       }
@@ -219,7 +254,7 @@ const AdminDashboard = () => {
       
       if (response.success) {
         alert('❌ Team rejected. Files deleted from Cloudinary.')
-        fetchTeams() // Refresh list
+        fetchAllTeams() // Refresh list
       } else {
         alert('❌ Failed to reject team: ' + (response.message || 'Unknown error'))
       }
@@ -236,26 +271,10 @@ const AdminDashboard = () => {
     navigate('/admin/login')
   }
 
-  // ✅ Safe Filtering (prevents "Cannot read toLowerCase of undefined")
-  const filteredTeams = teams.filter(team => {
-    const query = (searchQuery || '').toLowerCase()
-    const teamName = (team.teamName || '').toLowerCase()
-    const churchName = (team.churchName || '').toLowerCase()
-    const teamId = (team.teamId || '').toLowerCase()
-    const captainName = (team.captainName || '').toLowerCase()
-
-    return (
-      teamName.includes(query) ||
-      churchName.includes(query) ||
-      teamId.includes(query) ||
-      captainName.includes(query)
-    )
-  })
-
-  // Count teams by status
-  const pendingCount = teams.filter(t => t.registrationStatus === 'pending').length
-  const confirmedCount = teams.filter(t => t.registrationStatus === 'confirmed').length
-  const rejectedCount = teams.filter(t => t.registrationStatus === 'rejected').length
+  // Count teams by status from ALL teams (for accurate counts)
+  const pendingCount = allTeams.filter(t => t.registrationStatus === 'pending').length
+  const confirmedCount = allTeams.filter(t => t.registrationStatus === 'confirmed').length
+  const rejectedCount = allTeams.filter(t => t.registrationStatus === 'rejected').length
 
   // Get status badge color
   const getStatusBadge = (status: string) => {
@@ -309,7 +328,7 @@ const AdminDashboard = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {[
-            { label: 'Total Teams', value: teams.length },
+            { label: 'Total Teams', value: allTeams.length },
             { label: 'Pending', value: pendingCount, color: 'text-yellow-400' },
             { label: 'Confirmed', value: confirmedCount, color: 'text-green-400' },
             { label: 'Rejected', value: rejectedCount, color: 'text-red-400' }
@@ -341,7 +360,7 @@ const AdminDashboard = () => {
               { key: 'pending', label: 'Pending', count: pendingCount },
               { key: 'confirmed', label: 'Confirmed', count: confirmedCount },
               { key: 'rejected', label: 'Rejected', count: rejectedCount },
-              { key: 'all', label: 'All Teams', count: teams.length }
+              { key: 'all', label: 'All Teams', count: allTeams.length }
             ].map(tab => (
               <button
                 key={tab.key}
@@ -374,7 +393,7 @@ const AdminDashboard = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 input-focus focus:outline-none font-body text-sm sm:text-base"
             />
-            <button onClick={fetchTeams} className="btn-gold px-6 sm:px-8 py-3 rounded-lg font-body text-sm sm:text-base whitespace-nowrap">
+            <button onClick={fetchAllTeams} className="btn-gold px-6 sm:px-8 py-3 rounded-lg font-body text-sm sm:text-base whitespace-nowrap">
               Refresh
             </button>
           </div>
@@ -383,7 +402,7 @@ const AdminDashboard = () => {
         {/* Teams List */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
           <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white mb-4 sm:mb-6 tracking-wide">
-            Registered Teams ({filteredTeams.length})
+            Registered Teams ({displayedTeams.length})
           </h2>
 
           {loading ? (
@@ -395,13 +414,13 @@ const AdminDashboard = () => {
             <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-6 text-red-200 font-body">
               {error}
             </div>
-          ) : filteredTeams.length === 0 ? (
+          ) : displayedTeams.length === 0 ? (
             <div className="glass-effect rounded-xl p-12 text-center">
               <p className="text-white font-body text-lg">No teams found</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              {filteredTeams.map((team, index) => (
+              {displayedTeams.map((team, index) => (
                 <motion.div
                   key={team.teamId}
                   initial={{ opacity: 0, x: -20 }}

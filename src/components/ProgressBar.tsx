@@ -44,10 +44,10 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
 
       {/* Progress Text */}
       <div className="flex justify-between items-center mt-2">
-        <span className="text-sm text-gray-300">
+        <span className="text-sm text-white font-semibold">
           {isComplete ? 'Upload Complete!' : 'Uploading...'}
         </span>
-        <span className="text-sm font-bold text-gold">
+        <span className="text-sm font-bold text-accent">
           {percentage}%
         </span>
       </div>
@@ -119,7 +119,7 @@ export const DetailedProgressBar: React.FC<DetailedProgressBarProps> = ({
 
       {/* Progress Details */}
       <div className="flex justify-between items-center mt-2">
-        <div className="text-xs text-gray-300">
+        <div className="text-xs text-white font-semibold">
           {totalBytes > 0 ? (
             <span>
               {formatBytes(uploadedBytes)} / {formatBytes(totalBytes)}
@@ -128,7 +128,7 @@ export const DetailedProgressBar: React.FC<DetailedProgressBarProps> = ({
             <span>{isComplete ? 'Upload Complete!' : 'Uploading...'}</span>
           )}
         </div>
-        <div className="text-sm font-bold text-gold">
+        <div className="text-sm font-bold text-accent">
           {percentage}%
         </div>
       </div>
