@@ -11,18 +11,20 @@ import titleSponsorLogo from '../assets/sponsor/0 Title_Sponsors.png'
 
 const Home = () => {
   // State for teams count
-  const [teamsCount, setTeamsCount] = useState<number>(0)
+  const [approvedTeamsCount, setApprovedTeamsCount] = useState<number>(0)
   const [loadingCount, setLoadingCount] = useState<boolean>(true)
+  const MAX_TEAMS = 24
 
-  // Fetch teams count from backend
+  // Fetch teams count from backend (same as Teams page)
   useEffect(() => {
     const fetchTeamsCount = async () => {
       try {
         setLoadingCount(true)
-        const response = await apiService.getAllTeams()
-        const teams = response.teams || response.data || response
-        const count = Array.isArray(teams) ? teams.length : 0
-        setTeamsCount(count)
+        // Fetch confirmed teams (same as Teams page)
+        const response = await apiService.getAdminTeams('confirmed')
+        const teamsData = response.data || response.teams || response
+        const count = Array.isArray(teamsData) ? teamsData.length : 0
+        setApprovedTeamsCount(count)
       } catch (error) {
         console.error('Failed to fetch teams count:', error)
         // Keep default value of 0 on error
@@ -252,7 +254,7 @@ const Home = () => {
               const Icon = highlight.icon;
               // Use dynamic count for Teams Registered
               const displayValue = highlight.title === 'Teams Registered' 
-                ? (loadingCount ? 'Loading...' : `${teamsCount} TEAMS`)
+                ? (loadingCount ? 'Loading...' : `${approvedTeamsCount}/ ${MAX_TEAMS}`)
                 : highlight.value;
               
               return (
