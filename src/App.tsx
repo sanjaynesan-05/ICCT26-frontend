@@ -3,12 +3,12 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import CricketLoader from './components/CricketLoader'
 import ErrorBoundary from './components/ErrorBoundary'
+import FloatingTeamsWidget from './components/FloatingTeamsWidget'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
 import Schedule from './pages/Schedule'
 import Registration from './pages/Registration'
-import Teams from './pages/Teams'
 import Gallery from './pages/Gallery'
 import Rules from './pages/Rules'
 import Contact from './pages/Contact'
@@ -24,13 +24,14 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Loader duration: ~5.5 seconds (4.5s progress + 1s fade out)
-    const timer = setTimeout(() => setLoading(false), 5500)
+    // Loader duration: ~10.5 seconds (4.5s progress + 4.5s countdown + 1s get ready + 0.5s flash)
+    // onComplete callback in CricketLoader will also trigger setLoading(false)
+    const timer = setTimeout(() => setLoading(false), 10500)
     return () => clearTimeout(timer)
   }, [])
 
   if (loading) {
-    return <CricketLoader />
+    return <CricketLoader onComplete={() => setLoading(false)} />
   }
 
   return (
@@ -87,13 +88,13 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/schedule" element={<Schedule />} />
                     <Route path="/registration" element={<Registration />} />
-                    <Route path="/teams" element={<Teams />} />
                     <Route path="/gallery" element={<Gallery />} />
                     <Route path="/rules" element={<Rules />} />
                     <Route path="/contact" element={<Contact />} />
                   </Routes>
                 </AnimatePresence>
-                
+                <Footer />
+                <FloatingTeamsWidget />
               </motion.div>
             }
           />

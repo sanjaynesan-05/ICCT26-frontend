@@ -6,6 +6,7 @@ const SPONSOR_IMAGES = [
   '/sponsor/Johnpolimers.jpg',
   '/sponsor/JSInfotech.png',
   '/sponsor/SPORTSLANDLOGO.jpg',
+  '/sponsor/dicta.jpeg',
   '/sponsor/StPetersSchool.png',
   '/sponsor/SASHAINC.jpg',
   '/sponsor/NEWSYSTEM.jpg',

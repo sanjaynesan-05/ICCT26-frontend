@@ -794,9 +794,10 @@ const Registration = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
+      initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.8 }}
       className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
     >
       <div className="container mx-auto max-w-6xl">
