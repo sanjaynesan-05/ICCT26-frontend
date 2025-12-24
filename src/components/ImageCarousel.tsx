@@ -19,6 +19,7 @@ const SPONSOR_IMAGES = [
   '/sponsor/joycatering.jpeg',
   '/sponsor/jvdandkalani.webp',
   '/sponsor/williamconcepts.webp',
+  '/sponsor/gbhospital.jpeg',
 ]
 
 const ImageCarousel = () => {

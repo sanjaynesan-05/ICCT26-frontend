@@ -21,14 +21,23 @@ import PlayerDetail from './pages/admin/PlayerDetail'
 import ScheduleManager from './pages/admin/ScheduleManager'
 
 function App() {
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => {
+    // Only show loader on initial page load, not on page refresh or navigation
+    const hasShownLoader = sessionStorage.getItem('cricketLoaderShown')
+    return !hasShownLoader
+  })
 
   useEffect(() => {
-    // Loader duration: ~10.5 seconds (4.5s progress + 4.5s countdown + 1s get ready + 0.5s flash)
-    // onComplete callback in CricketLoader will also trigger setLoading(false)
-    const timer = setTimeout(() => setLoading(false), 10500)
-    return () => clearTimeout(timer)
-  }, [])
+    if (loading) {
+      // Mark that loader has been shown
+      sessionStorage.setItem('cricketLoaderShown', 'true')
+      
+      // Loader duration: ~10.5 seconds (4.5s progress + 4.5s countdown + 1s get ready + 0.5s flash)
+      // onComplete callback in CricketLoader will also trigger setLoading(false)
+      const timer = setTimeout(() => setLoading(false), 10500)
+      return () => clearTimeout(timer)
+    }
+  }, [loading])
 
   if (loading) {
     return <CricketLoader onComplete={() => setLoading(false)} />

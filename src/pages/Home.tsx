@@ -147,7 +147,31 @@ const Home = () => {
             transition={{ delay: 0.4 }}
             className="mb-12"
           >
-            {/* Title Sponsor - Appears first on mobile */}
+            {/* Trophy Sponsor Memorial - Appears first on all devices */}
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.35 }}
+              className="mb-8"
+            >
+              <motion.h2
+                className="font-heading text-2xl md:text-3xl lg:text-4xl text-accent mb-2 tracking-wider"
+              >
+                Trophy Sponsor
+              </motion.h2>
+              <motion.h2
+                className="font-heading text-2xl md:text-3xl lg:text-4xl text-white mb-4 tracking-wider"
+              >
+                In Memory of
+              </motion.h2>
+              <motion.h2
+                className="font-heading text-3xl md:text-4xl lg:text-5xl text-white mb-8 tracking-wider"
+              >
+                Mrs.R. Gnanajothi Anandaraj
+              </motion.h2>
+            </motion.div>
+
+            {/* Title Sponsor - Appears after Trophy Sponsor on mobile */}
             <div className="lg:hidden mb-8">
               <div className="flex flex-col items-center justify-center">
                 <motion.div

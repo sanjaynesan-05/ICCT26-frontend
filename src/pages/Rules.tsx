@@ -16,7 +16,7 @@ import {
 import { TOURNAMENT_RULES } from '../data/rules'
 
 // Set to true to close/lock rules page
-const RULES_CLOSED = true
+const RULES_CLOSED = false
 
 const iconMap = {
   ClipboardList,
@@ -99,6 +99,18 @@ const Rules = () => {
     )
   }
 
+  const SIMPLE_RULES = [
+    'Matches will be played using a Red Tennis Ball format.',
+    'Each team can have a maximum of 15 players.', 
+    'There is no age limit for participation.',
+    'Each team will play 10 overs per side.',
+    'Powerplay (Overs 1–2): Only 2 fielders are allowed outside the 30-yard circle.',
+    'Second Powerplay: Can be taken in any one over between Overs 6, 7, or 8; only 5 fielders are allowed outside the 30-yard circle.',
+    'A bowler can bowl a maximum of 3 overs in a match.',
+    'If a match ends in a tie, a Super Over will be played to decide the winner.',
+    'The Umpire\'s decision is final.'
+  ]
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -120,71 +132,36 @@ const Rules = () => {
           <p className="font-subheading text-2xl text-gray-300 mb-8">
             Know the Game. Play Fair.
           </p>
-          <a href="/rulebook.pdf" download className="btn-gold inline-flex items-center gap-2">
-            <Download className="w-5 h-5" />
-            Download Rulebook PDF
-          </a>
         </motion.div>
 
-        {/* Rules Accordion */}
-        <div className="space-y-4">
-          {rules.map((rule: any, index: number) => (
-            <motion.div
-              key={rule.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * index }}
-              className="glass-effect rounded-2xl overflow-hidden glow-border"
-            >
-              <button
-                onClick={() => setOpenAccordion(openAccordion === rule.id ? null : rule.id)}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/10 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  {/* Render Lucide icon dynamically */}
-                  {iconMap[rule.icon] ? (
-                    React.createElement(iconMap[rule.icon], { className: "w-8 h-8 text-accent" })
-                  ) : (
-                    <span className="text-4xl">?</span>
-                  )}
-                  <h3 className="font-heading text-2xl md:text-3xl text-white">
-                    {rule.title}
-                  </h3>
-                </div>
-                <motion.div
-                  animate={{ rotate: openAccordion === rule.id ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <ChevronDown className="w-6 h-6 text-accent" />
-                </motion.div>
-              </button>
-
+        {/* Simple Rules List */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="glass-effect rounded-2xl p-8 md:p-12 border border-accent/30 glow-border"
+        >
+          <div className="space-y-6">
+            {SIMPLE_RULES.map((rule, index) => (
               <motion.div
-                initial={false}
-                animate={{
-                  height: openAccordion === rule.id ? 'auto' : 0,
-                  opacity: openAccordion === rule.id ? 1 : 0,
-                }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden"
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.05 * index }}
+                className="flex items-start gap-4"
               >
-                <div className="px-6 pb-6 pl-20">
-                  <ul className="space-y-3">
-                    {rule.content.map((item: string, idx: number) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-3 text-gray-300 font-subheading"
-                      >
-                        <span className="text-accent mt-1">✓</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="flex-shrink-0">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-accent/20 border border-accent/40">
+                    <span className="text-accent font-bold text-sm">{index + 1}</span>
+                  </div>
                 </div>
+                <p className="text-gray-300 font-subheading text-lg pt-1 leading-relaxed">
+                  {rule}
+                </p>
               </motion.div>
-            </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </motion.div>
 
         {/* Important Note */}
         <motion.div

@@ -187,8 +187,6 @@ const Registration = () => {
   const [showProgress, setShowProgress] = useState(false)
   const [currentIdempotencyKey, setCurrentIdempotencyKey] = useState<string>('')
   const [registeredTeamId, setRegisteredTeamId] = useState<string>('')
-  const [showDocumentConfirmation, setShowDocumentConfirmation] = useState(false)
-  const [documentConfirmed, setDocumentConfirmed] = useState(false)
   
   // ========== CHURCH AVAILABILITY STATE ==========
   const [churchAvailability, setChurchAvailability] = useState<ChurchAvailability[] | undefined>()
@@ -907,7 +905,7 @@ const Registration = () => {
             )}
 
             <AnimatePresence mode="wait">
-              {/* Step 0: Document Authenticity */}
+              {/* Step 0: Introduction & Terms */}
               {currentStep === 0 && (
                 <motion.div
                   key="step0"
@@ -918,77 +916,75 @@ const Registration = () => {
                   className="glass-card rounded-2xl p-8 mb-8"
                 >
                   <div className="text-center mb-8">
-                    <h2 className="font-heading text-4xl md:text-5xl text-red-600 mb-4">
-                      Document Authenticity
+                    <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4">
+                      Welcome to ICCT26
                     </h2>
                     <p className="text-gray-600 font-subheading">
-                      Please read and confirm before proceeding with registration
+                      Register your team for the cricket tournament
                     </p>
                   </div>
 
                   <div className="space-y-6 text-gray-800 max-h-96 overflow-y-auto mb-8">
-                    {/* Warning Box */}
-                    <div className="bg-red-50 border-2 border-red-400 rounded-lg p-4">
-                      <p className="text-red-800 font-semibold text-sm mb-2">⚠️ IMPORTANT</p>
-                      <p className="text-red-700 text-sm mb-2">
-                        All documents must be:
-                      </p>
-                      <ul className="list-disc list-inside space-y-1 text-red-700 text-sm">
-                        <li><strong>Original & genuine</strong></li>
-                        <li><strong>Valid & current</strong></li>
-                        <li><strong>Relevant</strong></li>
-                        <li><strong>Clear & legible</strong></li>
-                      </ul>
-                    </div>
-
-                    {/* Verification Commitment */}
+                    {/* Registration Info */}
                     <div className="bg-blue-50 border-2 border-blue-400 rounded-lg p-4">
-                      <p className="text-blue-800 font-semibold text-sm mb-2">✓ COMMITMENT</p>
-                      <p className="text-blue-700 text-sm">
-                        I will upload only <strong>authentic</strong> documents and accept full responsibility.
+                      <p className="text-blue-800 font-semibold text-sm mb-2">📋 Registration Overview</p>
+                      <p className="text-blue-700 text-sm mb-3">
+                        You will proceed through the following steps:
                       </p>
+                      <ul className="list-disc list-inside space-y-1 text-blue-700 text-sm">
+                        <li>Team Details (Church, Team Name, Documents)</li>
+                        <li>Captain & Vice-Captain Information</li>
+                        <li>Player Details (11-15 players)</li>
+                        <li>Review Information</li>
+                        <li>Payment Upload</li>
+                      </ul>
                     </div>
 
                     {/* Requirements */}
                     <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4">
-                      <p className="text-green-800 font-semibold text-sm mb-3">📋 DOCUMENT REQUIREMENTS</p>
+                      <p className="text-green-800 font-semibold text-sm mb-3">✓ Rules and Regulations</p>
                       <ul className="list-disc list-inside space-y-2 text-green-700 text-sm">
-                        <li>Each player must submit: Aadhar Card, Subscription Card, and Photo</li>
-                        <li>Documents must be clear, legible, and complete</li>
-                        <li>All information must match exactly across all documents</li>
-                        <li>No alterations or modifications are permitted</li>
-                        <li>Files must be in JPG/JPEG/PNG format (max 5MB each)</li>
+                        <li>Matches will be played using a <strong>Red Tennis Ball</strong> format</li>
+                        <li>Each team can have a <strong>maximum of 15 players</strong></li>
+                        <li>There is <strong>no age limit</strong> for participation</li>
+                        <li>Each team will play <strong>10 overs per side</strong></li>
+                        <li><strong>Powerplay (Overs 1–2):</strong> Only <strong>2 fielders</strong> are allowed outside the <strong>30-yard circle</strong></li>
+                        <li><strong>Second Powerplay:</strong> Can be taken in any one over between <strong>Overs 6, 7, or 8</strong>; only <strong>5 fielders</strong> are allowed outside the <strong>30-yard circle</strong></li>
+                        <li>A bowler can bowl a <strong>maximum of 3 overs</strong> in a match</li>
+                        <li>If a match ends in a tie, a <strong>Super Over</strong> will be played to decide the winner</li>
+                        <li>The <strong>Umpire’s decision</strong> is final</li>
                       </ul>
                     </div>
 
-                    {/* Legal Notice */}
-                    <div className="bg-purple-50 border-2 border-purple-400 rounded-lg p-4">
-                      <p className="text-purple-800 font-semibold text-sm mb-2">⚖️ LEGAL NOTICE</p>
-                      <p className="text-purple-700 text-sm">
-                        By submitting this registration, you declare that all documents are authentic and original. 
-                        The tournament committee reserves the right to verify documents and take any actions if it is appropriate.
+                    {/* Terms */}
+                    <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+                      <p className="text-yellow-800 font-semibold text-sm mb-2">⚡ Important</p>
+                      <p className="text-yellow-700 text-sm">
+                        By proceeding with registration, you agree to comply with all tournament rules and regulations. All submitted information must be accurate and authentic.
                       </p>
                     </div>
                   </div>
 
                   <div className="border-t border-gray-200 pt-6">
-                    <div className="flex items-start gap-3 mb-6 p-3 bg-red-50 rounded-lg border-2 border-red-200">
+                    <div className="flex items-start gap-3 mb-6 p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
                       <input
                         type="checkbox"
                         id="acceptTerms"
                         checked={acceptTerms}
                         onChange={(e) => setAcceptTerms(e.target.checked)}
-                        className="mt-1 w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-600"
+                        className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-600"
                       />
                       <label htmlFor="acceptTerms" className="text-gray-800 font-medium text-sm">
-                        I confirm that all documents I will submit are <span className="text-red-600 font-bold">genuine and authentic</span>.
+                        I agree to the tournament rules and regulations and confirm that all information I provide will be <span className="text-blue-600 font-bold">accurate and authentic</span>.
                       </label>
                     </div>
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 1: Team Details */}
+              
+
+              {/* Step 2: Team Details */}
               {currentStep === 1 && (
                 <motion.div
                   key="step1"
@@ -1078,7 +1074,7 @@ const Registration = () => {
                 </motion.div>
               )}
 
-              {/* Step 2: Captain & Vice-Captain */}
+              {/* Step 3: Captain & Vice-Captain */}
               {currentStep === 2 && (
                 <motion.div
                   key="step2"
@@ -1296,7 +1292,7 @@ const Registration = () => {
                 </motion.div>
               )}
 
-              {/* Step 3: Player Details */}
+              {/* Step 4: Player Details */}
               {currentStep === 3 && (
                 <motion.div
                   key="step3"
@@ -1345,7 +1341,7 @@ const Registration = () => {
                 </motion.div>
               )}
 
-              {/* Step 4: Review Information */}
+              {/* Step 5: Review Information */}
               {currentStep === 4 && (
                 <motion.div
                   key="step4"
@@ -1416,7 +1412,7 @@ const Registration = () => {
                 </motion.div>
               )}
 
-              {/* Step 5: Payment Upload */}
+              {/* Step 6: Payment Upload */}
               {currentStep === 5 && (
                 <motion.div
                   key="step5"
@@ -1437,7 +1433,7 @@ const Registration = () => {
                     <div className="flex flex-col items-center justify-center">
                       <div className="bg-white p-4 rounded-xl shadow-lg mb-4 border-2 border-primary">
                         <img
-                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=sanjaynesan007@okaxis%26pn=ICCT26%26am=1%26cu=INR"
+                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=9944257713@kotak811%26pn=ICCT26%26am=2026%26cu=INR%26tn=ICCT%2726%20Team%20Registration"
                           alt="Payment QR Code"
                           className="w-64 h-64 object-cover rounded-lg"
                         />
@@ -1463,6 +1459,7 @@ const Registration = () => {
                   </div>
                 </motion.div>
               )}
+
             </AnimatePresence>
 
             {/* Validation Errors Display */}
@@ -1503,13 +1500,13 @@ const Registration = () => {
 
               <button
                 onClick={handleNext}
-                disabled={isSubmitting || (currentStep === 1 && formData.churchName && isChurchLocked(formData.churchName, churchAvailability))}
+                disabled={isSubmitting}
                 className={`flex items-center gap-2 btn-gold ${
-                  isSubmitting || (currentStep === 1 && formData.churchName && isChurchLocked(formData.churchName, churchAvailability))
+                  isSubmitting
                     ? 'opacity-60 cursor-not-allowed' 
                     : ''
                 }`}
-                title={currentStep === 1 && formData.churchName && isChurchLocked(formData.churchName, churchAvailability) ? 'Please select an available church' : ''}
+                title={''}
               >
                 {isSubmitting ? (
                   <span className="inline-flex items-center gap-2 text-black">
@@ -1537,7 +1534,7 @@ const Registration = () => {
                   </span>
                 ) : (
                   <>
-                    {currentStep === 5 ? 'Submit' : 'Next'}
+                    {currentStep === 4 ? 'Submit' : 'Next'}
                     {currentStep < 5 && <ChevronRight className="w-5 h-5" />}
                   </>
                 )}

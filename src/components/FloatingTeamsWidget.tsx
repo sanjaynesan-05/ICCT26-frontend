@@ -45,7 +45,6 @@ export const FloatingTeamsWidget = () => {
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
 
   // Fetch confirmed teams when widget opens
   useEffect(() => {
@@ -58,7 +57,7 @@ export const FloatingTeamsWidget = () => {
     try {
       setLoading(true)
       setError('')
-      const response = await apiService.getAdminTeams('confirmed')
+      const response = await apiService.getAdminTeams()
       const teamsData = response.data || response.teams || response
       
       if (Array.isArray(teamsData)) {
@@ -132,18 +131,18 @@ export const FloatingTeamsWidget = () => {
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
-        className="fixed bottom-8 right-8 z-40 px-7 py-4 rounded-2xl bg-gradient-to-br from-accent via-yellow-500 to-accent shadow-2xl flex items-center justify-center gap-3 text-black font-bold hover:shadow-3xl transition-all"
+        className="fixed bottom-6 right-4 md:bottom-8 md:right-8 z-40 px-5 md:px-7 py-3 md:py-4 rounded-2xl bg-gradient-to-br from-accent via-yellow-500 to-accent shadow-2xl flex items-center justify-center gap-2 md:gap-3 text-black font-bold hover:shadow-3xl transition-all text-sm md:text-base"
         style={{ 
           boxShadow: '0 0 30px rgba(255, 204, 41, 0.4)',
           borderRadius: '20px'
         }}
       >
-        <span className="font-body text-base tracking-wide">TEAMS</span>
+        <span className="font-body tracking-wide">TEAMS</span>
       </motion.button>
 
       {/* Teams List Panel */}
       <AnimatePresence>
-        {isOpen && !selectedTeam && (
+        {isOpen && (
           <>
             {/* Backdrop */}
             <motion.div
@@ -151,7 +150,7 @@ export const FloatingTeamsWidget = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-black/50 z-40"
+              className="fixed inset-0 bg-black/75 z-40"
             />
 
             {/* Panel */}
@@ -160,7 +159,7 @@ export const FloatingTeamsWidget = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 100, scale: 0.9 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed bottom-24 right-8 z-50 w-full max-w-md glass-effect rounded-2xl p-6 border border-accent/30 shadow-2xl max-h-[70vh] overflow-y-auto custom-scrollbar"
+              className="fixed bottom-20 right-4 md:bottom-24 md:right-8 z-50 w-[calc(100%-2rem)] md:w-full md:max-w-md glass-effect rounded-2xl p-4 md:p-6 border border-accent/30 shadow-2xl max-h-[60vh] md:max-h-[70vh] overflow-y-auto custom-scrollbar"
               style={{
                 background: 'linear-gradient(135deg, rgba(0, 43, 92, 0.8) 0%, rgba(13, 27, 42, 0.8) 100%)',
                 backdropFilter: 'blur(10px)',
@@ -168,18 +167,18 @@ export const FloatingTeamsWidget = () => {
               }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="font-heading text-2xl text-accent">Registered Teams</h3>
-                  <p className="text-sm text-gray-300 mt-1">
-                    {teams.length} team{teams.length !== 1 ? 's' : ''} confirmed
+              <div className="flex items-start justify-between mb-4 md:mb-6 gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-heading text-xl md:text-2xl text-accent">All Teams</h3>
+                  <p className="text-xs md:text-sm text-gray-300 mt-1">
+                    {teams.length} team{teams.length !== 1 ? 's' : ''} registered
                   </p>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
                 >
-                  <X className="w-5 h-5 text-white" />
+                  <X className="w-4 h-4 md:w-5 md:h-5 text-white" />
                 </button>
               </div>
 
@@ -198,46 +197,47 @@ export const FloatingTeamsWidget = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {teams.map((team, index) => (
-                    <motion.button
+                  {teams.map((team, index) => {
+                    // Determine status color and label
+                    const statusConfig = {
+                      'confirmed': { label: 'Registered', bgColor: 'bg-green-500/20', textColor: 'text-green-400', borderColor: 'border-green-500/30' },
+                      'pending': { label: 'In Progress', bgColor: 'bg-yellow-500/20', textColor: 'text-yellow-400', borderColor: 'border-yellow-500/30' },
+                      'waiting': { label: 'In Progress', bgColor: 'bg-yellow-500/20', textColor: 'text-yellow-400', borderColor: 'border-yellow-500/30' },
+                      'rejected': { label: 'Rejected', bgColor: 'bg-red-500/20', textColor: 'text-red-400', borderColor: 'border-red-500/30' }
+                    }
+                    const status = team.registrationStatus?.toLowerCase() || 'pending'
+                    const statusStyle = statusConfig[status as keyof typeof statusConfig] || statusConfig['pending']
+
+                    return (
+                    <div
                       key={team.teamId}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      onClick={() => setSelectedTeam(team)}
-                      className="w-full text-left bg-white/10 hover:bg-white/20 rounded-xl p-4 transition-all border border-white/10 hover:border-accent/50 group"
+                      className="w-full text-left bg-white/10 hover:bg-white/20 rounded-xl p-3 md:p-4 transition-all border border-white/10 hover:border-accent/50 group"
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-subheading font-semibold text-white text-sm group-hover:text-accent transition-colors">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                        <h4 className="font-subheading font-semibold text-white text-xs md:text-sm group-hover:text-accent transition-colors break-words flex-1">
                           {team.teamName}
                         </h4>
-                        <span className="bg-accent/20 text-accent text-xs font-bold px-2 py-1 rounded">
-                          {team.playerCount} Players
+                        <span className={`${statusStyle.bgColor} ${statusStyle.textColor} text-xs font-bold px-2 md:px-3 py-1 rounded border ${statusStyle.borderColor} flex-shrink-0`}>
+                          {statusStyle.label}
                         </span>
                       </div>
 
-                      <p className="text-xs text-gray-400 mb-2 flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {team.churchName}
+                      <p className="text-xs text-gray-400 mb-1 md:mb-2 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{team.churchName}</span>
                       </p>
 
-                      <p className="text-xs text-gray-300">
+                      <p className="text-xs text-gray-300 truncate">
                         Captain: {team.captain.name}
                       </p>
-
-                      <div className="mt-3 flex items-center justify-between pt-3 border-t border-white/5">
-                        <span className="text-xs text-gray-500">Click to view details</span>
-                        <svg className="w-4 h-4 text-accent/60 group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                      </div>
-                    </motion.button>
-                  ))}
+                    </div>
+                    )
+                  })}
                 </div>
               )}
 
               {/* Footer */}
-              <div className="mt-6 pt-4 border-t border-white/10">
+              <div className="mt-4 md:mt-6 pt-3 md:pt-4 border-t border-white/10">
                 <p className="text-xs text-gray-400 text-center">
                   Last updated: {new Date().toLocaleTimeString()}
                 </p>
@@ -247,167 +247,7 @@ export const FloatingTeamsWidget = () => {
         )}
       </AnimatePresence>
 
-      {/* Team Details Modal */}
-      <AnimatePresence>
-        {selectedTeam && (
-          <>
-            {/* Modal Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedTeam(null)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-            />
 
-            {/* Modal */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            >
-              <div className="w-full max-w-2xl rounded-3xl overflow-hidden border border-accent/40 shadow-2xl"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(13, 27, 42, 0.95) 50%, rgba(0, 43, 92, 0.95) 100%)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  boxShadow: '0 25px 50px rgba(255, 204, 41, 0.15), 0 0 60px rgba(255, 204, 41, 0.1)'
-                }}
-              >
-                {/* Modal Header */}
-                <div className="relative overflow-hidden p-8 border-b border-accent/20"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(255, 204, 41, 0.15) 0%, rgba(255, 204, 41, 0.05) 100%)',
-                    backdropFilter: 'blur(10px)'
-                  }}
-                >
-                  <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-                  <div className="relative flex items-start justify-between">
-                    <div>
-                      <span className="inline-block px-4 py-2 rounded-lg bg-accent/20 text-accent text-xs font-body font-semibold mb-4">
-                        {selectedTeam.teamId}
-                      </span>
-                      <h2 className="font-heading text-4xl text-white mb-3">
-                        {selectedTeam.teamName}
-                      </h2>
-                      <p className="text-gray-300 font-subheading flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-accent" />
-                        {selectedTeam.churchName}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setSelectedTeam(null)}
-                      className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Modal Content */}
-                <div className="p-8 space-y-8 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
-                  {/* Captain Section */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="space-y-3"
-                  >
-                    <h3 className="font-heading text-lg text-accent uppercase tracking-wider">Captain</h3>
-                    <div className="flex items-center gap-4 p-4 rounded-xl border border-accent/30 transition-all group hover:border-accent/60"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(255, 204, 41, 0.1) 0%, rgba(255, 204, 41, 0.05) 100%)',
-                        backdropFilter: 'blur(10px)'
-                      }}
-                    >
-                      <motion.div 
-                        className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border border-accent/40"
-                        style={{
-                          background: 'linear-gradient(135deg, rgba(255, 204, 41, 0.3) 0%, rgba(255, 204, 41, 0.1) 100%)',
-                          backdropFilter: 'blur(10px)'
-                        }}
-                      >
-                        <span className="text-lg font-bold text-accent">C</span>
-                      </motion.div>
-                      <div>
-                        <p className="text-gray-400 text-xs font-body mb-1">Team Captain</p>
-                        <p className="text-white font-subheading text-lg">{selectedTeam.captain.name}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Vice Captain Section */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="space-y-3"
-                  >
-                    <h3 className="font-heading text-lg text-accent uppercase tracking-wider">Vice Captain</h3>
-                    <div className="flex items-center gap-4 p-4 rounded-xl border border-accent/30 transition-all group hover:border-accent/60"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(255, 204, 41, 0.1) 0%, rgba(255, 204, 41, 0.05) 100%)',
-                        backdropFilter: 'blur(10px)'
-                      }}
-                    >
-                      <motion.div 
-                        className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border border-accent/40"
-                        style={{
-                          background: 'linear-gradient(135deg, rgba(255, 204, 41, 0.3) 0%, rgba(255, 204, 41, 0.1) 100%)',
-                          backdropFilter: 'blur(10px)'
-                        }}
-                      >
-                        <span className="text-lg font-bold text-accent">VC</span>
-                      </motion.div>
-                      <div>
-                        <p className="text-gray-400 text-xs font-body mb-1">Vice Captain</p>
-                        <p className="text-white font-subheading text-lg">{selectedTeam.viceCaptain.name}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Players Section */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="space-y-3"
-                  >
-                    <h3 className="font-heading text-lg text-accent uppercase tracking-wider">
-                      Players ({selectedTeam.players?.length || 0})
-                    </h3>
-                    {selectedTeam.players && selectedTeam.players.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {selectedTeam.players.map((player, playerIndex) => (
-                          <motion.div
-                            key={player.playerId || playerIndex}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.25 + playerIndex * 0.02 }}
-                            className="p-3 rounded-lg border border-accent/30 transition-all hover:border-accent/60"
-                            style={{
-                              background: 'linear-gradient(135deg, rgba(255, 204, 41, 0.08) 0%, rgba(255, 204, 41, 0.03) 100%)',
-                              backdropFilter: 'blur(8px)'
-                            }}
-                          >
-                            <p className="text-white font-body text-sm">
-                              <span className="text-accent font-semibold">{playerIndex + 1}.</span> {player.name}
-                            </p>
-                          </motion.div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-400 font-body">No players registered</p>
-                    )}
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </>
   )
 }
