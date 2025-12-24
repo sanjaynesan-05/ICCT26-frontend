@@ -85,7 +85,7 @@ interface RegistrationResponse {
 // ============================================================================
 
 // Set to true to close/lock registration
-const REGISTRATION_CLOSED = false
+const REGISTRATION_CLOSED = true
 
 const CHURCH_NAMES = [
   "CSI St Peters Church Rathinapuri",
@@ -1425,7 +1425,7 @@ const Registration = () => {
                   <div className="space-y-6">
                     <div className="bg-blue-50 border-l-4 border-primary p-4 rounded">
                       <p className="font-subheading text-primary font-semibold mb-2">
-                        Registration Fee: ₹1
+                        Registration Fee: ₹2026 per team
                       </p>
                       <p className="text-sm text-gray-700">Scan the QR code below to make payment</p>
                     </div>
@@ -1439,7 +1439,7 @@ const Registration = () => {
                         />
                       </div>
                       <p className="text-center font-subheading text-gray-600 mb-4">
-                        Scan with any UPI app to pay ₹1
+                        Scan with any UPI app
                       </p>
                     </div>
 

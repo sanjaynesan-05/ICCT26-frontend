@@ -106,7 +106,7 @@ const Rules = () => {
     'Each team will play 10 overs per side.',
     'Powerplay (Overs 1–2): Only 2 fielders are allowed outside the 30-yard circle.',
     'Second Powerplay: Can be taken in any one over between Overs 6, 7, or 8; only 5 fielders are allowed outside the 30-yard circle.',
-    'A bowler can bowl a maximum of 3 overs in a match.',
+    'Only one bowler can bowl a maximum of 3 overs in a match.',
     'If a match ends in a tie, a Super Over will be played to decide the winner.',
     'The Umpire\'s decision is final.'
   ]
