@@ -6,12 +6,13 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Plus, CheckCircle, ChevronRight, ChevronLeft, Copy, AlertTriangle, Sparkles } from 'lucide-react'
+import { Plus, CheckCircle, ChevronRight, ChevronLeft, Copy, AlertTriangle, Sparkles, Lock } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import PlayerFormCard from '../components/PlayerFormCard'
 import FileUpload from '../components/FileUpload'
 import { DetailedProgressBar } from '../components/ProgressBar'
 import { SearchableSelect } from '../components/SearchableSelect'
+import { fetchChurchAvailability, isChurchLocked, getChurchCapacityText, type ChurchAvailability } from '../utils/churchAvailability'
 
 // Import production utilities
 import {
@@ -188,6 +189,11 @@ const Registration = () => {
   const [registeredTeamId, setRegisteredTeamId] = useState<string>('')
   const [showDocumentConfirmation, setShowDocumentConfirmation] = useState(false)
   const [documentConfirmed, setDocumentConfirmed] = useState(false)
+  
+  // ========== CHURCH AVAILABILITY STATE ==========
+  const [churchAvailability, setChurchAvailability] = useState<ChurchAvailability[] | undefined>()
+  const [loadingChurches, setLoadingChurches] = useState(true)
+  const [churchLimitError, setChurchLimitError] = useState('')
 
   const emptyPlayer = (): PlayerData => ({
     name: '',
@@ -218,6 +224,20 @@ const Registration = () => {
     }
   }, [])
 
+  // ========== FETCH CHURCH AVAILABILITY ==========
+  useEffect(() => {
+    const loadChurchAvailability = async () => {
+      setLoadingChurches(true)
+      const data = await fetchChurchAvailability()
+      if (data) {
+        setChurchAvailability(data.churches)
+      }
+      setLoadingChurches(false)
+    }
+
+    loadChurchAvailability()
+  }, [])
+
   // ========== UTILITIES ==========
   const totalSteps = 6
   const progress = ((currentStep + 1) / totalSteps) * 100
@@ -244,14 +264,21 @@ const Registration = () => {
       case 1: { // Team Details
         let hasErrors = false
 
+        if (!formData.churchName.trim()) {
+          addValidationError('churchName', VALIDATION_MESSAGES.CHURCH_NAME_REQUIRED)
+          hasErrors = true
+        } else {
+          // Check if selected church is locked (at capacity)
+          if (isChurchLocked(formData.churchName, churchAvailability)) {
+            addValidationError('churchName', 'This church has reached its team limit (2/2). Please select a different church.')
+            setChurchLimitError(`${formData.churchName} has reached its team limit (2/2 teams). Please select a different church.`)
+            hasErrors = true
+          }
+        }
+
         const teamNameValidation = isValidTeamName(formData.teamName)
         if (!teamNameValidation.isValid) {
           addValidationError('teamName', teamNameValidation.error!)
-          hasErrors = true
-        }
-
-        if (!formData.churchName.trim()) {
-          addValidationError('churchName', VALIDATION_MESSAGES.CHURCH_NAME_REQUIRED)
           hasErrors = true
         }
 
@@ -615,6 +642,18 @@ const Registration = () => {
         console.error('Backend error:', errorMessage)
         saveIdempotencyRecord(idempotencyKey, 'failed')
 
+        // Check for church limit error
+        if (errorMessage.includes('Maximum 2 teams')) {
+          setChurchLimitError(
+            `${formData.churchName} has reached its team limit (2/2 teams). Please select a different church.`
+          )
+          // Refresh church availability
+          const data = await fetchChurchAvailability()
+          if (data) {
+            setChurchAvailability(data.churches)
+          }
+        }
+
         addValidationError('submit', errorMessage)
         setIsSubmitting(false)
         setShowProgress(false)
@@ -960,18 +999,32 @@ const Registration = () => {
                 >
                   <h3 className="font-heading text-3xl text-primary mb-6">Team Information</h3>
                   <div className="space-y-6">
-                    <SearchableSelect
-                      options={CHURCH_NAMES}
-                      value={formData.churchName}
-                      onChange={(value) => {
-                        clearValidationErrors()
-                        setFormData({ ...formData, churchName: value })
-                      }}
-                      label="Church Name"
-                      placeholder="Search and select your church..."
-                      disabled={isSubmitting}
-                      required
-                    />
+                    <div className="space-y-3">
+                      <SearchableSelect
+                        options={CHURCH_NAMES}
+                        value={formData.churchName}
+                        onChange={(value) => {
+                          clearValidationErrors()
+                          setChurchLimitError('')
+                          setFormData({ ...formData, churchName: value })
+                        }}
+                        label="Church Name"
+                        placeholder="Search and select your church..."
+                        disabled={isSubmitting || loadingChurches}
+                        disabledOptions={
+                          churchAvailability
+                            ?.filter(c => c.locked)
+                            .map(c => c.church_name) || []
+                        }
+                        optionCapacities={
+                          churchAvailability?.reduce((acc, church) => {
+                            acc[church.church_name] = `${church.team_count}/2`
+                            return acc
+                          }, {} as Record<string, string>) || {}
+                        }
+                        required
+                      />
+                    </div>
 
                     <div>
                       <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
@@ -1450,10 +1503,13 @@ const Registration = () => {
 
               <button
                 onClick={handleNext}
-                disabled={isSubmitting}
+                disabled={isSubmitting || (currentStep === 1 && formData.churchName && isChurchLocked(formData.churchName, churchAvailability))}
                 className={`flex items-center gap-2 btn-gold ${
-                  isSubmitting ? 'opacity-60 cursor-not-allowed' : ''
+                  isSubmitting || (currentStep === 1 && formData.churchName && isChurchLocked(formData.churchName, churchAvailability))
+                    ? 'opacity-60 cursor-not-allowed' 
+                    : ''
                 }`}
+                title={currentStep === 1 && formData.churchName && isChurchLocked(formData.churchName, churchAvailability) ? 'Please select an available church' : ''}
               >
                 {isSubmitting ? (
                   <span className="inline-flex items-center gap-2 text-black">

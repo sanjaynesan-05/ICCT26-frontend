@@ -17,6 +17,8 @@ interface SearchableSelectProps {
   label?: string
   required?: boolean
   className?: string
+  disabledOptions?: string[]
+  optionCapacities?: Record<string, string>
 }
 
 export const SearchableSelect: React.FC<SearchableSelectProps> = ({
@@ -28,6 +30,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   label,
   required = false,
   className = '',
+  disabledOptions = [],
+  optionCapacities = {},
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -208,29 +212,44 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
               className="max-h-72 overflow-y-auto bg-white"
             >
               {filteredOptions.length > 0 ? (
-                filteredOptions.map((option, index) => (
-                  <motion.button
-                    key={option}
-                    data-index={index}
-                    onClick={() => handleSelect(option)}
-                    onMouseEnter={() => setHighlightedIndex(index)}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.02 }}
-                    className={`w-full text-left px-4 py-3 transition-colors text-sm font-medium ${
-                      index === highlightedIndex
-                        ? 'bg-primary/10 text-primary border-l-4 border-primary'
-                        : value === option
-                          ? 'bg-accent/20 text-primary border-l-4 border-accent'
-                          : 'text-gray-700 hover:bg-gray-50 border-l-4 border-transparent'
-                    }`}
-                  >
-                    {option}
-                    {value === option && (
-                      <span className="float-right text-primary font-bold">✓</span>
-                    )}
-                  </motion.button>
-                ))
+                filteredOptions.map((option, index) => {
+                  const isOptionDisabled = disabledOptions.includes(option)
+                  return (
+                    <motion.button
+                      key={option}
+                      data-index={index}
+                      onClick={() => !isOptionDisabled && handleSelect(option)}
+                      onMouseEnter={() => !isOptionDisabled && setHighlightedIndex(index)}
+                      disabled={isOptionDisabled}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.02 }}
+                      className={`w-full text-left px-4 py-3 transition-colors text-sm font-medium flex items-center justify-between ${
+                        isOptionDisabled
+                          ? 'opacity-50 cursor-not-allowed bg-gray-50 text-gray-400 border-l-4 border-red-300'
+                          : index === highlightedIndex
+                            ? 'bg-primary/10 text-primary border-l-4 border-primary'
+                            : value === option
+                              ? 'bg-accent/20 text-primary border-l-4 border-accent'
+                              : 'text-gray-700 hover:bg-gray-50 border-l-4 border-transparent'
+                      }`}
+                      title={isOptionDisabled ? 'This church has reached its team limit (2/2)' : ''}
+                    >
+                      <span>{option}</span>
+                      <span className="flex items-center gap-2">
+                        {optionCapacities[option] && (
+                          <span className="text-xs font-semibold">{optionCapacities[option]}</span>
+                        )}
+                        {isOptionDisabled && (
+                          <span className="text-red-500 font-bold text-xs">FULL (2/2)</span>
+                        )}
+                        {!isOptionDisabled && value === option && (
+                          <span className="text-primary font-bold">✓</span>
+                        )}
+                      </span>
+                    </motion.button>
+                  )
+                })
               ) : (
                 <div className="px-4 py-8 text-center text-gray-500 text-sm">
                   <p>No churches found matching "{searchTerm}"</p>
