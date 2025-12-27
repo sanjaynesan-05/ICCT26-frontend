@@ -1,11 +1,7 @@
 import { Link } from 'react-router-dom'
-import { Trophy, Instagram, Youtube, MessageCircle, ArrowUp } from 'lucide-react'
+import { Trophy, Instagram, Youtube, MessageCircle } from 'lucide-react'
 
 const Footer = () => {
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
   const footerLinks = [
     { name: 'Home', path: '/' },
     { name: 'Schedule', path: '/schedule' },
@@ -95,15 +91,6 @@ const Footer = () => {
           </p>
         </div>
       </div>
-
-      {/* Scroll to Top Button */}
-      <button
-        onClick={scrollToTop}
-        className="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-gradient-gold flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300 hover:shadow-[0_0_30px_rgba(255,204,41,0.6)] z-40"
-        aria-label="Scroll to top"
-      >
-        <ArrowUp className="w-6 h-6 text-primary" />
-      </button>
     </footer>
   )
 }

@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import CricketLoader from './components/CricketLoader'
 import ErrorBoundary from './components/ErrorBoundary'
-import FloatingTeamsWidget from './components/FloatingTeamsWidget'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -103,7 +102,6 @@ function App() {
                   </Routes>
                 </AnimatePresence>
                 <Footer />
-                <FloatingTeamsWidget />
               </motion.div>
             }
           />

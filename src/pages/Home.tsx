@@ -1,41 +1,13 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
 import Countdown from '../components/Countdown'
 import RegistrationCountdown from '../components/RegistrationCountdown'
 import ImageCarousel from '../components/ImageCarousel'
 import { HERO_SECTION, TOURNAMENT_HIGHLIGHTS } from '../data/home'
 import { SOCIAL_LINKS } from '../data/contact'
-import { apiService } from '../services/api'
 import titleSponsorLogo from '../assets/sponsor/0 Title_Sponsors.png'
 
 const Home = () => {
-  // State for teams count
-  const [approvedTeamsCount, setApprovedTeamsCount] = useState<number>(0)
-  const [loadingCount, setLoadingCount] = useState<boolean>(true)
-  const MAX_TEAMS = 24
-
-  // Fetch teams count from backend (same as Teams page)
-  useEffect(() => {
-    const fetchTeamsCount = async () => {
-      try {
-        setLoadingCount(true)
-        // Fetch confirmed teams (same as Teams page)
-        const response = await apiService.getAdminTeams('confirmed')
-        const teamsData = response.data || response.teams || response
-        const count = Array.isArray(teamsData) ? teamsData.length : 0
-        setApprovedTeamsCount(count)
-      } catch (error) {
-        console.error('Failed to fetch teams count:', error)
-        // Keep default value of 0 on error
-      } finally {
-        setLoadingCount(false)
-      }
-    }
-
-    fetchTeamsCount()
-  }, [])
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -276,9 +248,9 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {TOURNAMENT_HIGHLIGHTS.map((highlight, index) => {
               const Icon = highlight.icon;
-              // Use dynamic count for Teams Registered
+              // Use Coming Soon for Teams Registered
               const displayValue = highlight.title === 'Teams Registered' 
-                ? (loadingCount ? 'Loading...' : `${approvedTeamsCount}/ ${MAX_TEAMS}`)
+                ? 'Coming Soon'
                 : highlight.value;
               
               return (
