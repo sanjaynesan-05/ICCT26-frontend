@@ -85,7 +85,7 @@ interface RegistrationResponse {
 // ============================================================================
 
 // Set to true to close/lock registration
-const REGISTRATION_CLOSED = false
+const REGISTRATION_CLOSED = true
 
 const CHURCH_NAMES = [
   "CSI St Peters Church Rathinapuri",
