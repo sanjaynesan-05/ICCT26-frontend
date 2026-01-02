@@ -85,7 +85,7 @@ interface RegistrationResponse {
 // ============================================================================
 
 // Set to true to close/lock registration
-const REGISTRATION_CLOSED = true  
+const REGISTRATION_CLOSED = false  
 
 
 const CHURCH_NAMES = [
