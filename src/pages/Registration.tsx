@@ -85,7 +85,7 @@ interface RegistrationResponse {
 // ============================================================================
 
 // Set to true to close/lock registration
-const REGISTRATION_CLOSED = false  
+const REGISTRATION_CLOSED = true  
 
 
 const CHURCH_NAMES = [
@@ -772,7 +772,7 @@ const Registration = () => {
               Team Registration
             </h1>
             <p className="font-subheading text-xl text-gray-300">
-              Opening Soon
+              Closed
             </p>
           </motion.div>
 
@@ -790,30 +790,18 @@ const Registration = () => {
               className="mb-8"
             >
               <div className="inline-block">
-                <div className="text-6xl md:text-8xl font-heading text-accent mb-6">⏳</div>
+                <div className="text-6xl md:text-8xl font-heading text-accent mb-6">🔒</div>
               </div>
             </motion.div>
 
             {/* Main Message */}
             <h2 className="font-heading text-4xl md:text-5xl text-accent mb-6">
-              Registration Coming Soon
+              Registration Closed
             </h2>
             
             <p className="font-body text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl mx-auto">
-              Team registration for ICCT26 Cricket Tournament will open soon. Stay tuned for updates on registration dates, deadlines, and guidelines!
+              Team registrations for the ICCT ’26 Inter Church Cricket Tournament are now officially closed. Please stay tuned for further updates and announcements.
             </p>
-
-            {/* Tournament Info Box */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-            >
-              <div className="rounded-xl px-8 py-4 border-2 border-accent/60 bg-accent/10 backdrop-blur-lg shadow-lg shadow-accent/20 glass-effect hover:shadow-xl transition-all">
-                <p className="font-subheading font-bold text-accent">🏏 Registration Date 25/12/2025</p>
-              </div>
-            </motion.div>
 
             {/* Follow Updates */}
             <motion.p
