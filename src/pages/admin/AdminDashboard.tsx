@@ -357,8 +357,8 @@ const AdminDashboard = () => {
         >
           <div className="flex flex-wrap gap-2">
             {[
-              { key: 'pending', label: 'Pending', count: pendingCount },
               { key: 'confirmed', label: 'Confirmed', count: confirmedCount },
+              { key: 'pending', label: 'Pending', count: pendingCount },
               { key: 'rejected', label: 'Rejected', count: rejectedCount },
               { key: 'all', label: 'All Teams', count: allTeams.length }
             ].map(tab => (
