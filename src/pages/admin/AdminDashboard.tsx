@@ -31,7 +31,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'rejected' | 'all'>('pending')
+  const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'rejected' | 'all'>('confirmed')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const navigate = useNavigate()
   const { logout } = useAdmin()

@@ -13,7 +13,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
   // Check session on mount
   useEffect(() => {
-    const session = sessionStorage.getItem('admin_session')
+    const session = localStorage.getItem('admin_session')
     if (session === 'authenticated') {
       setIsAuthenticated(true)
     }
@@ -23,7 +23,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     // Dummy credentials
     if (username === 'admin' && password === 'admin123') {
       setIsAuthenticated(true)
-      sessionStorage.setItem('admin_session', 'authenticated')
+      localStorage.setItem('admin_session', 'authenticated')
       return true
     }
     return false
@@ -31,7 +31,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setIsAuthenticated(false)
-    sessionStorage.removeItem('admin_session')
+    localStorage.removeItem('admin_session')
   }
 
   return (
