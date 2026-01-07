@@ -248,10 +248,7 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {TOURNAMENT_HIGHLIGHTS.map((highlight, index) => {
               const Icon = highlight.icon;
-              // Use Coming Soon for Teams Registered
-              const displayValue = highlight.title === 'Teams Registered' 
-                ? 'Coming Soon'
-                : highlight.value;
+              const displayValue = highlight.value;
               
               return (
                 <motion.div

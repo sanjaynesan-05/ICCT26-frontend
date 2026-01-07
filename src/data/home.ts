@@ -47,7 +47,7 @@ export const TOURNAMENT_HIGHLIGHTS = [
   {
     icon: Users,
     title: 'Teams Registered',
-    value: '15',
+    value: '22',
     color: 'text-purple-400',
   },
 ]

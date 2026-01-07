@@ -11,6 +11,10 @@ const SPONSOR_IMAGES = [
   '/sponsor/SASHAINC.jpg',
   '/sponsor/NEWSYSTEM.jpg',
   '/sponsor/Alpha.jpg',
+  '/sponsor/jesustransports.png',
+  '/sponsor/kafeeg.png',
+  '/sponsor/msengineers.png',
+  '/sponsor/pktraders.png',
   '/sponsor/SKAMBULANCE.jpg',
   '/sponsor/LifeEvents.png',
   '/sponsor/adrievents.webp',
@@ -20,6 +24,7 @@ const SPONSOR_IMAGES = [
   '/sponsor/jvdandkalani.webp',
   '/sponsor/williamconcepts.webp',
   '/sponsor/gbhospital.jpeg',
+
 ]
 
 const ImageCarousel = () => {
