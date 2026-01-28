@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Countdown from '../components/Countdown'
 import RegistrationCountdown from '../components/RegistrationCountdown'
 import ImageCarousel from '../components/ImageCarousel'
+import SchedulePreview from '../components/SchedulePreview'
 import { HERO_SECTION, TOURNAMENT_HIGHLIGHTS } from '../data/home'
 import { SOCIAL_LINKS } from '../data/contact'
 import titleSponsorLogo from '../assets/sponsor/0 Title_Sponsors.png'
@@ -229,6 +230,9 @@ const Home = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Schedule Preview Section */}
+      <SchedulePreview />
 
       {/* Image Carousel - Sponsor Logos */}
       <ImageCarousel />

@@ -44,22 +44,45 @@ const SchedulePreview = () => {
     const fetchMatches = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`${API_URL}/api/schedule/matches`)
+        setError(null)
+        
+        const response = await fetch(`${API_URL}/api/schedule/matches`, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
         
         if (!response.ok) {
-          throw new Error('Failed to fetch matches')
+          console.error(`API Error: ${response.status} ${response.statusText}`)
+          throw new Error(`Failed to fetch matches: ${response.statusText}`)
         }
 
         const data = await response.json()
-        const normalizedMatches = (data.data || []).map((match: any) => ({
+        
+        if (!data) {
+          throw new Error('No data received from API')
+        }
+
+        const matchesArray = Array.isArray(data) ? data : (data.data || [])
+        
+        if (matchesArray.length === 0) {
+          console.warn('No matches returned from API')
+          setMatches([])
+          setLoading(false)
+          return
+        }
+
+        const normalizedMatches = matchesArray.map((match: any) => ({
           ...match,
-          status: match.status === 'done' ? 'completed' : match.status
+          status: match.status === 'done' ? 'completed' : (match.status || 'scheduled')
         }))
+        
         setMatches(normalizedMatches)
         setError(null)
       } catch (err: any) {
         console.error('Error fetching matches:', err)
-        setError(err.message)
+        setError(err.message || 'Failed to load schedule')
+        setMatches([])
       } finally {
         setLoading(false)
       }
@@ -106,16 +129,73 @@ const SchedulePreview = () => {
           >
             Schedule
           </motion.h2>
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-300 text-lg font-subheading">Loading matches...</p>
           </div>
         </div>
       </section>
     )
   }
 
-  if (error || !primaryMatch) {
-    return null
+  if (error) {
+    return (
+      <section className="py-20 px-4 lg:px-8">
+        <div className="container mx-auto max-w-6xl">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="font-heading text-5xl md:text-6xl text-center text-accent mb-16"
+          >
+            Schedule
+          </motion.h2>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center py-12 bg-yellow-500/10 border-2 border-yellow-500/30 rounded-2xl"
+          >
+            <p className="text-yellow-400 text-lg font-subheading">
+              Schedule data unavailable at the moment. Please check back later.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+    )
+  }
+
+  if (!primaryMatch) {
+    return (
+      <section className="py-20 px-4 lg:px-8">
+        <div className="container mx-auto max-w-6xl">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="font-heading text-5xl md:text-6xl text-center text-accent mb-16"
+          >
+            Schedule
+          </motion.h2>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center py-12"
+          >
+            <p className="text-gray-300 text-lg font-subheading">
+              No upcoming matches scheduled yet. Check back soon!
+            </p>
+            <Link
+              to="/schedule"
+              className="inline-block btn-gold transition-transform hover:scale-105 mt-6"
+            >
+              View Full Schedule
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+    )
   }
 
   const formatScore = (runs?: number | null, wickets?: number | null): string => {
