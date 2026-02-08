@@ -29,6 +29,9 @@ export default {
         'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'glow': 'glow 2s ease-in-out infinite',
         'scroll': 'scroll 25s linear infinite',
+        'spin-slow': 'spin 8s linear infinite',
+        'gradient-x': 'gradient-x 3s ease infinite',
+        'bounce-slow': 'bounce 3s infinite',
       },
       keyframes: {
         float: {
@@ -42,6 +45,16 @@ export default {
         scroll: {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-50%)' },
+        },
+        'gradient-x': {
+          '0%, 100%': { 
+            'background-size': '200% 200%',
+            'background-position': 'left center'
+          },
+          '50%': { 
+            'background-size': '200% 200%',
+            'background-position': 'right center'
+          },
         },
       },
       backgroundImage: {

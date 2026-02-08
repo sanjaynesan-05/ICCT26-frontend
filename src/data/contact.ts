@@ -8,6 +8,8 @@ import {
   Facebook,
   Youtube,
   Globe,
+  Linkedin,
+  Github,
 } from 'lucide-react'
 import type { Organizer, SocialLink, Venue } from '../types'
 
@@ -88,6 +90,34 @@ export const VENUE: Venue = {
   country: "India",
   mapEmbedUrl:
     'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1033.827757739101!2d76.96839547578858!3d11.081894026594052!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba8f7bc8e9c32c5%3A0x4ad24d5bea5c250d!2sDon%20Bosco%20Sport%20Academy%20(Cricket%20ground)!5e0!3m2!1sen!2sin!4v1765175449153!5m2!1sen!2sin',
+}
+
+/**
+ * Website Developer Information
+ */
+export const DEVELOPER = {
+  name: 'Sanjay Nesan J',
+  role: 'Website Developer',
+  socials: [
+    {
+      name: 'LinkedIn',
+      icon: Linkedin,
+      url: 'https://www.linkedin.com/in/sanjaynesanj/',
+      color: 'from-gray-700 to-gray-600',
+    },
+    {
+      name: 'GitHub',
+      icon: Github,
+      url: 'https://github.com/sanjaynesan-05',
+      color: 'from-gray-700 to-gray-600',
+    },
+    {
+      name: 'Instagram',
+      icon: Instagram,
+      url: 'https://www.instagram.com/lordsmagan/',
+      color: 'from-gray-700 to-gray-600',
+    },
+  ],
 }
 
 /**

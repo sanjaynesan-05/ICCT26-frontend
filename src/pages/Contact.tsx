@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Phone, MapPin, MessageCircle } from 'lucide-react'
-import { ORGANIZERS, SOCIAL_LINKS, VENUE } from '../data/contact'
+import { ORGANIZERS, SOCIAL_LINKS, VENUE, DEVELOPER } from '../data/contact'
 
 const Contact = () => {
   return (
@@ -160,6 +160,40 @@ const Contact = () => {
               >
                 Connect with us on social media for updates and announcements
               </motion.p>
+            </div>
+          </motion.div>
+
+          {/* Website Developer Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mt-16"
+          >
+            <div className="flex flex-col items-center bg-gradient-to-r from-primary/60 to-secondary/60 rounded-xl p-6 shadow-lg border border-accent/30">
+              <h3 className="font-heading text-lg text-accent mb-1">
+                {DEVELOPER.role}
+              </h3>
+              <p className="font-subheading font-bold text-white text-base mb-4">
+                {DEVELOPER.name}
+              </p>
+              <div className="flex items-center gap-4">
+                {DEVELOPER.socials.map((social, idx) => (
+                  <motion.a
+                    key={social.name}
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center gap-2 text-gray-300 hover:text-accent transition-colors group"
+                    aria-label={social.name}
+                    title={social.name}
+                  >
+                    <social.icon className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  </motion.a>
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>
