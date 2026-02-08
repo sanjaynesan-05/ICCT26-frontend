@@ -6,7 +6,6 @@ import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
-import Schedule from './pages/Schedule'
 import Registration from './pages/Registration'
 import Gallery from './pages/Gallery'
 import Rules from './pages/Rules'
@@ -94,7 +93,6 @@ function App() {
                 <AnimatePresence mode="wait">
                   <Routes>
                     <Route path="/" element={<Home />} />
-                    <Route path="/schedule" element={<Schedule />} />
                     <Route path="/registration" element={<Registration />} />
                     <Route path="/gallery" element={<Gallery />} />
                     <Route path="/rules" element={<Rules />} />
