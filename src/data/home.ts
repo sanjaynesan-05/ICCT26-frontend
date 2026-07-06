@@ -35,19 +35,19 @@ export const TOURNAMENT_HIGHLIGHTS = [
   {
     icon: MapPin,
     title: 'Venue',
-    value: 'DON BOSCO\n(Cricket ground)\nThudiyalur ',
+    value: 'TBA ',
     color: 'text-blue-400',
   },
   {
     icon: Calendar,
     title: 'Start Date',
-    value: 'JANUARY 24, 2026',
+    value: 'TBA',
     color: 'text-green-400',
   },
   {
     icon: Users,
     title: 'Teams Registered',
-    value: '22',
+    value: '0',
     color: 'text-purple-400',
   },
 ]
