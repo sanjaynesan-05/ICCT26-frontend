@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Phone, MapPin, MessageCircle } from 'lucide-react'
 import { ORGANIZERS, SOCIAL_LINKS, VENUE, DEVELOPER } from '../data/contact'
+import SEO from '../components/SEO'
 
 const Contact = () => {
   return (
@@ -10,6 +11,7 @@ const Contact = () => {
       exit={{ opacity: 0 }}
       className="min-h-screen pt-32 pb-20 px-4 lg:px-8 bg-gradient-to-b from-bg-start via-primary to-secondary"
     >
+      <SEO title="Contact Us" description="Get in touch with the ICCT'27 organizing committee." />
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <motion.div

@@ -13,6 +13,7 @@ import FileUpload from '../components/FileUpload'
 import { DetailedProgressBar } from '../components/ProgressBar'
 import { SearchableSelect } from '../components/SearchableSelect'
 import { fetchChurchAvailability, isChurchLocked, getChurchCapacityText, type ChurchAvailability } from '../utils/churchAvailability'
+import SEO from '../components/SEO'
 
 // Import production utilities
 import {
@@ -85,7 +86,7 @@ interface RegistrationResponse {
 // ============================================================================
 
 // Set to true to close/lock registration
-const REGISTRATION_CLOSED = true  
+const REGISTRATION_CLOSED = false  
 
 
 const CHURCH_NAMES = [
@@ -761,6 +762,7 @@ const Registration = () => {
         exit={{ opacity: 0 }}
         className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
       >
+        <SEO title="Team Registration" description="Register your team for ICCT'27." />
         <div className="container mx-auto max-w-6xl">
           {/* Header */}
           <motion.div
@@ -826,6 +828,7 @@ const Registration = () => {
       transition={{ duration: 0.8 }}
       className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
     >
+      <SEO title="Team Registration" description="Register your team for ICCT'27." />
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <motion.div

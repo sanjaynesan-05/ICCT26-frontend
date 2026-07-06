@@ -6,6 +6,7 @@ import ImageCarousel from '../components/ImageCarousel'
 import { HERO_SECTION, TOURNAMENT_HIGHLIGHTS } from '../data/home'
 import { SOCIAL_LINKS } from '../data/contact'
 import titleSponsorLogo from '../assets/sponsor/0 Title_Sponsors.png'
+import SEO from '../components/SEO'
 
 const Home = () => {
   return (
@@ -15,6 +16,7 @@ const Home = () => {
       exit={{ opacity: 0 }}
       className="min-h-screen"
     >
+      <SEO title="Home" description="Welcome to ICCT'27, the ultimate Inter Church Cricket Tournament." />
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Overlay */}
@@ -295,7 +297,7 @@ const Home = () => {
             viewport={{ once: true }}
             className="font-heading text-5xl md:text-6xl text-accent mb-8"
           >
-            About ICCT26
+            About ICCT27
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -304,7 +306,7 @@ const Home = () => {
             transition={{ delay: 0.2 }}
             className="font-body text-lg md:text-xl text-gray-300 leading-relaxed mb-6"
           >
-            <strong className="text-accent">ICCT '26</strong> – Inter Church Cricket Tournament is more than a sporting event; it is a celebration of unity, faith, and fellowships among our youths. 
+            <strong className="text-accent">ICCT '27</strong> – Inter Church Cricket Tournament is more than a sporting event; it is a celebration of unity, faith, and fellowships among our youths. 
             Organized by CSI St. Peter's Church, Coimbatore – Youth Fellowship, ICCT has grown into a powerful platform that brings together 
             churches and young hearts through the spirit of cricket, fostering brotherhood, sportsmanship, and shared values.
           </motion.p>
@@ -315,8 +317,11 @@ const Home = () => {
             transition={{ delay: 0.4 }}
             className="font-body text-lg md:text-xl text-gray-300 leading-relaxed"
           >
-            After the successful editions of <strong className="text-accent">ICCT '17</strong> and <strong className="text-accent">ICCT '25</strong>, we proudly return with <strong className="text-accent">ICCT '26</strong> — our <strong className="text-accent">3<sup>rd</sup> Season</strong>, bigger and more impactful 
-            than ever. Played in the electrifying Red Tennis Ball cricket format, <strong className="text-accent">ICCT '26</strong> goes beyond matches and prizes, nurturing leadership, 
+            After the successful editions of <strong className="text-accent">ICCT '17</strong> ,<strong className="text-accent">ICCT '25</strong> and 
+            <strong className="text-accent">ICCT '26</strong>, we proudly return with <strong className="text-accent">ICCT '27</strong> 
+            — our <strong className="text-accent">4<sup>th</sup> Season</strong>, bigger and more impactful 
+            than ever. Played in the electrifying Red Tennis Ball cricket format, <strong className="text-accent">ICCT '27</strong> 
+            goes beyond matches and prizes, nurturing leadership, 
             discipline, and lasting connections—making it not just a tournament, but a proud continuation of a growing legacy.
           </motion.p>
         </div>

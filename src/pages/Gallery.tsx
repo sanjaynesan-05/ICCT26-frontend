@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import SEO from '../components/SEO'
 
 interface GalleryImage {
   id: string
@@ -179,6 +180,7 @@ const Gallery = () => {
       exit={{ opacity: 0 }}
       className="min-h-screen bg-gradient-to-b from-bg-start via-primary to-bg-end py-20 px-4"
     >
+      <SEO title="Tournament Gallery" description="View photos and highlights from previous ICCT tournaments." />
       <div className="container mx-auto max-w-7xl">
         {/* Header */}
         <motion.div

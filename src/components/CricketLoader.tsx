@@ -599,6 +599,22 @@ export default function CricketLoader({ onComplete }: CricketLoaderProps) {
             animate={{ x: ["-100%", "100%"] }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           />
+
+          {/* Skip Button */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1, duration: 0.5 }}
+            onClick={() => {
+              setShowFlash(true);
+              if (onComplete) {
+                setTimeout(() => onComplete(), 500);
+              }
+            }}
+            className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-[60] px-4 py-1.5 sm:px-6 sm:py-2 rounded-full border border-white/20 text-white/60 text-xs sm:text-sm font-quicksand tracking-widest uppercase hover:text-[#FFCC29] hover:border-[#FFCC29]/50 hover:bg-[#FFCC29]/10 transition-all duration-300 backdrop-blur-sm"
+          >
+            Skip
+          </motion.button>
         </motion.div>
       ) : null}
 

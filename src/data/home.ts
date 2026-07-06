@@ -15,7 +15,7 @@ import { Trophy, MapPin, Calendar, Users } from 'lucide-react'
  * Hero Section Information
  */
 export const HERO_SECTION = {
-  mainTitle: "ICCT'26",
+  mainTitle: "ICCT'27",
   subTitle: 'Inter Church Cricket Tournament',
   tagline: 'Experience the Ultimate Cricket Championship',
   description:

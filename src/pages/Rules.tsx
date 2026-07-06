@@ -14,6 +14,7 @@ import {
   Download        // Download button (if used)
 } from 'lucide-react'
 import { TOURNAMENT_RULES } from '../data/rules'
+import SEO from '../components/SEO'
 
 // Set to true to close/lock rules page
 const RULES_CLOSED = false
@@ -42,6 +43,7 @@ const Rules = () => {
         exit={{ opacity: 0 }}
         className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
       >
+        <SEO title="Rules & Regulations" description="Read the official rules and regulations for ICCT'27." />
         <div className="container mx-auto max-w-6xl">
           {/* Header */}
           <motion.div
@@ -117,6 +119,7 @@ const Rules = () => {
       exit={{ opacity: 0 }}
       className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
     >
+      <SEO title="Rules & Regulations" description="Read the official rules and regulations for ICCT'27." />
       <div className="container mx-auto max-w-5xl">
         {/* Header */}
         <motion.div
