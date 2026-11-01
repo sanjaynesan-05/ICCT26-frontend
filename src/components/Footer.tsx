@@ -26,7 +26,7 @@ const Footer = () => {
             <Link to="/" className="inline-flex items-center space-x-3 group mb-4">
               <Trophy className="w-10 h-10 text-accent group-hover:rotate-12 transition-transform duration-300" />
               <div className="flex flex-col">
-                <span className="font-heading text-3xl text-accent tracking-wider">ICCT26</span>
+                <span className="font-heading text-3xl text-accent tracking-wider">ICCT27</span>
                 <span className="text-sm text-gray-300">Cricket Tournament</span>
               </div>
             </Link>

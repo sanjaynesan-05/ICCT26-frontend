@@ -223,7 +223,7 @@ export default function CricketLoader({ onComplete }: CricketLoaderProps) {
                         textShadow: "0 0 50px rgba(255, 204, 41, 0.6), 0 0 30px rgba(255, 204, 41, 0.4), 0 0 80px rgba(255, 204, 41, 0.3)"
                       }}
                     >
-                      ICCT'26
+                      ICCT'27
                     </motion.h1>
                     <motion.p
                       className="text-white/80 text-xs sm:text-sm md:text-base font-quicksand tracking-[0.2em] sm:tracking-[0.3em] text-center mt-2 leading-tight"

@@ -1,5 +1,5 @@
 /**
- * ICCT26 Production-Grade Registration Component
+ * ICCT27 Production-Grade Registration Component
  * Full client validation, idempotency, retry logic, progress bars, error handling
  * Created: November 17, 2025 | Consolidated: November 18, 2025
  */
@@ -802,7 +802,7 @@ const Registration = () => {
             </h2>
             
             <p className="font-body text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl mx-auto">
-              Team registrations for the ICCT ’26 Inter Church Cricket Tournament are now officially closed. Please stay tuned for further updates and announcements.
+              Team registrations for the ICCT ’27 Inter Church Cricket Tournament are now officially closed. Please stay tuned for further updates and announcements.
             </p>
 
             {/* Follow Updates */}
@@ -909,7 +909,7 @@ const Registration = () => {
                 >
                   <div className="text-center mb-8">
                     <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4">
-                      Welcome to ICCT26
+                      Welcome to ICCT27
                     </h2>
                     <p className="text-gray-600 font-subheading">
                       Register your team for the cricket tournament
@@ -1390,7 +1390,7 @@ const Registration = () => {
                       </div>
                       <div className="flex justify-between py-2 border-b">
                         <span className="font-subheading font-semibold">Registration Fee:</span>
-                        <span className="text-green-600 font-bold">₹2,026</span>
+                        <span className="text-green-600 font-bold">₹2,027</span>
                       </div>
                     </div>
 
@@ -1417,7 +1417,7 @@ const Registration = () => {
                   <div className="space-y-6">
                     <div className="bg-blue-50 border-l-4 border-primary p-4 rounded">
                       <p className="font-subheading text-primary font-semibold mb-2">
-                        Registration Fee: ₹2026 per team
+                        Registration Fee: ₹2027 per team
                       </p>
                       <p className="text-sm text-gray-700">Scan the QR code below to make payment</p>
                     </div>
@@ -1425,7 +1425,7 @@ const Registration = () => {
                     <div className="flex flex-col items-center justify-center">
                       <div className="bg-white p-4 rounded-xl shadow-lg mb-4 border-2 border-primary">
                         <img
-                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=9944257713@kotak811%26pn=ICCT26%26am=2026%26cu=INR%26tn=ICCT%2726%20Team%20Registration"
+                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=9944257713@kotak811%26pn=ICCT27%26am=2027%26cu=INR%26tn=ICCT%2727%20Team%20Registration"
                           alt="Payment QR Code"
                           className="w-64 h-64 object-cover rounded-lg"
                         />

@@ -25,7 +25,7 @@ const Navbar = () => {
           <Link to="/" className="flex items-center space-x-3 group">
             <Trophy className="w-8 h-8 text-accent group-hover:rotate-12 transition-transform duration-300" />
             <div className="flex flex-col">
-              <span className="font-heading text-2xl text-accent tracking-wider">ICCT26</span>
+              <span className="font-heading text-2xl text-accent tracking-wider">ICCT27</span>
               <span className="text-xs text-gray-300 -mt-1">Cricket Tournament</span>
             </div>
           </Link>

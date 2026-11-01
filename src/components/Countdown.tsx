@@ -9,8 +9,8 @@ interface TimeLeft {
 }
 
 const Countdown = () => {
-  // Tournament date: January 24, 2026
-  const targetDate = new Date('2026-01-24T00:00:00').getTime()
+  // Tournament date: January 23, 2026
+  const targetDate = new Date('2027-01-23T00:00:00').getTime()
 
   const calculateTimeLeft = (): TimeLeft => {
     const now = new Date().getTime()
