@@ -1,32 +1,21 @@
 import { useState } from 'react'
+import comingSoonLogo from '../assets/coming soon.png'
 
 // Sponsor images - Add or remove sponsor logos here by updating the file paths
 // Simply add new image paths to the array when you update the sponsors folder
 const SPONSOR_IMAGES = [
-  '/sponsor/Johnpolimers.jpg',
-  '/sponsor/JSInfotech.png',
-  '/sponsor/SPORTSLANDLOGO.jpg',
-  '/sponsor/dicta.jpeg',
-  '/sponsor/StPetersSchool.png',
-  '/sponsor/SASHAINC.jpg',
-  '/sponsor/NEWSYSTEM.jpg',
-  '/sponsor/Alpha.jpg',
-  '/sponsor/jesustransports.png',
-  '/sponsor/kafeeg.png',
-  '/sponsor/msengineers.png',
-  '/sponsor/pktraders.png',
-  '/sponsor/SKAMBULANCE.jpg',
-  '/sponsor/LifeEvents.png',
-  '/sponsor/adrievents.webp',
-  '/sponsor/agalyapets.webp',
-  '/sponsor/galaxylabsolutions.webp',
-  '/sponsor/joycatering.jpeg',
-  '/sponsor/jvdandkalani.webp',
-  '/sponsor/williamconcepts.webp',
-  '/sponsor/gbhospital.jpeg',
-  '/sponsor/candlelight.webp',
-  '/sponsor/jkdental.webp',
-
+  comingSoonLogo,
+  comingSoonLogo,
+  comingSoonLogo,
+  comingSoonLogo,
+  comingSoonLogo,
+  comingSoonLogo,
+  comingSoonLogo,
+  comingSoonLogo,
+  comingSoonLogo,
+  comingSoonLogo,
+  comingSoonLogo,
+  comingSoonLogo,
 ]
 
 const ImageCarousel = () => {

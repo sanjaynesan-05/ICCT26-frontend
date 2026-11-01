@@ -5,10 +5,13 @@ import RegistrationCountdown from '../components/RegistrationCountdown'
 import ImageCarousel from '../components/ImageCarousel'
 import { HERO_SECTION, TOURNAMENT_HIGHLIGHTS } from '../data/home'
 import { SOCIAL_LINKS } from '../data/contact'
-import titleSponsorLogo from '../assets/sponsor/0 Title_Sponsors.png'
+import titleSponsorLogo from '../assets/coming soon.png'
 import SEO from '../components/SEO'
 
 const Home = () => {
+  // Set this to true to show the Trophy Sponsor memorial section
+  const SHOW_TROPHY_SPONSOR = false
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -122,6 +125,7 @@ const Home = () => {
             className="mb-12"
           >
             {/* Trophy Sponsor Memorial - Appears first on all devices */}
+            {SHOW_TROPHY_SPONSOR && (
             <motion.div
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -144,6 +148,7 @@ const Home = () => {
                 Mrs.R. Gnanajothi Anandaraj
               </motion.h2>
             </motion.div>
+            )}
 
             {/* Title Sponsor - Appears after Trophy Sponsor on mobile */}
             <div className="lg:hidden mb-8">
