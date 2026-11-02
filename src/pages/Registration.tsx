@@ -6,13 +6,13 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Plus, CheckCircle, ChevronRight, ChevronLeft, Copy, AlertTriangle, Sparkles, Lock } from 'lucide-react'
+import { Plus, CheckCircle, ChevronRight, ChevronLeft, AlertTriangle, Sparkles } from 'lucide-react'
 import confetti from 'canvas-confetti'
-import PlayerFormCard from '../components/PlayerFormCard'
 import FileUpload from '../components/FileUpload'
+import PlayerFormCard from '../components/PlayerFormCard'
 import { DetailedProgressBar } from '../components/ProgressBar'
 import { SearchableSelect } from '../components/SearchableSelect'
-import { fetchChurchAvailability, isChurchLocked, getChurchCapacityText, type ChurchAvailability } from '../utils/churchAvailability'
+import { fetchChurchAvailability, isChurchLocked, type ChurchAvailability } from '../utils/churchAvailability'
 import SEO from '../components/SEO'
 
 // Import production utilities
@@ -58,16 +58,11 @@ interface CaptainInfo {
 
 interface PlayerData {
   name: string
-  role: string
-  aadharFile: File | null
-  subscriptionFile: File | null
 }
 
 interface FormData {
   churchName: string
   teamName: string
-  pastorLetter: File | null
-  groupPhoto: File | null
   captain: CaptainInfo
   viceCaptain: CaptainInfo
   players: PlayerData[]
@@ -86,7 +81,7 @@ interface RegistrationResponse {
 // ============================================================================
 
 // Set to true to close/lock registration
-const REGISTRATION_CLOSED = true  
+const REGISTRATION_CLOSED = false 
 
 
 const CHURCH_NAMES = [
@@ -193,23 +188,18 @@ const Registration = () => {
   // ========== CHURCH AVAILABILITY STATE ==========
   const [churchAvailability, setChurchAvailability] = useState<ChurchAvailability[] | undefined>()
   const [loadingChurches, setLoadingChurches] = useState(true)
-  const [churchLimitError, setChurchLimitError] = useState('')
+  const [, setChurchLimitError] = useState('')
 
   const emptyPlayer = (): PlayerData => ({
     name: '',
-    role: '',
-    aadharFile: null, 
-    subscriptionFile: null,
   })
 
   const [formData, setFormData] = useState<FormData>({
     churchName: '',
     teamName: '',
-    pastorLetter: null,
-    groupPhoto: null,
     captain: { name: '', phone: '', whatsapp: '', email: '' },
     viceCaptain: { name: '', phone: '', whatsapp: '', email: '' },
-    players: Array.from({ length: 11 }).map(() => emptyPlayer()),
+    players: Array.from({ length: 13 }).map(() => emptyPlayer()),
     paymentReceipt: null,
   })
 
@@ -239,15 +229,14 @@ const Registration = () => {
   }, [])
 
   // ========== UTILITIES ==========
-  const totalSteps = 6
+  const totalSteps = 4
   const progress = ((currentStep + 1) / totalSteps) * 100
 
   const steps = [
-    { number: 1, title: 'Team Details' },
+    { number: 1, title: 'Team' },
     { number: 2, title: 'Captain & Vice-Captain' },
     { number: 3, title: 'Players' },
-    { number: 4, title: 'Review' },
-    { number: 5, title: 'Payment Upload' },
+    { number: 4, title: 'Review, Payment & Submit' },
   ]
 
   const clearValidationErrors = () => setValidationErrors([])
@@ -261,8 +250,13 @@ const Registration = () => {
     clearValidationErrors()
 
     switch (currentStep) {
-      case 1: { // Team Details
+      case 0: { // Team Details
         let hasErrors = false
+
+        if (!acceptTerms) {
+          addValidationError('terms', 'Please accept the tournament rules and regulations to proceed.')
+          hasErrors = true
+        }
 
         if (!formData.churchName.trim()) {
           addValidationError('churchName', VALIDATION_MESSAGES.CHURCH_NAME_REQUIRED)
@@ -282,32 +276,10 @@ const Registration = () => {
           hasErrors = true
         }
 
-        if (!formData.pastorLetter) {
-          addValidationError('pastorLetter', 'Pastor letter is required')
-          hasErrors = true
-        } else {
-          const fileValidation = isValidFile(formData.pastorLetter)
-          if (!fileValidation.isValid) {
-            addValidationError('pastorLetter', fileValidation.error!)
-            hasErrors = true
-          }
-        }
-
-        if (!formData.groupPhoto) {
-          addValidationError('groupPhoto', 'Group photo is required')
-          hasErrors = true
-        } else {
-          const fileValidation = isValidFile(formData.groupPhoto)
-          if (!fileValidation.isValid) {
-            addValidationError('groupPhoto', fileValidation.error!)
-            hasErrors = true
-          }
-        }
-
         return !hasErrors
       }
 
-      case 2: { // Captain & Vice-Captain
+      case 1: { // Captain & Vice-Captain
         let hasErrors = false
 
         // Captain validation
@@ -367,16 +339,16 @@ const Registration = () => {
         return !hasErrors
       }
 
-      case 3: { // Players
+      case 2: { // Players
         let hasErrors = false
 
-        if (formData.players.length < 11) {
-          addValidationError('players', 'At least 11 players are required')
+        if (formData.players.length < 13) {
+          addValidationError('players', 'At least 13 players are required')
           hasErrors = true
         }
 
-        if (formData.players.length > 15) {
-          addValidationError('players', 'Maximum 15 players allowed')
+        if (formData.players.length > 17) {
+          addValidationError('players', 'Maximum 17 players allowed')
           hasErrors = true
         }
 
@@ -387,36 +359,12 @@ const Registration = () => {
             hasErrors = true
           }
 
-          if (!player.aadharFile) {
-            addValidationError(`player_${index}_aadhar`, `Player ${index + 1}: Aadhar card is required`)
-            hasErrors = true
-          } else {
-            const fileValidation = isValidFile(player.aadharFile)
-            if (!fileValidation.isValid) {
-              addValidationError(`player_${index}_aadhar`, `Player ${index + 1} Aadhar: ${fileValidation.error}`)
-              hasErrors = true
-            }
-          }
-
-          if (!player.subscriptionFile) {
-            addValidationError(`player_${index}_subscription`, `Player ${index + 1}: Subscription file is required`)
-            hasErrors = true
-          } else {
-            const fileValidation = isValidFile(player.subscriptionFile)
-            if (!fileValidation.isValid) {
-              addValidationError(`player_${index}_subscription`, `Player ${index + 1} Subscription: ${fileValidation.error}`)
-              hasErrors = true
-            }
-          }
         })
 
         return !hasErrors
       }
 
-      case 4: // Review step - no validation needed
-        return true
-
-      case 5: { // Payment
+      case 3: { // Review and payment
         let hasErrors = false
 
         if (!formData.paymentReceipt) {
@@ -442,18 +390,8 @@ const Registration = () => {
   const handleNext = () => {
     clearValidationErrors()
 
-    if (currentStep === 0) {
-      if (!acceptTerms) {
-        addValidationError('terms', 'Please accept the terms and conditions to proceed.')
-        return
-      }
-      // Move to step 1
-      setCurrentStep(1)
+    if (!validateCurrentStep()) {
       return
-    } else {
-      if (!validateCurrentStep()) {
-        return
-      }
     }
 
     if (currentStep < totalSteps - 1) {
@@ -479,13 +417,13 @@ const Registration = () => {
   }
 
   const addPlayer = () => {
-    if (formData.players.length < 15) {
+    if (formData.players.length < 17) {
       setFormData({ ...formData, players: [...formData.players, emptyPlayer()] })
     }
   }
 
   const removeLastPlayer = () => {
-    if (formData.players.length > 11) {
+    if (formData.players.length > 13) {
       setFormData({ ...formData, players: formData.players.slice(0, -1) })
     }
   }
@@ -494,16 +432,6 @@ const Registration = () => {
   const handleFileChange = (file: File | null) => {
     clearValidationErrors()
     setFormData({ ...formData, paymentReceipt: file })
-  }
-
-  const handlePastorLetterChange = (file: File | null) => {
-    clearValidationErrors()
-    setFormData({ ...formData, pastorLetter: file })
-  }
-
-  const handleGroupPhotoChange = (file: File | null) => {
-    clearValidationErrors()
-    setFormData({ ...formData, groupPhoto: file })
   }
 
   // ========== FORM SUBMISSION WITH PRODUCTION FEATURES ==========
@@ -522,9 +450,7 @@ const Registration = () => {
       vicePhone: formData.viceCaptain.phone,
       viceEmail: formData.viceCaptain.email,
       viceWhatsapp: formData.viceCaptain.whatsapp,
-      pastorLetter: formData.pastorLetter,
       paymentReceipt: formData.paymentReceipt,
-      groupPhoto: formData.groupPhoto,
       players: formData.players
     })
 
@@ -564,14 +490,6 @@ const Registration = () => {
       multipartData.append('vice_email', formData.viceCaptain.email.trim())
       multipartData.append('vice_whatsapp', formData.viceCaptain.whatsapp?.trim() || '')
 
-      // Team files with sanitized filenames
-      const sanitizedPastorLetter = new File(
-        [formData.pastorLetter!],
-        sanitizeFilename(formData.pastorLetter!.name),
-        { type: formData.pastorLetter!.type }
-      )
-      multipartData.append('pastor_letter', sanitizedPastorLetter)
-
       const sanitizedPaymentReceipt = new File(
         [formData.paymentReceipt!],
         sanitizeFilename(formData.paymentReceipt!.name),
@@ -579,40 +497,17 @@ const Registration = () => {
       )
       multipartData.append('payment_receipt', sanitizedPaymentReceipt)
 
-      const sanitizedGroupPhoto = new File(
-        [formData.groupPhoto!],
-        sanitizeFilename(formData.groupPhoto!.name),
-        { type: formData.groupPhoto!.type }
-      )
-      multipartData.append('group_photo', sanitizedGroupPhoto)
-
       // Players (FLATTENED)
       formData.players.forEach((p: PlayerData, index: number) => {
         multipartData.append(`player_${index}_name`, p.name.trim())
-        multipartData.append(`player_${index}_role`, p.role?.trim() || '')
-
-        // Sanitize player file names
-        const sanitizedAadhar = new File(
-          [p.aadharFile!],
-          sanitizeFilename(p.aadharFile!.name),
-          { type: p.aadharFile!.type }
-        )
-        multipartData.append(`player_${index}_aadhar_file`, sanitizedAadhar)
-
-        const sanitizedSubscription = new File(
-          [p.subscriptionFile!],
-          sanitizeFilename(p.subscriptionFile!.name),
-          { type: p.subscriptionFile!.type }
-        )
-        multipartData.append(`player_${index}_subscription_file`, sanitizedSubscription)
       })
 
       console.log('📤 Submitting with idempotency key:', idempotencyKey)
-      console.log('📦 Total files:', 3 + (formData.players.length * 2))
+      console.log('📦 Total files: 1')
 
       // 🔍 DEBUG: Log all FormData entries
       console.log('🔍 === COMPLETE FORMDATA DEBUG ===')
-      for (let [key, value] of multipartData.entries()) {
+      for (const [key, value] of multipartData.entries()) {
         if (value instanceof File) {
           console.log(`✅ ${key}: File(name: ${value.name}, size: ${value.size} bytes, type: ${value.type})`)
         } else {
@@ -728,11 +623,6 @@ const Registration = () => {
   }
 
   // ========== SUCCESS HANDLERS ==========
-  const copyTeamId = () => {
-    navigator.clipboard.writeText(registeredTeamId)
-    alert('Team ID copied to clipboard!')
-  }
-
   const closeSuccess = () => {
     setShowSuccess(false)
     setCurrentStep(0)
@@ -740,8 +630,6 @@ const Registration = () => {
     setFormData({
       churchName: '',
       teamName: '',
-      pastorLetter: null,
-      groupPhoto: null,
       captain: { name: '', phone: '', whatsapp: '', email: '' },
       viceCaptain: { name: '', phone: '', whatsapp: '', email: '' },
       players: Array.from({ length: 11 }).map(() => emptyPlayer()),
@@ -859,12 +747,12 @@ const Registration = () => {
               <div
                 key={step.number}
                 className={`flex flex-col items-center transition-all duration-300 ${
-                  currentStep >= step.number ? 'opacity-100' : 'opacity-40'
+                  currentStep >= step.number - 1 ? 'opacity-100' : 'opacity-40'
                 }`}
               >
                 <div
                   className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold mb-2 transition-all duration-300 ${
-                    currentStep >= step.number
+                    currentStep >= step.number - 1
                       ? 'bg-gradient-gold text-primary shadow-[0_0_20px_rgba(255,204,41,0.5)]'
                       : 'bg-secondary text-gray-500'
                   }`}
@@ -897,87 +785,8 @@ const Registration = () => {
             )}
 
             <AnimatePresence mode="wait">
-              {/* Step 0: Introduction & Terms */}
+              {/* Step 1: Team Details */}
               {currentStep === 0 && (
-                <motion.div
-                  key="step0"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                  className="glass-card rounded-2xl p-8 mb-8"
-                >
-                  <div className="text-center mb-8">
-                    <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4">
-                      Welcome to ICCT27
-                    </h2>
-                    <p className="text-gray-600 font-subheading">
-                      Register your team for the cricket tournament
-                    </p>
-                  </div>
-
-                  <div className="space-y-6 text-gray-800 max-h-96 overflow-y-auto mb-8">
-                    {/* Registration Info */}
-                    <div className="bg-blue-50 border-2 border-blue-400 rounded-lg p-4">
-                      <p className="text-blue-800 font-semibold text-sm mb-2">📋 Registration Overview</p>
-                      <p className="text-blue-700 text-sm mb-3">
-                        You will proceed through the following steps:
-                      </p>
-                      <ul className="list-disc list-inside space-y-1 text-blue-700 text-sm">
-                        <li>Team Details (Church, Team Name, Documents)</li>
-                        <li>Captain & Vice-Captain Information</li>
-                        <li>Player Details (11-15 players)</li>
-                        <li>Review Information</li>
-                        <li>Payment Upload</li>
-                      </ul>
-                    </div>
-
-                    {/* Requirements */}
-                    <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4">
-                      <p className="text-green-800 font-semibold text-sm mb-3">✓ Rules and Regulations</p>
-                      <ul className="list-disc list-inside space-y-2 text-green-700 text-sm">
-                        <li>Matches will be played using a <strong>Red Tennis Ball</strong> format</li>
-                        <li>Each team can have a <strong>maximum of 15 players</strong></li>
-                        <li>There is <strong>no age limit</strong> for participation</li>
-                        <li>Each team will play <strong>10 overs per side</strong></li>
-                        <li><strong>Powerplay (Overs 1–2):</strong> Only <strong>2 fielders</strong> are allowed outside the <strong>30-yard circle</strong></li>
-                        <li><strong>Second Powerplay:</strong> Can be taken in any one over between <strong>Overs 6, 7, or 8</strong>; only <strong>5 fielders</strong> are allowed outside the <strong>30-yard circle</strong></li>
-                        <li>A bowler can bowl a <strong>maximum of 3 overs</strong> in a match</li>
-                        <li>If a match ends in a tie, a <strong>Super Over</strong> will be played to decide the winner</li>
-                        <li>The <strong>Umpire’s decision</strong> is final</li>
-                      </ul>
-                    </div>
-
-                    {/* Terms */}
-                    <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
-                      <p className="text-yellow-800 font-semibold text-sm mb-2">⚡ Important</p>
-                      <p className="text-yellow-700 text-sm">
-                        By proceeding with registration, you agree to comply with all tournament rules and regulations. All submitted information must be accurate and authentic.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-200 pt-6">
-                    <div className="flex items-start gap-3 mb-6 p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
-                      <input
-                        type="checkbox"
-                        id="acceptTerms"
-                        checked={acceptTerms}
-                        onChange={(e) => setAcceptTerms(e.target.checked)}
-                        className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-600"
-                      />
-                      <label htmlFor="acceptTerms" className="text-gray-800 font-medium text-sm">
-                        I agree to the tournament rules and regulations and confirm that all information I provide will be <span className="text-blue-600 font-bold">accurate and authentic</span>.
-                      </label>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              
-
-              {/* Step 2: Team Details */}
-              {currentStep === 1 && (
                 <motion.div
                   key="step1"
                   initial={{ opacity: 0, x: 50 }}
@@ -986,6 +795,40 @@ const Registration = () => {
                   transition={{ duration: 0.3 }}
                 >
                   <h3 className="font-heading text-3xl text-primary mb-6">Team Information</h3>
+                  <div className="space-y-6 mb-6 text-gray-800">
+                    <div className="bg-blue-50 border-2 border-blue-400 rounded-lg p-4">
+                      <p className="text-blue-800 font-semibold text-sm mb-2">Registration Overview</p>
+                      <p className="text-blue-700 text-sm mb-3">
+                        Complete the team details, captain and vice-captain information, player details, payment, and receipt upload to submit your registration.
+                      </p>
+                    </div>
+
+                    <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4">
+                      <p className="text-green-800 font-semibold text-sm mb-3">Rules and Regulations</p>
+                      <ul className="list-disc list-inside space-y-2 text-green-700 text-sm">
+                        <li>Matches will be played using a <strong>Red Tennis Ball</strong> format</li>
+                        <li>Each team can have a <strong>maximum of 17 players</strong></li>
+                        <li>There is <strong>no age limit</strong> for participation</li>
+                        <li>Each team will play <strong>10 overs per side</strong></li>
+                        <li><strong>Powerplay (Overs 1–2):</strong> Only <strong>2 fielders</strong> are allowed outside the <strong>30-yard circle</strong></li>
+                        <li><strong>Second Powerplay:</strong> Can be taken in any one over between <strong>Overs 6, 7, or 8</strong>; only <strong>5 fielders</strong> are allowed outside the <strong>30-yard circle</strong></li>
+                        <li>A bowler can bowl a <strong>maximum of 3 overs</strong> in a match</li>
+                        <li>If a match ends in a tie, a <strong>Super Over</strong> will be played to decide the winner</li>
+                        <li>The <strong>Umpire&apos;s decision</strong> is final</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+                      <p className="text-yellow-800 font-semibold text-sm mb-2">Important</p>
+                      <p className="text-yellow-700 text-sm">
+                        By proceeding with registration, you agree to comply with all tournament rules and regulations. All submitted information must be accurate and authentic.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 mb-6 p-3 bg-yellow-50 rounded-lg border-2 border-yellow-200">
+                    <input type="checkbox" id="acceptTerms" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-600" />
+                    <label htmlFor="acceptTerms" className="text-gray-800 font-medium text-sm">I agree to the tournament rules and regulations and confirm that all information I provide will be accurate and authentic.</label>
+                  </div>
                   <div className="space-y-6">
                     <div className="space-y-3">
                       <SearchableSelect
@@ -1032,42 +875,12 @@ const Registration = () => {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Church Letter * (PDF/Image, max 5MB)
-                      </label>
-                      <div>
-                        <FileUpload
-                          file={formData.pastorLetter}
-                          onFileChange={handlePastorLetterChange}
-                          accept=".jpg,.jpeg,.png,.pdf"
-                          placeholder="Upload Church Letter"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Team Group Photo * (Image only, max 5MB)
-                      </label>
-                      <p className="text-xs text-gray-500 mb-2">
-                        Upload a group photo of your team (JPEG or PNG)
-                      </p>
-                      <div>
-                        <FileUpload
-                          file={formData.groupPhoto}
-                          onFileChange={handleGroupPhotoChange}
-                          accept=".jpg,.jpeg,.png"
-                          placeholder="Upload Team Photo"
-                        />
-                      </div>
-                    </div>
                   </div>
                 </motion.div>
               )}
 
               {/* Step 3: Captain & Vice-Captain */}
-              {currentStep === 2 && (
+              {currentStep === 1 && (
                 <motion.div
                   key="step2"
                   initial={{ opacity: 0, x: 50 }}
@@ -1285,7 +1098,7 @@ const Registration = () => {
               )}
 
               {/* Step 4: Player Details */}
-              {currentStep === 3 && (
+              {currentStep === 2 && (
                 <motion.div
                   key="step3"
                   initial={{ opacity: 0, x: 50 }}
@@ -1297,7 +1110,7 @@ const Registration = () => {
                   <div className="sticky top-0 bg-white pb-4 mb-4 z-10">
                     <h3 className="font-heading text-3xl text-primary mb-2">Player Details</h3>
                     <p className="text-sm text-gray-600">
-                      Add 11-15 players (Captain & Vice-Captain included)
+                      Add 13-17 players (Captain & Vice-Captain included)
                     </p>
                   </div>
 
@@ -1308,19 +1121,13 @@ const Registration = () => {
                         playerNumber={index + 1}
                         player={player}
                         onChange={(data) => updatePlayer(index, data)}
-                        onRemove={
-                          index === formData.players.length - 1 && formData.players.length > 11
-                            ? removeLastPlayer
-                            : undefined
-                        }
-                        canRemove={
-                          index === formData.players.length - 1 && formData.players.length > 11
-                        }
+                        onRemove={index === formData.players.length - 1 && formData.players.length > 13 ? removeLastPlayer : undefined}
+                        canRemove={index === formData.players.length - 1 && formData.players.length > 13}
                       />
                     ))}
                   </div>
 
-                  {formData.players.length < 15 && (
+                  {formData.players.length < 17 && (
                     <button
                       onClick={addPlayer}
                       disabled={isSubmitting}
@@ -1334,7 +1141,7 @@ const Registration = () => {
               )}
 
               {/* Step 5: Review Information */}
-              {currentStep === 4 && (
+              {currentStep === 3 && (
                 <motion.div
                   key="step4"
                   initial={{ opacity: 0, x: 50 }}
@@ -1371,6 +1178,10 @@ const Registration = () => {
                         <span className="font-subheading font-semibold">Captain Email:</span>
                         <span>{formData.captain.email || 'N/A'}</span>
                       </div>
+                      <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Captain WhatsApp:</span>
+                        <span>{formData.captain.whatsapp || 'N/A'}</span>
+                      </div>
 
                       <div className="flex justify-between py-2 border-b">
                         <span className="font-subheading font-semibold">Vice-Captain:</span>
@@ -1385,8 +1196,16 @@ const Registration = () => {
                         <span>{formData.viceCaptain.email || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between py-2 border-b">
+                        <span className="font-subheading font-semibold">Vice-Captain WhatsApp:</span>
+                        <span>{formData.viceCaptain.whatsapp || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b">
                         <span className="font-subheading font-semibold">Total Players:</span>
                         <span>{formData.players.length}</span>
+                      </div>
+                      <div className="py-2 border-b">
+                        <span className="font-subheading font-semibold">Players:</span>
+                        <p className="mt-1 text-sm">{formData.players.map((player) => player.name || 'N/A').join(', ')}</p>
                       </div>
                       <div className="flex justify-between py-2 border-b">
                         <span className="font-subheading font-semibold">Registration Fee:</span>
@@ -1405,7 +1224,7 @@ const Registration = () => {
               )}
 
               {/* Step 6: Payment Upload */}
-              {currentStep === 5 && (
+              {currentStep === 3 && (
                 <motion.div
                   key="step5"
                   initial={{ opacity: 0, x: 50 }}
@@ -1526,8 +1345,8 @@ const Registration = () => {
                   </span>
                 ) : (
                   <>
-                    {currentStep === 4 ? 'Submit' : 'Next'}
-                    {currentStep < 5 && <ChevronRight className="w-5 h-5" />}
+                    {currentStep === 3 ? 'Submit' : 'Next'}
+                    {currentStep < totalSteps - 1 && <ChevronRight className="w-5 h-5" />}
                   </>
                 )}
               </button>

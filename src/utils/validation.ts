@@ -335,14 +335,9 @@ export function validateTeamRegistration(data: {
   vicePhone: string
   viceEmail: string
   viceWhatsapp?: string
-  pastorLetter: File | null
   paymentReceipt: File | null
-  groupPhoto: File | null
   players: Array<{
     name: string
-    role: string
-    aadharFile: File | null
-    subscriptionFile: File | null
   }>
 }): FieldError[] {
   const errors: FieldError[] = []
@@ -406,16 +401,6 @@ export function validateTeamRegistration(data: {
     }
   }
 
-  // Team files
-  if (!data.pastorLetter) {
-    errors.push({ field: 'pastorLetter', error: 'Pastor letter is required' })
-  } else {
-    const fileValidation = isValidFile(data.pastorLetter)
-    if (!fileValidation.isValid) {
-      errors.push({ field: 'pastorLetter', error: fileValidation.error! })
-    }
-  }
-
   if (!data.paymentReceipt) {
     errors.push({ field: 'paymentReceipt', error: 'Payment receipt is required' })
   } else {
@@ -425,18 +410,9 @@ export function validateTeamRegistration(data: {
     }
   }
 
-  if (!data.groupPhoto) {
-    errors.push({ field: 'groupPhoto', error: 'Group photo is required' })
-  } else {
-    const fileValidation = isValidFile(data.groupPhoto)
-    if (!fileValidation.isValid) {
-      errors.push({ field: 'groupPhoto', error: fileValidation.error! })
-    }
-  }
-
-  // Players (minimum 11)
-  if (data.players.length < 11) {
-    errors.push({ field: 'players', error: 'At least 11 players are required' })
+  // Players (13-17)
+  if (data.players.length < 13) {
+    errors.push({ field: 'players', error: 'At least 13 players are required' })
   }
 
   data.players.forEach((player, index) => {
@@ -449,37 +425,6 @@ export function validateTeamRegistration(data: {
       })
     }
 
-    // Player Aadhar file (role is optional)
-    if (!player.aadharFile) {
-      errors.push({ 
-        field: `player_${index}_aadhar`, 
-        error: `Player ${index + 1}: Aadhar card is required` 
-      })
-    } else {
-      const fileValidation = isValidFile(player.aadharFile)
-      if (!fileValidation.isValid) {
-        errors.push({ 
-          field: `player_${index}_aadhar`, 
-          error: `Player ${index + 1} Aadhar: ${fileValidation.error}` 
-        })
-      }
-    }
-
-    // Player Subscription file
-    if (!player.subscriptionFile) {
-      errors.push({ 
-        field: `player_${index}_subscription`, 
-        error: `Player ${index + 1}: Subscription file is required` 
-      })
-    } else {
-      const fileValidation = isValidFile(player.subscriptionFile)
-      if (!fileValidation.isValid) {
-        errors.push({ 
-          field: `player_${index}_subscription`, 
-          error: `Player ${index + 1} Subscription: ${fileValidation.error}` 
-        })
-      }
-    }
   })
 
   return errors
