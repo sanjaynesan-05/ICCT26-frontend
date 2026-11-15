@@ -71,12 +71,12 @@ export const getChurchTeamCount = (
 }
 
 /**
- * Get capacity status text (e.g., "2/2", "1/2")
+ * Get capacity status text (e.g., "1/1", "0/1")
  */
 export const getChurchCapacityText = (
   churchName: string,
   churchAvailability: ChurchAvailability[] | undefined
 ): string => {
   const count = getChurchTeamCount(churchName, churchAvailability)
-  return `${count}/2 teams`
+  return `${count}/1 team`
 }

@@ -4,6 +4,8 @@
  * Created: November 17, 2025
  */
 
+import { REGISTRATION_CONFIG } from '../data/registration'
+
 // ============================================================================
 // VALIDATION RULES (Must match backend exactly)
 // ============================================================================
@@ -410,9 +412,12 @@ export function validateTeamRegistration(data: {
     }
   }
 
-  // Players (13-17)
-  if (data.players.length < 13) {
-    errors.push({ field: 'players', error: 'At least 13 players are required' })
+  // Players (min-max from REGISTRATION_CONFIG)
+  if (data.players.length < REGISTRATION_CONFIG.minPlayers) {
+    errors.push({ field: 'players', error: `At least ${REGISTRATION_CONFIG.minPlayers} players are required` })
+  }
+  if (data.players.length > REGISTRATION_CONFIG.maxPlayers) {
+    errors.push({ field: 'players', error: `Maximum ${REGISTRATION_CONFIG.maxPlayers} players allowed` })
   }
 
   data.players.forEach((player, index) => {

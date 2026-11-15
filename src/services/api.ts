@@ -5,32 +5,6 @@
 
 import { API_CONFIG } from '../config/app.config'
 
-export interface TeamRegistrationPayload {
-  team_name: string
-  church_name: string
-  captain: {
-    name: string
-    phone: string
-    email: string
-    whatsapp: string
-  }
-  viceCaptain: {
-    name: string
-    phone: string
-    email: string
-    whatsapp: string
-  }
-  payment_receipt: string
-  pastor_letter: string
-  groupPhoto: string
-  players: Array<{
-    name: string
-    role: string
-    aadhar_file: string
-    subscription_file: string
-  }>
-}
-
 export interface ApiResponse<T = any> {
   success: boolean
   data?: T
@@ -99,43 +73,6 @@ class ApiService {
       
       console.error(`API Error [${endpoint}]:`, error)
       throw new Error(message)
-    }
-  }
-
-  /**
-   * Register a team
-   */
-  async registerTeam(payload: TeamRegistrationPayload): Promise<any> {
-    return this.request('/api/register/team', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    })
-  }
-
-  /**
-   * Register a team using multipart/form-data
-   */
-  async registerTeamMultipart(formData: FormData): Promise<any> {
-    const url = this.getUrl('/api/register/team')
-    
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        body: formData,
-        // Don't set Content-Type header - browser will set it with boundary
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          detail: `HTTP ${response.status}: ${response.statusText}`,
-        }))
-        throw new Error(errorData.detail || JSON.stringify(errorData))
-      }
-
-      return await response.json()
-    } catch (error) {
-      console.error('Multipart registration error:', error)
-      throw error
     }
   }
 
@@ -212,13 +149,6 @@ class ApiService {
     return this.request(`/admin/teams/${teamId}/reject`, {
       method: 'PUT'
     })
-  }
-
-  /**
-   * Admin: Get player details
-   */
-  async getPlayerById(playerId: string): Promise<any> {
-    return this.request(`/admin/players/${playerId}`)
   }
 
   /**
@@ -467,33 +397,6 @@ class ApiService {
       return await response.json()
     } catch (error) {
       console.error('Team update error:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Update player using multipart/form-data (supports partial file updates)
-   */
-  async updatePlayerMultipart(playerId: string, formData: FormData): Promise<any> {
-    const url = this.getUrl(`/api/players/${playerId}`)
-    
-    try {
-      const response = await fetch(url, {
-        method: 'PUT',
-        body: formData,
-        // Don't set Content-Type header - browser will set it with boundary
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          detail: `HTTP ${response.status}: ${response.statusText}`,
-        }))
-        throw new Error(errorData.detail || JSON.stringify(errorData))
-      }
-
-      return await response.json()
-    } catch (error) {
-      console.error('Player update error:', error)
       throw error
     }
   }

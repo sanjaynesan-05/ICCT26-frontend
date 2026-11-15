@@ -4,135 +4,121 @@ import { motion } from 'framer-motion'
 import { Download } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { apiService } from '../../services/api'
-
-interface Player {
-  playerId: string
-  name: string
-  role: string
-  aadharFile?: string
-  subscriptionFile?: string
-}
-
-interface TeamDetails {
-  teamId: string
-  teamName: string
-  churchName: string
-  captainName: string
-  captainPhone: string
-  captainEmail: string
-  captainWhatsapp: string
-  viceCaptainName: string
-  viceCaptainPhone: string
-  viceCaptainEmail: string
-  viceCaptainWhatsapp: string
-  paymentReceipt: string
-  pastorLetter?: string
-  groupPhoto: string
-  registrationDate: string
-  players: Player[]
-}
+import {
+  type AdminTeam,
+  STATUS_BADGE_CLASSES,
+  extractTeamList,
+  formatRegistrationDate,
+  getFileKind,
+  normalizeTeam,
+  normalizeTeamResponse,
+} from '../../utils/adminTeams'
 
 const TeamDetail = () => {
   const { teamId } = useParams<{ teamId: string }>()
   const navigate = useNavigate()
-  const [team, setTeam] = useState<TeamDetails | null>(null)
+  const [team, setTeam] = useState<AdminTeam | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
-  // Sanitize file URLs to handle legacy data (null, {}, local paths)
-  const cleanFileUrl = (url: any): string => {
-    if (!url) return ''
-    if (typeof url === 'object') {
-      console.warn('⚠️ Group photo is stored as object, not URL:', url)
-      return ''
-    }
-    if (typeof url !== 'string' || url.trim() === '') {
-      return ''
-    }
-    
-    const trimmedUrl = url.trim()
-    
-    // Reject invalid local paths
-    if (trimmedUrl.startsWith('data:') || trimmedUrl.startsWith('file:') || trimmedUrl.startsWith('C:')) {
-      return ''
-    }
-    
-    // Accept HTTP/HTTPS URLs (Cloudinary, etc.)
-    if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
-      console.log('✅ Group photo URL accepted:', trimmedUrl.substring(0, 80) + '...')
-      return trimmedUrl
-    }
-    
-    return ''
-  }
-
-  // Unified file preview helper for Cloudinary URLs
-  const getFilePreview = (url: string | undefined, altText: string = 'Document') => {
-    const cleanUrl = cleanFileUrl(url)
-    if (!cleanUrl) return null
-
-    const ext = cleanUrl.split('.').pop()?.toLowerCase()
-
-    if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')) {
-      return (
-        <img 
-          src={cleanUrl} 
-          alt={altText}
-          className="max-w-full sm:max-w-2xl w-full rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
-          onClick={() => window.open(cleanUrl, '_blank')}
-        />
-      )
-    }
-
-    if (ext === 'pdf') {
-      return (
-        <div className="w-full h-[400px] rounded-lg border-2 border-accent/50 bg-white/5 flex flex-col items-center justify-center gap-4">
-          <svg className="w-16 h-16 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          <a
-            href={cleanUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-gold px-6 py-3 rounded-lg"
-          >
-            View PDF
-          </a>
-        </div>
-      )
-    }
-
-    return (
-      <div className="w-full h-[400px] rounded-lg border-2 border-accent/50 bg-white/5 flex items-center justify-center">
-        <a
-          href={cleanUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-gold px-6 py-3 rounded-lg"
-        >
-          Download File
-        </a>
-      </div>
-    )
-  }
+  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     fetchTeamDetails()
   }, [teamId])
 
+  const fetchTeamDetails = async () => {
+    if (!teamId) return
+    try {
+      setLoading(true)
+      setError('')
+      let fetchedTeam: AdminTeam | null = null
+
+      try {
+        // Admin endpoint returns { team, players } including registration status
+        fetchedTeam = normalizeTeamResponse(await apiService.getAdminTeamById(teamId))
+      } catch (adminError) {
+        console.warn('Admin team endpoint failed, trying public endpoints:', adminError)
+        try {
+          fetchedTeam = normalizeTeamResponse(await apiService.getTeamById(teamId))
+        } catch {
+          const match = extractTeamList(await apiService.getTeamsFromDatabase())
+            .map((t) => normalizeTeam(t))
+            .find((t) => t.teamId === teamId)
+          fetchedTeam = match ?? null
+        }
+      }
+
+      if (!fetchedTeam) {
+        setError('⚠️ Team not found in backend data.')
+        setTeam(null)
+        return
+      }
+
+      setTeam(fetchedTeam)
+    } catch (err) {
+      console.error('Error fetching team details:', err)
+      setError('❌ Failed to load team details. Connection issue.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleApprove = async () => {
+    if (!team) return
+    if (!confirm('Approve this team registration? Check the payment receipt first. A confirmation email will be sent to the captain.')) {
+      return
+    }
+    setActionLoading(true)
+    try {
+      const response = await apiService.confirmTeam(team.teamId)
+      if (response.success) {
+        alert(`✅ Team approved! Email ${response.email_notification || 'sent'}`)
+        await fetchTeamDetails()
+      } else {
+        alert('❌ Failed to approve team: ' + (response.message || 'Unknown error'))
+      }
+    } catch (err) {
+      alert('❌ Error approving team: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleReject = async () => {
+    if (!team) return
+    if (!confirm('Are you sure you want to REJECT this team? The church slot will be freed for another registration.')) {
+      return
+    }
+    setActionLoading(true)
+    try {
+      const response = await apiService.rejectTeam(team.teamId)
+      if (response.success) {
+        alert('❌ Team rejected.')
+        await fetchTeamDetails()
+      } else {
+        alert('❌ Failed to reject team: ' + (response.message || 'Unknown error'))
+      }
+    } catch (err) {
+      alert('❌ Error rejecting team: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   // Export team data to Excel
   const exportToExcel = () => {
     if (!team) return
 
-    // Sheet 1: Team Information
     const teamInfo = [
-      ['ICCT26 Tournament - Team Report'],
+      ["ICCT'27 Tournament - Team Report"],
       [''],
       ['Team Information'],
       ['Team ID', team.teamId],
       ['Team Name', team.teamName],
       ['Church Name', team.churchName],
-      ['Registration Date', team.registrationDate],
+      ['Registration Status', team.registrationStatus.toUpperCase()],
+      ['Registration Date', formatRegistrationDate(team.registrationDate)],
+      ['Payment Receipt', team.paymentReceipt || 'Not uploaded'],
       [''],
       ['Captain Information'],
       ['Name', team.captainName],
@@ -145,144 +131,27 @@ const TeamDetail = () => {
       ['Phone', team.viceCaptainPhone],
       ['WhatsApp', team.viceCaptainWhatsapp],
       ['Email', team.viceCaptainEmail],
-      [''],
-      ['Submitted Documents'],
-      ['Pastor Letter', cleanFileUrl(team.pastorLetter) || 'Not uploaded'],
-      ['Payment Receipt', cleanFileUrl(team.paymentReceipt) || 'Not uploaded'],
-      ['Group Photo', cleanFileUrl(team.groupPhoto) || 'Not uploaded'],
     ]
 
-    // Sheet 2: Players Information
-    const playersHeader = [
-      ['Players Squad (' + (team.players?.length || 0) + ' players)'],
+    const playersSheet = [
+      [`Players Squad (${team.players.length} players)`],
       [''],
-      ['#', 'Player ID', 'Name', 'Role', 'Aadhar File URL', 'Subscription File URL']
+      ['#', 'Player ID', 'Name'],
+      ...team.players.map((player, index) => [index + 1, player.playerId, player.name]),
     ]
-    
-    const playersData = team.players?.map((player, index) => [
-      index + 1,
-      player.playerId,
-      player.name,
-      player.role || 'Not specified',
-      cleanFileUrl(player.aadharFile) || 'Not uploaded',
-      cleanFileUrl(player.subscriptionFile) || 'Not uploaded'
-    ]) || []
 
-    const playersSheet = [...playersHeader, ...playersData]
-
-    // Create workbook
     const wb = XLSX.utils.book_new()
-    
-    // Add Team Info sheet
+
     const ws1 = XLSX.utils.aoa_to_sheet(teamInfo)
-    
-    // Set column widths for Team Info
-    ws1['!cols'] = [
-      { wch: 25 }, // Column A
-      { wch: 50 }  // Column B
-    ]
-    
+    ws1['!cols'] = [{ wch: 25 }, { wch: 60 }]
     XLSX.utils.book_append_sheet(wb, ws1, 'Team Information')
 
-    // Add Players sheet
     const ws2 = XLSX.utils.aoa_to_sheet(playersSheet)
-    
-    // Set column widths for Players
-    ws2['!cols'] = [
-      { wch: 5 },  // #
-      { wch: 15 }, // Player ID
-      { wch: 25 }, // Name
-      { wch: 15 }, // Role
-      { wch: 60 }, // Aadhar URL
-      { wch: 60 }  // Subscription URL
-    ]
-    
+    ws2['!cols'] = [{ wch: 5 }, { wch: 18 }, { wch: 35 }]
     XLSX.utils.book_append_sheet(wb, ws2, 'Players')
 
-    // Generate filename with team name and date
-    const fileName = `ICCT26_${team.teamName.replace(/\s+/g, '_')}_${team.teamId}_${new Date().toISOString().split('T')[0]}.xlsx`
-
-    // Download file
+    const fileName = `ICCT27_${team.teamName.replace(/\s+/g, '_')}_${team.teamId}_${new Date().toISOString().split('T')[0]}.xlsx`
     XLSX.writeFile(wb, fileName)
-  }
-
-  const fetchTeamDetails = async () => {
-    try {
-      setLoading(true)
-      setError('')
-      let fetchedTeam: any = null
-
-      try {
-        const response = await apiService.getTeamById(teamId!)
-        fetchedTeam = response.team || response.data || response
-        if (fetchedTeam && response.players) {
-          fetchedTeam.players = response.players
-        }
-      } catch (adminError: any) {
-        console.warn('Admin team endpoint failed, fallback mode:', adminError.message)
-        const response = await apiService.getTeamsFromDatabase()
-        const teams = Array.isArray(response)
-          ? response
-          : response.teams || response.data || []
-        fetchedTeam = teams.find((t: any) => t.teamId === teamId)
-      }
-
-      if (!fetchedTeam) {
-        setError('⚠️ Team not found in backend data.')
-        setTeam(null)
-        return
-      }
-
-      // Debug: Log all available fields to find group photo
-      console.log('📋 All available fields in fetchedTeam:', Object.keys(fetchedTeam))
-      console.log('🖼️ Group photo field values:')
-      console.log('  - groupPhoto:', fetchedTeam.groupPhoto)
-      console.log('  - group_photo:', fetchedTeam.group_photo)
-      console.log('  - groupPhotoUrl:', fetchedTeam.groupPhotoUrl)
-      console.log('  - group_photo_url:', fetchedTeam.group_photo_url)
-      console.log('  - photo:', fetchedTeam.photo)
-      console.log('  - full object:', JSON.stringify(fetchedTeam, null, 2))
-
-      const safeTeam: TeamDetails = {
-        teamId: fetchedTeam.teamId || fetchedTeam.team_id || 'UNKNOWN-ID',
-        teamName: fetchedTeam.teamName || fetchedTeam.team_name || 'Unnamed Team',
-        churchName: fetchedTeam.churchName || fetchedTeam.church_name || 'Unknown Church',
-        captainName: fetchedTeam.captain?.name || fetchedTeam.captainName || 'N/A',
-        captainPhone: fetchedTeam.captain?.phone || fetchedTeam.captainPhone || '',
-        captainEmail: fetchedTeam.captain?.email || fetchedTeam.captainEmail || '',
-        captainWhatsapp: fetchedTeam.captain?.whatsapp || fetchedTeam.captainWhatsapp || '',
-        viceCaptainName: fetchedTeam.viceCaptain?.name || fetchedTeam.viceCaptainName || 'N/A',
-        viceCaptainPhone: fetchedTeam.viceCaptain?.phone || fetchedTeam.viceCaptainPhone || '',
-        viceCaptainEmail: fetchedTeam.viceCaptain?.email || fetchedTeam.viceCaptainEmail || '',
-        viceCaptainWhatsapp: fetchedTeam.viceCaptain?.whatsapp || fetchedTeam.viceCaptainWhatsapp || '',
-        paymentReceipt: fetchedTeam.paymentReceipt || fetchedTeam.payment_receipt || '',
-        pastorLetter: fetchedTeam.pastorLetter || fetchedTeam.pastor_letter || '',
-        groupPhoto: fetchedTeam.groupPhoto || fetchedTeam.group_photo || '',
-        registrationDate: fetchedTeam.registrationDate || fetchedTeam.registration_date || '',
-        players: Array.isArray(fetchedTeam.players)
-          ? fetchedTeam.players.map((p: any) => ({
-              playerId: p.playerId || 'UNKNOWN',
-              name: p.name || 'Unnamed Player',
-              role: p.role || 'Unknown Role',
-              aadharFile: p.aadharFile || p.aadhar_file || '',
-              subscriptionFile: p.subscriptionFile || p.subscription_file || '',
-            }))
-          : []
-      }
-
-      // Debug: Log what we're receiving from backend
-      console.log('Backend team data:', fetchedTeam)
-      console.log('Processed team data:', safeTeam)
-      console.log('Group photo value:', safeTeam.groupPhoto)
-      console.log('Cleaned group photo:', cleanFileUrl(safeTeam.groupPhoto))
-
-      setTeam(safeTeam)
-    } catch (err) {
-      console.error('Error fetching team details:', err)
-      setError('❌ Failed to load team details. Connection issue.')
-    } finally {
-      setLoading(false)
-    }
   }
 
   if (loading) {
@@ -321,6 +190,7 @@ const TeamDetail = () => {
             <button
               onClick={() => navigate('/admin/dashboard')}
               className="text-accent hover:text-white transition-colors flex-shrink-0"
+              aria-label="Back to dashboard"
             >
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -328,10 +198,33 @@ const TeamDetail = () => {
             </button>
             <div className="min-w-0 flex-1">
               <h1 className="font-heading text-xl sm:text-2xl md:text-3xl text-white tracking-wide truncate">{team.teamName}</h1>
-              <p className="font-body text-accent text-xs sm:text-sm truncate">{team.teamId}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-body text-accent text-xs sm:text-sm truncate">{team.teamId}</p>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-body font-semibold border ${STATUS_BADGE_CLASSES[team.registrationStatus]}`}>
+                  {team.registrationStatus.toUpperCase()}
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex gap-2 self-end sm:self-auto">
+          <div className="flex flex-wrap gap-2 self-end sm:self-auto">
+            {team.registrationStatus === 'pending' && (
+              <>
+                <button
+                  onClick={handleApprove}
+                  disabled={actionLoading}
+                  className="bg-green-500/20 hover:bg-green-500/30 text-green-400 px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap disabled:opacity-50"
+                >
+                  {actionLoading ? 'Processing...' : '✅ Approve'}
+                </button>
+                <button
+                  onClick={handleReject}
+                  disabled={actionLoading}
+                  className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap disabled:opacity-50"
+                >
+                  {actionLoading ? 'Processing...' : '❌ Reject'}
+                </button>
+              </>
+            )}
             <button
               onClick={exportToExcel}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap flex items-center gap-2"
@@ -352,7 +245,6 @@ const TeamDetail = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Team Information */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
           className="glass-effect rounded-xl p-4 sm:p-6 md:p-8 glow-border mb-6 sm:mb-8"
         >
@@ -362,13 +254,13 @@ const TeamDetail = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 pb-8 border-b border-white/10">
             <InfoCard label="Team Name" value={team.teamName} />
             <InfoCard label="Church Name" value={team.churchName} />
-            <InfoCard label="Registration Date" value={team.registrationDate} />
+            <InfoCard label="Registration Date" value={formatRegistrationDate(team.registrationDate)} />
           </div>
 
           {/* Captain Section */}
           <div className="mb-8 pb-8 border-b border-white/10">
             <h3 className="font-heading text-lg sm:text-xl text-accent mb-4 tracking-wide">Captain Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <InfoCard label="Name" value={team.captainName} />
               <InfoCard label="Phone" value={team.captainPhone} />
               <InfoCard label="Email" value={team.captainEmail} />
@@ -379,7 +271,7 @@ const TeamDetail = () => {
           {/* Vice Captain Section */}
           <div className="mb-8 pb-8 border-b border-white/10">
             <h3 className="font-heading text-lg sm:text-xl text-accent mb-4 tracking-wide">Vice Captain Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <InfoCard label="Name" value={team.viceCaptainName} />
               <InfoCard label="Phone" value={team.viceCaptainPhone} />
               <InfoCard label="Email" value={team.viceCaptainEmail} />
@@ -388,81 +280,36 @@ const TeamDetail = () => {
           </div>
 
           {/* Players Section */}
-          <div className="mt-8 pt-8 border-t border-white/10">
-            <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white mb-6 tracking-wide">Squad ({team.players?.length || 0} Players)</h2>
-            {team.players?.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 mb-8">
+          <div className="mb-8 pb-8 border-b border-white/10">
+            <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white mb-6 tracking-wide">
+              Squad ({team.players.length} Players)
+            </h2>
+            {team.players.length > 0 ? (
+              <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {team.players.map((p, index) => (
-                  <motion.div
-                    key={p.playerId}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => navigate(`/admin/player/${p.playerId}`, { state: { player: p, team } })}
-                    className="glass-effect rounded-xl p-4 sm:p-6 hover:border-accent hover:bg-white/20 transition-all cursor-pointer group glow-border"
+                  <li
+                    key={`${p.playerId}-${index}`}
+                    className="bg-white/5 rounded-lg px-4 py-3 border border-white/10 flex items-center gap-3"
                   >
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-                      <div className="flex-1 w-full">
-                        <h3 className="font-heading text-lg sm:text-xl md:text-2xl text-white group-hover:text-accent transition-colors tracking-wide mb-2">{p.name}</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Role</p>
-                            <p className="text-white font-body text-sm sm:text-base">{p.role}</p>
-                          </div>
-                        </div>
-                      </div>
-                      <svg className="w-5 h-5 sm:w-6 sm:h-6 text-accent group-hover:translate-x-1 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+                    <span className="font-heading text-accent text-lg w-8 text-right flex-shrink-0">{index + 1}</span>
+                    <div className="min-w-0">
+                      <p className="text-white font-body text-sm sm:text-base break-words">{p.name}</p>
+                      <p className="text-white/50 font-body text-xs">{p.playerId}</p>
                     </div>
-                  </motion.div>
+                  </li>
                 ))}
-              </div>
+              </ol>
             ) : (
-              <div className="glass-effect rounded-xl p-8 sm:p-12 text-center mb-8">
+              <div className="glass-effect rounded-xl p-8 sm:p-12 text-center">
                 <p className="text-white font-body text-base sm:text-lg">No players found for this team.</p>
               </div>
             )}
           </div>
 
-          {/* Documents Section */}
-          <div className="mt-8">
-            <h3 className="font-heading text-xl sm:text-2xl text-white mb-6 tracking-wide">Submitted Documents</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Pastor Letter */}
-              {team.pastorLetter && (
-                <div className="flex flex-col">
-                  <p className="text-accent text-sm font-body mb-3 font-semibold">Pastor Letter</p>
-                  {getFilePreview(team.pastorLetter, 'Pastor Letter')}
-                </div>
-              )}
-
-              {/* Payment Receipt */}
-              {team.paymentReceipt && (
-                <div className="flex flex-col">
-                  <p className="text-accent text-sm font-body mb-3 font-semibold">Payment Receipt</p>
-                  {getFilePreview(team.paymentReceipt, 'Payment Receipt')}
-                </div>
-              )}
-
-              {/* Group Photo */}
-              {cleanFileUrl(team.groupPhoto) ? (
-                <div className="flex flex-col">
-                  <p className="text-accent text-sm font-body mb-3 font-semibold">Team Group Photo</p>
-                  {getFilePreview(team.groupPhoto, 'Team Group Photo')}
-                </div>
-              ) : (
-                <div className="flex flex-col">
-                  <p className="text-accent text-sm font-body mb-3 font-semibold">Team Group Photo</p>
-                  <div className="glass-effect rounded-xl p-4 border border-yellow-500/50 bg-yellow-500/10 h-full flex items-center justify-center">
-                    <div className="text-center">
-                      <p className="text-yellow-200 font-body text-sm mb-2">📸 Group photo not yet uploaded</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+          {/* Payment Receipt */}
+          <div>
+            <h3 className="font-heading text-xl sm:text-2xl text-white mb-6 tracking-wide">Payment Receipt</h3>
+            <ReceiptPreview url={team.paymentReceipt} />
           </div>
         </motion.div>
       </div>
@@ -477,5 +324,39 @@ const InfoCard = ({ label, value }: { label: string; value: string }) => (
     <p className="text-white font-body text-sm sm:text-base break-words line-clamp-2">{value || 'N/A'}</p>
   </div>
 )
+
+const ReceiptPreview = ({ url }: { url: string }) => {
+  if (!url) {
+    return (
+      <div className="rounded-xl p-6 border border-red-500/50 bg-red-500/10">
+        <p className="text-red-200 font-body text-sm">No payment receipt on file for this team.</p>
+      </div>
+    )
+  }
+
+  const kind = getFileKind(url)
+
+  if (kind === 'image') {
+    return (
+      <img
+        src={url}
+        alt="Payment receipt"
+        className="max-w-full sm:max-w-2xl w-full rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
+        onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+      />
+    )
+  }
+
+  return (
+    <div className="w-full max-w-2xl h-[240px] rounded-lg border-2 border-accent/50 bg-white/5 flex flex-col items-center justify-center gap-4">
+      <svg className="w-16 h-16 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg>
+      <a href={url} target="_blank" rel="noopener noreferrer" className="btn-gold px-6 py-3 rounded-lg">
+        {kind === 'pdf' ? 'View PDF' : 'Download File'}
+      </a>
+    </div>
+  )
+}
 
 export default TeamDetail

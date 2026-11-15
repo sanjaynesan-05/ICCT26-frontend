@@ -21,9 +21,9 @@ export const REGISTRATION_STEPS: RegistrationStep[] = [
  */
 export const REGISTRATION_CONFIG = {
   totalSteps: REGISTRATION_STEPS.length,
-  minPlayers: 11,
-  maxPlayers: 15,
-  defaultPlayers: 11,
+  minPlayers: 13,
+  maxPlayers: 17,
+  defaultPlayers: 13,
   registrationFee: 2000, // in INR
   currency: 'INR',
 }

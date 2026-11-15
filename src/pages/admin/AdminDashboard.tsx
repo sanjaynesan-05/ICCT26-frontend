@@ -3,91 +3,59 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAdmin } from '../../contexts/AdminContext'
 import { apiService } from '../../services/api'
+import {
+  type AdminTeam,
+  type RegistrationStatus,
+  STATUS_BADGE_CLASSES,
+  extractTeamList,
+  formatRegistrationDate,
+  getFileKind,
+  normalizeTeam,
+  normalizeTeamResponse,
+} from '../../utils/adminTeams'
 
-interface Team {
-  teamId: string
-  teamName: string
-  churchName: string
-  captainName: string
-  captainPhone: string
-  captainEmail: string
-  captainWhatsapp: string
-  viceCaptainName: string
-  viceCaptainPhone: string
-  viceCaptainEmail: string
-  viceCaptainWhatsapp: string
-  playerCount: number
-  registrationDate: string
-  registrationStatus?: 'pending' | 'confirmed' | 'rejected'
-  paymentReceipt: string
-  pastorLetter: string
-  groupPhoto: string
-  players?: any[]
-}
+type StatusTab = RegistrationStatus | 'all'
 
 const AdminDashboard = () => {
-  const [allTeams, setAllTeams] = useState<Team[]>([])
-  const [displayedTeams, setDisplayedTeams] = useState<Team[]>([])
+  const [allTeams, setAllTeams] = useState<AdminTeam[]>([])
+  const [displayedTeams, setDisplayedTeams] = useState<AdminTeam[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'rejected' | 'all'>('confirmed')
+  // New registrations arrive as "pending", so open on the review queue
+  const [activeTab, setActiveTab] = useState<StatusTab>('pending')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const navigate = useNavigate()
   const { logout } = useAdmin()
 
-  // Sanitize file URLs to handle legacy data (null, {}, local paths)
-  const cleanFileUrl = (url: any): string => {
-    if (!url) return ''
-    if (typeof url === 'object') return ''
-    if (typeof url !== 'string' || url.trim() === '') return ''
-    
-    const trimmedUrl = url.trim()
-    
-    // Reject invalid local paths
-    if (trimmedUrl.startsWith('data:') || trimmedUrl.startsWith('file:') || trimmedUrl.startsWith('C:')) {
-      return ''
-    }
-    
-    // Accept HTTP/HTTPS URLs (Cloudinary, etc.)
-    if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
-      return trimmedUrl
-    }
-    
-    return ''
-  }
-
-  // Unified file status helper for Cloudinary URLs
-  const getFileStatusIcon = (url: string | undefined) => {
-    const cleanUrl = cleanFileUrl(url)
+  // Payment receipt thumbnail / badge
+  const getReceiptPreview = (url: string) => {
     if (!url) {
-      return <span className="text-red-500 font-semibold text-xs">No File</span>
+      return <span className="text-red-500 font-semibold text-xs">No Receipt</span>
     }
 
-    const ext = cleanUrl.split('.').pop()?.toLowerCase()
+    const open = (e: React.MouseEvent) => {
+      e.stopPropagation()
+      window.open(url, '_blank', 'noopener,noreferrer')
+    }
 
-    if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')) {
+    if (getFileKind(url) === 'image') {
       return (
-        <img 
-          src={cleanUrl} 
-          alt="Document thumbnail"
+        <img
+          src={url}
+          alt="Payment receipt"
           className="w-12 h-12 rounded border-2 border-accent/50 object-cover cursor-pointer hover:border-accent transition-colors"
-          onClick={(e) => {
-            e.stopPropagation()
-            window.open(cleanUrl, '_blank')
-          }}
+          onClick={open}
         />
       )
     }
 
-    if (ext === 'pdf') {
-      return <span className="text-blue-400 underline text-xs font-semibold">PDF</span>
-    }
-
-    return <span className="text-blue-400 underline text-xs font-semibold">File</span>
+    return (
+      <button onClick={open} className="text-blue-400 underline text-xs font-semibold">
+        {getFileKind(url) === 'pdf' ? 'PDF' : 'File'}
+      </button>
+    )
   }
-
-  // Removed unused viewFile function - click handlers are inline in JSX
 
   // Fetch all teams once on component mount
   useEffect(() => {
@@ -104,80 +72,43 @@ const AdminDashboard = () => {
       setLoading(true)
       setError('')
 
-      let teamsList: any[] = []
+      let teamsList: AdminTeam[] = []
 
       try {
         // Always fetch ALL teams with all statuses
-        const response = await apiService.getAdminTeams()
-        const teamsData = response.data || response.teams || response
-        
-        // Fetch complete details for each team if needed
-        if (Array.isArray(teamsData) && teamsData.length > 0) {
-          console.log(`Fetching complete details for ${teamsData.length} teams...`)
-          
-          const detailedTeamsPromises = teamsData.map(async (team: any) => {
+        const summaries = extractTeamList(await apiService.getAdminTeams())
+
+        // Only fetch per-team details when the list doesn't already carry a player count
+        teamsList = await Promise.all(
+          summaries.map(async (summary) => {
+            const team = normalizeTeam(summary)
+            const raw = summary as Record<string, unknown>
+            const hasCount = raw.player_count != null || raw.playerCount != null || Array.isArray(raw.players)
+            if (hasCount) return team
+
             try {
-              const teamId = team.teamId || team.team_id
-              const detailResponse = await apiService.getAdminTeamById(teamId)
-              
-              // Backend returns { team: {...}, players: [...] }
-              const teamData = detailResponse.team || detailResponse.data?.team || detailResponse.data || detailResponse
-              const playersData = detailResponse.players || detailResponse.data?.players || []
-              
-              return {
-                ...teamData,
-                players: playersData
-              }
+              return normalizeTeamResponse(await apiService.getAdminTeamById(team.teamId)) ?? team
             } catch (err) {
               console.warn(`Failed to fetch details for team ${team.teamId}:`, err)
-              return team // Return summary data if detail fetch fails
+              return team
             }
           })
-          
-          teamsList = await Promise.all(detailedTeamsPromises)
-        }
-      } catch (adminError: any) {
-        console.warn('Admin teams endpoint not available, trying fallback:', adminError.message)
+        )
+      } catch (adminError) {
+        console.warn('Admin teams endpoint not available, trying fallback:', adminError)
         try {
-          const response = await apiService.getAllTeams()
-          teamsList = response.teams || response.data || response
-        } catch (databaseError: any) {
-          console.error('Teams endpoint not available:', databaseError.message)
+          teamsList = extractTeamList(await apiService.getAllTeams()).map((t) => normalizeTeam(t))
+        } catch (databaseError) {
+          console.error('Teams endpoint not available:', databaseError)
           setError('Failed to load teams from backend. Please ensure the backend server is running and accessible.')
           setAllTeams([])
           return
         }
       }
 
-      // ✅ Sanitize data: ensure all string fields are safe strings
-      const safeTeams = Array.isArray(teamsList)
-        ? teamsList.map((team: any) => ({
-            ...team,
-            teamId: team.teamId || team.team_id || 'UNKNOWN-ID',
-            teamName: team.teamName || team.team_name || 'Unnamed Team',
-            churchName: team.churchName || team.church_name || 'Unknown Church',
-            registrationStatus: team.registrationStatus || team.registration_status || 'pending',
-            // Handle nested captain object OR flat properties
-            captainName: team.captain?.name || team.captainName || team.captain_name || 'N/A',
-            captainPhone: team.captain?.phone || team.captainPhone || team.captain_phone || '',
-            captainEmail: team.captain?.email || team.captainEmail || team.captain_email || '',
-            captainWhatsapp: team.captain?.whatsapp || team.captainWhatsapp || team.captain_whatsapp || '',
-            // Handle nested viceCaptain object OR flat properties
-            viceCaptainName: team.viceCaptain?.name || team.viceCaptainName || team.vice_captain_name || 'N/A',
-            viceCaptainPhone: team.viceCaptain?.phone || team.viceCaptainPhone || team.vice_captain_phone || '',
-            viceCaptainEmail: team.viceCaptain?.email || team.viceCaptainEmail || team.vice_captain_email || '',
-            viceCaptainWhatsapp: team.viceCaptain?.whatsapp || team.viceCaptainWhatsapp || team.vice_captain_whatsapp || '',
-            playerCount: team.playerCount || team.player_count || (team.players?.length || 0),
-            registrationDate: team.registrationDate || team.registration_date || '',
-            // Sanitize file URLs to handle legacy data
-            paymentReceipt: cleanFileUrl(team.paymentReceipt || team.payment_receipt),
-            pastorLetter: cleanFileUrl(team.pastorLetter || team.pastor_letter),
-            groupPhoto: cleanFileUrl(team.groupPhoto || team.group_photo),
-            players: team.players || []
-          }))
-        : []
-
-      setAllTeams(safeTeams)
+      // Newest registrations first
+      teamsList.sort((a, b) => (b.registrationDate || '').localeCompare(a.registrationDate || ''))
+      setAllTeams(teamsList)
     } catch (err) {
       console.error('Error fetching teams:', err)
       setError('Failed to load teams from backend. Connection error.')
@@ -204,11 +135,15 @@ const AdminDashboard = () => {
         const teamId = (team.teamId || '').toLowerCase()
         const churchName = (team.churchName || '').toLowerCase()
         const captainName = (team.captainName || '').toLowerCase()
+        const captainPhone = team.captainPhone || ''
+        const playerNames = team.players.map(p => p.name.toLowerCase()).join(' ')
         return (
           teamName.includes(query) ||
           teamId.includes(query) ||
           churchName.includes(query) ||
-          captainName.includes(query)
+          captainName.includes(query) ||
+          captainPhone.includes(query) ||
+          playerNames.includes(query)
         )
       })
     }
@@ -219,7 +154,7 @@ const AdminDashboard = () => {
   const handleApprove = async (teamId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     
-    if (!confirm('Approve this team registration? Files will be moved to confirmed folder and email will be sent.')) {
+    if (!confirm('Approve this team registration? Check the payment receipt first. A confirmation email will be sent to the captain.')) {
       return
     }
     
@@ -233,9 +168,9 @@ const AdminDashboard = () => {
       } else {
         alert('❌ Failed to approve team: ' + (response.message || 'Unknown error'))
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error approving team:', error)
-      alert('❌ Error approving team: ' + (error.message || 'Unknown error'))
+      alert('❌ Error approving team: ' + (error instanceof Error ? error.message : 'Unknown error'))
     } finally {
       setActionLoading(null)
     }
@@ -244,7 +179,7 @@ const AdminDashboard = () => {
   const handleReject = async (teamId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     
-    if (!confirm('Are you sure you want to REJECT this team? All files will be deleted permanently from Cloudinary!')) {
+    if (!confirm('Are you sure you want to REJECT this team? The church slot will be freed for another registration.')) {
       return
     }
     
@@ -253,14 +188,14 @@ const AdminDashboard = () => {
       const response = await apiService.rejectTeam(teamId)
       
       if (response.success) {
-        alert('❌ Team rejected. Files deleted from Cloudinary.')
+        alert('❌ Team rejected.')
         fetchAllTeams() // Refresh list
       } else {
         alert('❌ Failed to reject team: ' + (response.message || 'Unknown error'))
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error rejecting team:', error)
-      alert('❌ Error rejecting team: ' + (error.message || 'Unknown error'))
+      alert('❌ Error rejecting team: ' + (error instanceof Error ? error.message : 'Unknown error'))
     } finally {
       setActionLoading(null)
     }
@@ -276,20 +211,6 @@ const AdminDashboard = () => {
   const confirmedCount = allTeams.filter(t => t.registrationStatus === 'confirmed').length
   const rejectedCount = allTeams.filter(t => t.registrationStatus === 'rejected').length
 
-  // Get status badge color
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50'
-      case 'confirmed':
-        return 'bg-green-500/20 text-green-400 border-green-500/50'
-      case 'rejected':
-        return 'bg-red-500/20 text-red-400 border-red-500/50'
-      default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50'
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-primary">
       {/* Admin Header */}
@@ -297,7 +218,7 @@ const AdminDashboard = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white tracking-wider">ICCT'26 ADMIN</h1>
+              <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white tracking-wider">ICCT'27 ADMIN</h1>
               <p className="font-body text-accent text-xs sm:text-sm">Team Management Dashboard</p>
             </div>
             <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto flex-wrap">
@@ -356,15 +277,15 @@ const AdminDashboard = () => {
           className="glass-effect rounded-xl p-2 mb-6"
         >
           <div className="flex flex-wrap gap-2">
-            {[
-              { key: 'confirmed', label: 'Confirmed', count: confirmedCount },
+            {([
               { key: 'pending', label: 'Pending', count: pendingCount },
+              { key: 'confirmed', label: 'Confirmed', count: confirmedCount },
               { key: 'rejected', label: 'Rejected', count: rejectedCount },
               { key: 'all', label: 'All Teams', count: allTeams.length }
-            ].map(tab => (
+            ] as { key: StatusTab; label: string; count: number }[]).map(tab => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key as any)}
+                onClick={() => setActiveTab(tab.key)}
                 className={`flex-1 min-w-[100px] px-4 py-3 rounded-lg font-body font-semibold text-sm transition-all ${
                   activeTab === tab.key
                     ? 'bg-accent text-black'
@@ -388,7 +309,7 @@ const AdminDashboard = () => {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             <input
               type="text"
-              placeholder="Search teams..."
+              placeholder="Search team, ID, church, captain, phone or player..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 input-focus focus:outline-none font-body text-sm sm:text-base"
@@ -436,8 +357,8 @@ const AdminDashboard = () => {
                           <span className="bg-accent/20 text-accent px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-body font-semibold">
                             {team.teamId}
                           </span>
-                          <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-body font-semibold border ${getStatusBadge(team.registrationStatus || 'pending')}`}>
-                            {(team.registrationStatus || 'pending').toUpperCase()}
+                          <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-body font-semibold border ${STATUS_BADGE_CLASSES[team.registrationStatus]}`}>
+                            {team.registrationStatus.toUpperCase()}
                           </span>
                           <h3 className="font-heading text-xl sm:text-2xl md:text-3xl text-white group-hover:text-accent transition-colors tracking-wide break-words">
                             {team.teamName || 'Unnamed Team'}
@@ -451,7 +372,7 @@ const AdminDashboard = () => {
                           </div>
                           <div>
                             <p className="text-accent text-xs sm:text-sm font-body mb-1">Registration Date</p>
-                            <p className="text-white font-body text-sm sm:text-base">{team.registrationDate || 'N/A'}</p>
+                            <p className="text-white font-body text-sm sm:text-base">{formatRegistrationDate(team.registrationDate) || 'N/A'}</p>
                           </div>
                           <div>
                             <p className="text-accent text-xs sm:text-sm font-body mb-1">Total Players</p>
@@ -474,21 +395,8 @@ const AdminDashboard = () => {
                             )}
                           </div>
                           <div>
-                            <p className="text-accent text-xs sm:text-sm font-body mb-2">Team Documents</p>
-                            <div className="grid grid-cols-3 gap-2">
-                              <div className="flex flex-col items-center gap-1">
-                                {getFileStatusIcon(team.paymentReceipt)}
-                                <span className="text-[10px] text-white/60">Receipt</span>
-                              </div>
-                              <div className="flex flex-col items-center gap-1">
-                                {getFileStatusIcon(team.pastorLetter)}
-                                <span className="text-[10px] text-white/60">Letter</span>
-                              </div>
-                              <div className="flex flex-col items-center gap-1">
-                                {getFileStatusIcon(team.groupPhoto)}
-                                <span className="text-[10px] text-white/60">Photo</span>
-                              </div>
-                            </div>
+                            <p className="text-accent text-xs sm:text-sm font-body mb-2">Payment Receipt</p>
+                            {getReceiptPreview(team.paymentReceipt)}
                           </div>
                         </div>
                       </div>

@@ -24,6 +24,11 @@ const MAX_RETRIES = 3
 const RETRY_DELAYS = [1000, 2000, 4000] // Exponential backoff: 1s → 2s → 4s
 const TIMEOUT = 120000 // 120 seconds for large file uploads
 
+// Same Idempotency-Key still being processed on the server
+export const REQUEST_IN_PROGRESS_CODE = 'REQUEST_IN_PROGRESS'
+const MAX_IN_PROGRESS_RETRIES = 12
+const DEFAULT_IN_PROGRESS_DELAY = 5000 // used when Retry-After is missing or not exposed via CORS
+
 console.log('🔧 API Client initialized with baseURL:', API_BASE_URL)
 
 // ============================================================================
@@ -186,14 +191,43 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+/**
+ * The backend answers 409 REQUEST_IN_PROGRESS when the same Idempotency-Key is
+ * still being processed (e.g. our first attempt timed out on the client but is
+ * still uploading on the server). Waiting and retrying with the same key lets
+ * us pick up the saved result instead of showing a false error.
+ */
+function isRequestInProgressError(error: AxiosError): boolean {
+  const data = error.response?.data as { error_code?: string } | undefined
+  return error.response?.status === 409 && data?.error_code === REQUEST_IN_PROGRESS_CODE
+}
+
+function getRetryAfterMs(error: AxiosError): number {
+  const header = error.response?.headers?.['retry-after']
+  const seconds = Number(header)
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return DEFAULT_IN_PROGRESS_DELAY
+  }
+  return Math.min(Math.max(seconds * 1000, 1000), 30000)
+}
+
 async function retryRequest<T>(
   requestFn: () => Promise<T>,
-  retryCount = 0
+  retryCount = 0,
+  inProgressCount = 0
 ): Promise<T> {
   try {
     return await requestFn()
   } catch (error) {
     const axiosError = error as AxiosError
+
+    if (isRequestInProgressError(axiosError) && inProgressCount < MAX_IN_PROGRESS_RETRIES) {
+      const delay = getRetryAfterMs(axiosError)
+      console.log(`⏳ Request still processing on server, checking again in ${delay}ms (${inProgressCount + 1}/${MAX_IN_PROGRESS_RETRIES})...`)
+
+      await sleep(delay)
+      return retryRequest(requestFn, retryCount, inProgressCount + 1)
+    }
 
     if (retryCount < MAX_RETRIES && isRetryableError(axiosError)) {
       const delay = RETRY_DELAYS[retryCount]
@@ -214,20 +248,33 @@ async function retryRequest<T>(
 async function requestWithRetry<T>(
   config: AxiosRequestConfig
 ): Promise<BackendResponse<T>> {
-  return retryRequest(async () => {
-    try {
-      const response = await apiClient.request<BackendResponse<T>>(config)
-      return response.data
-    } catch (error) {
-      const axiosError = error as AxiosError
+  try {
+    return await retryRequest(async () => {
+      try {
+        const response = await apiClient.request<BackendResponse<T>>(config)
+        return response.data
+      } catch (error) {
+        const axiosError = error as AxiosError
 
-      if (axiosError.response && isBackendError(axiosError.response.data)) {
-        return axiosError.response.data as BackendError
+        // Let "still in progress" bubble up so retryRequest can wait and retry
+        if (
+          axiosError.response &&
+          isBackendError(axiosError.response.data) &&
+          !isRequestInProgressError(axiosError)
+        ) {
+          return axiosError.response.data as BackendError
+        }
+
+        throw axiosError
       }
-
-      throw axiosError
+    })
+  } catch (error) {
+    // Retries exhausted on a backend error envelope: hand it back like any other backend error
+    if (axios.isAxiosError(error) && error.response && isBackendError(error.response.data)) {
+      return error.response.data as BackendError
     }
-  })
+    throw error
+  }
 }
 
 // ============================================================================

@@ -15,7 +15,6 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import TeamDetail from './pages/admin/TeamDetail'
-import PlayerDetail from './pages/admin/PlayerDetail'
 import ScheduleManager from './pages/admin/ScheduleManager'
 
 function App() {
@@ -64,14 +63,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-            <Route
-              path="/admin/player/:playerId"
-              element={
-                <ProtectedRoute>
-                  <PlayerDetail />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/admin/schedule"
               element={

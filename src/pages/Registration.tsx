@@ -14,6 +14,7 @@ import { DetailedProgressBar } from '../components/ProgressBar'
 import { SearchableSelect } from '../components/SearchableSelect'
 import { fetchChurchAvailability, isChurchLocked, type ChurchAvailability } from '../utils/churchAvailability'
 import SEO from '../components/SEO'
+import { REGISTRATION_CONFIG } from '../data/registration'
 
 // Import production utilities
 import {
@@ -40,6 +41,7 @@ import {
 import {
   uploadMultipartWithRetry,
   extractErrorMessage,
+  extractErrorCode,
   isSuccessResponse,
   handleAxiosError,
   BackendResponse
@@ -70,10 +72,9 @@ interface FormData {
 }
 
 interface RegistrationResponse {
+  registration_status: 'pending' | 'confirmed' | 'rejected'
   team_id: string
   team_name: string
-  email_sent: boolean
-  message: string
 }
 
 // ============================================================================
@@ -81,7 +82,13 @@ interface RegistrationResponse {
 // ============================================================================
 
 // Set to true to close/lock registration
-const REGISTRATION_CLOSED = false 
+const REGISTRATION_CLOSED = false
+
+const MIN_PLAYERS = REGISTRATION_CONFIG.minPlayers
+const MAX_PLAYERS = REGISTRATION_CONFIG.maxPlayers
+
+// Backend error_code when the church already has its one team
+const CHURCH_ALREADY_REGISTERED = 'CHURCH_ALREADY_REGISTERED'
 
 
 const CHURCH_NAMES = [
@@ -199,7 +206,7 @@ const Registration = () => {
     teamName: '',
     captain: { name: '', phone: '', whatsapp: '', email: '' },
     viceCaptain: { name: '', phone: '', whatsapp: '', email: '' },
-    players: Array.from({ length: 13 }).map(() => emptyPlayer()),
+    players: Array.from({ length: MIN_PLAYERS }).map(() => emptyPlayer()),
     paymentReceipt: null,
   })
 
@@ -264,8 +271,8 @@ const Registration = () => {
         } else {
           // Check if selected church is locked (at capacity)
           if (isChurchLocked(formData.churchName, churchAvailability)) {
-            addValidationError('churchName', 'This church has reached its team limit (2/2). Please select a different church.')
-            setChurchLimitError(`${formData.churchName} has reached its team limit (2/2 teams). Please select a different church.`)
+            addValidationError('churchName', 'This church already has its one allowed entry. Please select a different church.')
+            setChurchLimitError(`${formData.churchName} already has its one allowed entry. Please select a different church.`)
             hasErrors = true
           }
         }
@@ -342,13 +349,13 @@ const Registration = () => {
       case 2: { // Players
         let hasErrors = false
 
-        if (formData.players.length < 13) {
-          addValidationError('players', 'At least 13 players are required')
+        if (formData.players.length < MIN_PLAYERS) {
+          addValidationError('players', `At least ${MIN_PLAYERS} players are required`)
           hasErrors = true
         }
 
-        if (formData.players.length > 17) {
-          addValidationError('players', 'Maximum 17 players allowed')
+        if (formData.players.length > MAX_PLAYERS) {
+          addValidationError('players', `Maximum ${MAX_PLAYERS} players allowed`)
           hasErrors = true
         }
 
@@ -417,13 +424,13 @@ const Registration = () => {
   }
 
   const addPlayer = () => {
-    if (formData.players.length < 17) {
+    if (formData.players.length < MAX_PLAYERS) {
       setFormData({ ...formData, players: [...formData.players, emptyPlayer()] })
     }
   }
 
   const removeLastPlayer = () => {
-    if (formData.players.length > 13) {
+    if (formData.players.length > MIN_PLAYERS) {
       setFormData({ ...formData, players: formData.players.slice(0, -1) })
     }
   }
@@ -533,14 +540,18 @@ const Registration = () => {
       if (!isSuccessResponse(response)) {
         // Backend error
         const errorMessage = extractErrorMessage(response)
+        const errorCode = extractErrorCode(response)
 
-        console.error('Backend error:', errorMessage)
+        console.error('Backend error:', errorCode, errorMessage)
         saveIdempotencyRecord(idempotencyKey, 'failed')
 
-        // Check for church limit error
-        if (errorMessage.includes('Maximum 2 teams')) {
+        // Church already has its team (error_code first; message check kept for older backends)
+        if (
+          errorCode === CHURCH_ALREADY_REGISTERED ||
+          errorMessage.toLowerCase().includes('one allowed entry')
+        ) {
           setChurchLimitError(
-            `${formData.churchName} has reached its team limit (2/2 teams). Please select a different church.`
+            `${formData.churchName} already has its one allowed entry. Please select a different church.`
           )
           // Refresh church availability
           const data = await fetchChurchAvailability()
@@ -556,7 +567,7 @@ const Registration = () => {
       }
 
       // Handle backend success response safely
-      const data = response?.data ?? response ?? null
+      const data = response.data ?? null
 
       if (!data) {
         console.error('Invalid backend response:', response)
@@ -568,7 +579,7 @@ const Registration = () => {
 
       // NEW FLOW: Backend returns pending status (no team_id shown to user)
       // Team ID will be sent via email after admin approval
-      const registrationStatus = data.registration_status || data.status || 'pending'
+      const registrationStatus = data.registration_status || 'pending'
       
       // For backward compatibility, handle if team_id is returned
       const teamId = data.team_id || 'PENDING'
@@ -616,7 +627,7 @@ const Registration = () => {
       const errorMessage = handleAxiosError(error)
       addValidationError('submit', errorMessage)
 
-      saveIdempotencyRecord(currentIdempotencyKey, 'failed')
+      saveIdempotencyRecord(idempotencyKey, 'failed')
     } finally {
       setIsSubmitting(false)
     }
@@ -632,7 +643,7 @@ const Registration = () => {
       teamName: '',
       captain: { name: '', phone: '', whatsapp: '', email: '' },
       viceCaptain: { name: '', phone: '', whatsapp: '', email: '' },
-      players: Array.from({ length: 11 }).map(() => emptyPlayer()),
+      players: Array.from({ length: MIN_PLAYERS }).map(() => emptyPlayer()),
       paymentReceipt: null,
     })
     setAcceptTerms(false)
@@ -849,7 +860,7 @@ const Registration = () => {
                         }
                         optionCapacities={
                           churchAvailability?.reduce((acc, church) => {
-                            acc[church.church_name] = `${church.team_count}/2`
+                            acc[church.church_name] = `${church.team_count}/1`
                             return acc
                           }, {} as Record<string, string>) || {}
                         }
@@ -1121,13 +1132,13 @@ const Registration = () => {
                         playerNumber={index + 1}
                         player={player}
                         onChange={(data) => updatePlayer(index, data)}
-                        onRemove={index === formData.players.length - 1 && formData.players.length > 13 ? removeLastPlayer : undefined}
-                        canRemove={index === formData.players.length - 1 && formData.players.length > 13}
+                        onRemove={index === formData.players.length - 1 && formData.players.length > MIN_PLAYERS ? removeLastPlayer : undefined}
+                        canRemove={index === formData.players.length - 1 && formData.players.length > MIN_PLAYERS}
                       />
                     ))}
                   </div>
 
-                  {formData.players.length < 17 && (
+                  {formData.players.length < MAX_PLAYERS && (
                     <button
                       onClick={addPlayer}
                       disabled={isSubmitting}

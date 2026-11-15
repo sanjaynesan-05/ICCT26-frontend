@@ -90,9 +90,6 @@ export interface FormData {
 export interface Player {
   playerId: string
   name: string
-  role: string
-  aadharFile?: string
-  subscriptionFile?: string
 }
 
 /**
