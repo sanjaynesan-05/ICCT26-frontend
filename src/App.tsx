@@ -16,8 +16,14 @@ import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import TeamDetail from './pages/admin/TeamDetail'
 import ScheduleManager from './pages/admin/ScheduleManager'
+import { warmUpBackend } from './utils/backendWarmup'
 
 function App() {
+  // Wake the (possibly sleeping) backend immediately — runs during the intro loader too
+  useEffect(() => {
+    void warmUpBackend()
+  }, [])
+
   const [loading, setLoading] = useState(() => {
     // Only show loader on initial page load, not on page refresh or navigation
     const hasShownLoader = sessionStorage.getItem('cricketLoaderShown')

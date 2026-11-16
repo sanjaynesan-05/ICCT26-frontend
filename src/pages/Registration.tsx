@@ -15,6 +15,7 @@ import { SearchableSelect } from '../components/SearchableSelect'
 import { fetchChurchAvailability, isChurchLocked, type ChurchAvailability } from '../utils/churchAvailability'
 import SEO from '../components/SEO'
 import { REGISTRATION_CONFIG } from '../data/registration'
+import { warmUpBackend, ensureBackendAwake, useBackendStatus } from '../utils/backendWarmup'
 
 // Import production utilities
 import {
@@ -191,6 +192,7 @@ const Registration = () => {
   const [showProgress, setShowProgress] = useState(false)
   const [currentIdempotencyKey, setCurrentIdempotencyKey] = useState<string>('')
   const [registeredTeamId, setRegisteredTeamId] = useState<string>('')
+  const [registeredStatus, setRegisteredStatus] = useState<string>('pending')
   
   // ========== CHURCH AVAILABILITY STATE ==========
   const [churchAvailability, setChurchAvailability] = useState<ChurchAvailability[] | undefined>()
@@ -209,6 +211,15 @@ const Registration = () => {
     players: Array.from({ length: MIN_PLAYERS }).map(() => emptyPlayer()),
     paymentReceipt: null,
   })
+
+  // ========== BACKEND WARM-UP ==========
+  const backendStatus = useBackendStatus()
+  const [waitingForServer, setWaitingForServer] = useState(false)
+
+  // Re-ping on open: the user may have sat on another page long enough for it to sleep again
+  useEffect(() => {
+    void warmUpBackend()
+  }, [])
 
   // ========== INITIALIZATION ==========
   useEffect(() => {
@@ -234,6 +245,13 @@ const Registration = () => {
 
     loadChurchAvailability()
   }, [])
+
+  // ========== SCROLL TO TOP ON STEP CHANGE ==========
+  // Without this, moving from the long Players step lands the user mid-page
+  // (e.g. straight on the payment QR) instead of the top of the new step.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [currentStep])
 
   // ========== UTILITIES ==========
   const totalSteps = 4
@@ -467,6 +485,20 @@ const Registration = () => {
       return
     }
 
+    // Make sure the backend is awake before sending (it may still be booting)
+    setIsSubmitting(true)
+    setWaitingForServer(true)
+    const serverReady = await ensureBackendAwake()
+    setWaitingForServer(false)
+    if (!serverReady) {
+      setIsSubmitting(false)
+      addValidationError(
+        'submit',
+        'The registration server is not responding right now. Your details are still here — please wait a minute and press Submit again.'
+      )
+      return
+    }
+
     // Generate idempotency key
     const idempotencyKey = generateIdempotencyKey()
     setCurrentIdempotencyKey(idempotencyKey)
@@ -577,14 +609,12 @@ const Registration = () => {
         return
       }
 
-      // NEW FLOW: Backend returns pending status (no team_id shown to user)
-      // Team ID will be sent via email after admin approval
-      const registrationStatus = data.registration_status || 'pending'
-      
-      // For backward compatibility, handle if team_id is returned
-      const teamId = data.team_id || 'PENDING'
-      
+      const raw = data as RegistrationResponse & { teamId?: string; status?: string }
+      const registrationStatus = raw.registration_status || raw.status || 'pending'
+      const teamId = raw.team_id || raw.teamId || 'PENDING'
+
       setRegisteredTeamId(teamId)
+      setRegisteredStatus(registrationStatus)
 
       // Save to localStorage
       saveIdempotencyRecord(idempotencyKey, 'success', teamId)
@@ -741,6 +771,33 @@ const Registration = () => {
           <p className="font-subheading text-xl text-gray-300">
             Complete all steps to register your team
           </p>
+
+          {/* Server connection status (backend may be waking from sleep) */}
+          {backendStatus !== 'awake' && backendStatus !== 'idle' && (
+            <div
+              className={`mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${
+                backendStatus === 'waking'
+                  ? 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/40'
+                  : 'bg-red-500/15 text-red-300 border border-red-500/40'
+              }`}
+              role="status"
+            >
+              {backendStatus === 'waking' ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-yellow-300 animate-pulse" />
+                  Connecting to server… you can keep filling the form
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-red-400" />
+                  Server not reachable yet.
+                  <button type="button" onClick={() => void warmUpBackend()} className="underline hover:text-white">
+                    Retry
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </motion.div>
 
         {/* Progress Bar */}
@@ -1151,7 +1208,7 @@ const Registration = () => {
                 </motion.div>
               )}
 
-              {/* Step 5: Review Information */}
+              {/* Step 4: Review (top) → Payment & Submit (below) */}
               {currentStep === 3 && (
                 <motion.div
                   key="step4"
@@ -1159,69 +1216,108 @@ const Registration = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
+                  className="space-y-10"
                 >
-                  <h3 className="font-heading text-3xl text-primary mb-6">Review Information</h3>
-                  <div className="space-y-6">
-                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                      <p className="font-subheading text-green-700 font-semibold">
-                        ✓ Please review all information before final submission
-                      </p>
+                  {/* ===== SECTION A: REVIEW ===== */}
+                  <section>
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">A</span>
+                      <h3 className="font-heading text-3xl text-primary">Review Your Details</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Check everything carefully. Use <strong>Previous</strong> to make changes. Payment is further below.
+                    </p>
+
+                    {/* Team */}
+                    <div className="rounded-xl border-2 border-primary/20 bg-blue-50 p-5 mb-4">
+                      <p className="text-xs uppercase tracking-wider font-bold text-primary/70 mb-3">Team</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-800">
+                        <div>
+                          <p className="text-xs text-gray-500">Team Name</p>
+                          <p className="font-subheading font-bold text-lg break-words">{formData.teamName || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Church</p>
+                          <p className="font-subheading font-semibold break-words">{formData.churchName || 'N/A'}</p>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="space-y-3 text-gray-700">
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Church Name:</span>
-                        <span>{formData.churchName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Team Name:</span>
-                        <span>{formData.teamName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Captain:</span>
-                        <span>{formData.captain.name || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Captain Phone:</span>
-                        <span>{formData.captain.phone || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Captain Email:</span>
-                        <span>{formData.captain.email || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Captain WhatsApp:</span>
-                        <span>{formData.captain.whatsapp || 'N/A'}</span>
-                      </div>
+                    {/* Captain & Vice-Captain */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      {[
+                        { label: 'Captain', data: formData.captain, tone: 'bg-blue-50 border-blue-200' },
+                        { label: 'Vice-Captain', data: formData.viceCaptain, tone: 'bg-green-50 border-green-200' },
+                      ].map(({ label, data, tone }) => (
+                        <div key={label} className={`rounded-xl border-2 p-5 ${tone}`}>
+                          <p className="text-xs uppercase tracking-wider font-bold text-gray-500 mb-2">{label}</p>
+                          <p className="font-subheading font-bold text-lg text-gray-900 mb-3 break-words">{data.name || 'N/A'}</p>
+                          <dl className="space-y-1 text-sm text-gray-700">
+                            <div className="flex gap-2"><dt className="text-gray-500 w-20 shrink-0">Phone</dt><dd className="break-all">{data.phone || 'N/A'}</dd></div>
+                            <div className="flex gap-2"><dt className="text-gray-500 w-20 shrink-0">WhatsApp</dt><dd className="break-all">{data.whatsapp || 'N/A'}</dd></div>
+                            <div className="flex gap-2"><dt className="text-gray-500 w-20 shrink-0">Email</dt><dd className="break-all">{data.email || 'N/A'}</dd></div>
+                          </dl>
+                        </div>
+                      ))}
+                    </div>
 
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Vice-Captain:</span>
-                        <span>{formData.viceCaptain.name || 'N/A'}</span>
+                    {/* Players */}
+                    <div className="rounded-xl border-2 border-gray-200 bg-white p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs uppercase tracking-wider font-bold text-gray-500">Players</p>
+                        <span className="text-xs font-bold bg-primary text-white px-3 py-1 rounded-full">
+                          {formData.players.length} total
+                        </span>
                       </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Vice-Captain Phone:</span>
-                        <span>{formData.viceCaptain.phone || 'N/A'}</span>
+                      <ol className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {formData.players.map((player, index) => (
+                          <li key={index} className="flex items-center gap-3 rounded-lg bg-gray-50 px-3 py-2">
+                            <span className="w-7 h-7 shrink-0 rounded-full bg-accent text-primary text-xs font-bold flex items-center justify-center">
+                              {index + 1}
+                            </span>
+                            <span className="text-gray-800 font-medium break-words">{player.name || 'N/A'}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </section>
+
+                  {/* ===== SECTION B: PAYMENT & SUBMIT ===== */}
+                  <section className="pt-8 border-t-2 border-dashed border-gray-300">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">B</span>
+                      <h3 className="font-heading text-3xl text-primary">Payment & Submit</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Pay the registration fee, upload the receipt, then press <strong>Submit</strong>.
+                    </p>
+
+                    <div className="bg-blue-50 border-l-4 border-primary p-4 rounded mb-6 flex items-center justify-between gap-4">
+                      <p className="font-subheading text-primary font-semibold">Registration Fee</p>
+                      <p className="text-green-600 font-bold text-xl">₹2,027</p>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center mb-6">
+                      <div className="bg-white p-4 rounded-xl shadow-lg mb-3 border-2 border-primary">
+                        <img
+                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=9944257713@kotak811%26pn=ICCT27%26am=2027%26cu=INR%26tn=ICCT%2727%20Team%20Registration"
+                          alt="Payment QR Code"
+                          className="w-56 h-56 md:w-64 md:h-64 object-cover rounded-lg"
+                        />
                       </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Vice-Captain Email:</span>
-                        <span>{formData.viceCaptain.email || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Vice-Captain WhatsApp:</span>
-                        <span>{formData.viceCaptain.whatsapp || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Total Players:</span>
-                        <span>{formData.players.length}</span>
-                      </div>
-                      <div className="py-2 border-b">
-                        <span className="font-subheading font-semibold">Players:</span>
-                        <p className="mt-1 text-sm">{formData.players.map((player) => player.name || 'N/A').join(', ')}</p>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Registration Fee:</span>
-                        <span className="text-green-600 font-bold">₹2,027</span>
-                      </div>
+                      <p className="text-center font-subheading text-gray-600">Scan with any UPI app</p>
+                    </div>
+
+                    <div className="mb-6">
+                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
+                        Upload Payment Receipt * (Required)
+                      </label>
+                      <FileUpload
+                        file={formData.paymentReceipt}
+                        onFileChange={handleFileChange}
+                        accept=".jpg,.jpeg,.png,.pdf"
+                        placeholder="Upload Receipt"
+                      />
                     </div>
 
                     <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
@@ -1230,55 +1326,7 @@ const Registration = () => {
                         rules and regulations. All information provided must be accurate.
                       </p>
                     </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 6: Payment Upload */}
-              {currentStep === 3 && (
-                <motion.div
-                  key="step5"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">Payment Upload</h3>
-                  <div className="space-y-6">
-                    <div className="bg-blue-50 border-l-4 border-primary p-4 rounded">
-                      <p className="font-subheading text-primary font-semibold mb-2">
-                        Registration Fee: ₹2027 per team
-                      </p>
-                      <p className="text-sm text-gray-700">Scan the QR code below to make payment</p>
-                    </div>
-
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="bg-white p-4 rounded-xl shadow-lg mb-4 border-2 border-primary">
-                        <img
-                          src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=9944257713@kotak811%26pn=ICCT27%26am=2027%26cu=INR%26tn=ICCT%2727%20Team%20Registration"
-                          alt="Payment QR Code"
-                          className="w-64 h-64 object-cover rounded-lg"
-                        />
-                      </div>
-                      <p className="text-center font-subheading text-gray-600 mb-4">
-                        Scan with any UPI app
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Upload Payment Receipt * (Required)
-                      </label>
-                      <div>
-                        <FileUpload
-                          file={formData.paymentReceipt}
-                          onFileChange={handleFileChange}
-                          accept=".jpg,.jpeg,.png,.pdf"
-                          placeholder="Upload Receipt"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  </section>
                 </motion.div>
               )}
 
@@ -1352,7 +1400,7 @@ const Registration = () => {
                         d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                       ></path>
                     </svg>
-                    Submitting...
+                    {waitingForServer ? 'Connecting to server...' : 'Submitting...'}
                   </span>
                 ) : (
                   <>
@@ -1380,7 +1428,7 @@ const Registration = () => {
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: 'spring', duration: 0.6 }}
-              className="glass-card rounded-2xl p-8 max-w-lg w-full text-center relative overflow-hidden"
+              className="glass-card rounded-2xl p-6 md:p-8 max-w-lg w-full text-center relative overflow-x-hidden overflow-y-auto max-h-[90vh]"
             >
               {/* Animated background elements */}
               <motion.div
@@ -1443,27 +1491,57 @@ const Registration = () => {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="font-subheading text-lg text-gray-700 mb-8"
+                className="font-subheading text-lg text-gray-700 mb-6"
               >
                 🎉 Your registration has been received! 🏏
               </motion.p>
 
-              {/* Pending Status Notice */}
+              {/* Team ID */}
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 rounded-xl p-6 mb-6 border-2 border-blue-300 shadow-lg"
+                transition={{ delay: 0.55 }}
+                className="relative rounded-xl p-5 mb-4 bg-primary text-white shadow-lg"
               >
-                <div className="flex items-center justify-center gap-3 mb-3">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                  <p className="text-sm font-bold text-blue-800 uppercase tracking-wider">Status: Pending Admin Approval</p>
-                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                <p className="text-xs uppercase tracking-widest text-white/70 mb-1">Team ID</p>
+                {registeredTeamId && registeredTeamId !== 'PENDING' ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <p className="font-heading text-4xl tracking-wider text-accent break-all">{registeredTeamId}</p>
+                    <button
+                      type="button"
+                      onClick={() => { void navigator.clipboard?.writeText(registeredTeamId) }}
+                      className="text-xs px-2 py-1 rounded bg-white/15 hover:bg-white/25"
+                      title="Copy Team ID"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                ) : (
+                  <p className="font-subheading text-lg text-accent">Will be emailed after approval</p>
+                )}
+                <p className="text-xs text-white/70 mt-2">Save this ID for all future communication.</p>
+              </motion.div>
+
+              {/* Registration summary */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="relative text-left rounded-xl border border-gray-200 bg-white/80 p-4 mb-4 text-sm text-gray-700 space-y-2"
+              >
+                <div className="flex justify-between gap-4"><span className="text-gray-500">Team</span><span className="font-semibold text-right break-words">{formData.teamName}</span></div>
+                <div className="flex justify-between gap-4"><span className="text-gray-500">Church</span><span className="font-semibold text-right break-words">{formData.churchName}</span></div>
+                <div className="flex justify-between gap-4"><span className="text-gray-500">Captain</span><span className="font-semibold text-right break-words">{formData.captain.name}</span></div>
+                <div className="flex justify-between gap-4"><span className="text-gray-500">Vice-Captain</span><span className="font-semibold text-right break-words">{formData.viceCaptain.name}</span></div>
+                <div className="flex justify-between gap-4"><span className="text-gray-500">Players</span><span className="font-semibold">{formData.players.length}</span></div>
+                <div className="flex justify-between gap-4 items-center">
+                  <span className="text-gray-500">Status</span>
+                  <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full ${
+                    registeredStatus === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    {registeredStatus === 'confirmed' ? 'Confirmed' : 'Pending Admin Approval'}
+                  </span>
                 </div>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  Your registration is currently under review by our admin team.
-                  You will receive a confirmation email with your <strong>Team ID</strong> once approved.
-                </p>
               </motion.div>
 
               {/* Email Confirmation Notice */}

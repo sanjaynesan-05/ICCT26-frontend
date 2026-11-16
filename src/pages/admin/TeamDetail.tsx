@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Download } from 'lucide-react'
-import * as XLSX from 'xlsx'
 import { apiService } from '../../services/api'
+import { exportTeamToExcel } from '../../utils/teamExcel'
 import {
   type AdminTeam,
   STATUS_BADGE_CLASSES,
@@ -105,53 +105,9 @@ const TeamDetail = () => {
     }
   }
 
-  // Export team data to Excel
+  // Export team data to Excel (same per-team sheet as the dashboard's Export All)
   const exportToExcel = () => {
-    if (!team) return
-
-    const teamInfo = [
-      ["ICCT'27 Tournament - Team Report"],
-      [''],
-      ['Team Information'],
-      ['Team ID', team.teamId],
-      ['Team Name', team.teamName],
-      ['Church Name', team.churchName],
-      ['Registration Status', team.registrationStatus.toUpperCase()],
-      ['Registration Date', formatRegistrationDate(team.registrationDate)],
-      ['Payment Receipt', team.paymentReceipt || 'Not uploaded'],
-      [''],
-      ['Captain Information'],
-      ['Name', team.captainName],
-      ['Phone', team.captainPhone],
-      ['WhatsApp', team.captainWhatsapp],
-      ['Email', team.captainEmail],
-      [''],
-      ['Vice Captain Information'],
-      ['Name', team.viceCaptainName],
-      ['Phone', team.viceCaptainPhone],
-      ['WhatsApp', team.viceCaptainWhatsapp],
-      ['Email', team.viceCaptainEmail],
-    ]
-
-    const playersSheet = [
-      [`Players Squad (${team.players.length} players)`],
-      [''],
-      ['#', 'Player ID', 'Name'],
-      ...team.players.map((player, index) => [index + 1, player.playerId, player.name]),
-    ]
-
-    const wb = XLSX.utils.book_new()
-
-    const ws1 = XLSX.utils.aoa_to_sheet(teamInfo)
-    ws1['!cols'] = [{ wch: 25 }, { wch: 60 }]
-    XLSX.utils.book_append_sheet(wb, ws1, 'Team Information')
-
-    const ws2 = XLSX.utils.aoa_to_sheet(playersSheet)
-    ws2['!cols'] = [{ wch: 5 }, { wch: 18 }, { wch: 35 }]
-    XLSX.utils.book_append_sheet(wb, ws2, 'Players')
-
-    const fileName = `ICCT27_${team.teamName.replace(/\s+/g, '_')}_${team.teamId}_${new Date().toISOString().split('T')[0]}.xlsx`
-    XLSX.writeFile(wb, fileName)
+    if (team) exportTeamToExcel(team)
   }
 
   if (loading) {

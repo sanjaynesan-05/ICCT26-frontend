@@ -40,8 +40,8 @@ export const TOURNAMENT_HIGHLIGHTS = [
   },
   {
     icon: Calendar,
-    title: 'Start Date',
-    value: 'TBA',
+    title: 'Dates',
+    value: '23/01/2026 - 24/01/2026',
     color: 'text-green-400',
   },
   {

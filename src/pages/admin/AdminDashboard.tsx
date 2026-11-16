@@ -13,6 +13,8 @@ import {
   normalizeTeam,
   normalizeTeamResponse,
 } from '../../utils/adminTeams'
+import { exportTeamsToExcel } from '../../utils/teamExcel'
+import { Download } from 'lucide-react'
 
 type StatusTab = RegistrationStatus | 'all'
 
@@ -25,6 +27,7 @@ const AdminDashboard = () => {
   // New registrations arrive as "pending", so open on the review queue
   const [activeTab, setActiveTab] = useState<StatusTab>('pending')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
   const navigate = useNavigate()
   const { logout } = useAdmin()
 
@@ -201,6 +204,37 @@ const AdminDashboard = () => {
     }
   }
 
+  // Export the teams in the current tab (+ search) — one sheet per team
+  const handleExportAll = async () => {
+    if (displayedTeams.length === 0) {
+      alert('No teams to export in this view.')
+      return
+    }
+    setExporting(true)
+    try {
+      // The list endpoint may carry only a player count; load full squads where missing
+      const teams = await Promise.all(
+        displayedTeams.map(async (team) => {
+          if (team.players.length > 0) return team
+          try {
+            return normalizeTeamResponse(await apiService.getAdminTeamById(team.teamId)) ?? team
+          } catch (err) {
+            console.warn(`Failed to load players for ${team.teamId}:`, err)
+            return team
+          }
+        })
+      )
+      const missing = teams.filter((t) => t.players.length === 0).map((t) => t.teamName)
+      if (missing.length && !confirm(`Players could not be loaded for: ${missing.join(', ')}.\nExport anyway?`)) {
+        return
+      }
+      const label = activeTab === 'all' ? 'All_Teams' : `${activeTab}_Teams`
+      exportTeamsToExcel(teams, label)
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const handleLogout = () => {
     logout()
     navigate('/admin/login')
@@ -316,6 +350,19 @@ const AdminDashboard = () => {
             />
             <button onClick={fetchAllTeams} className="btn-gold px-6 sm:px-8 py-3 rounded-lg font-body text-sm sm:text-base whitespace-nowrap">
               Refresh
+            </button>
+            <button
+              onClick={handleExportAll}
+              disabled={exporting || loading || displayedTeams.length === 0}
+              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-body font-semibold text-sm sm:text-base whitespace-nowrap transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Download one Excel file with a separate sheet for each team in this view"
+            >
+              {exporting ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              {exporting ? 'Exporting...' : `Export All Teams (${displayedTeams.length})`}
             </button>
           </div>
         </motion.div>

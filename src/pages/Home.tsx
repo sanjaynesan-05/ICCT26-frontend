@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { apiService } from '../services/api'
 import Countdown from '../components/Countdown'
 import RegistrationCountdown from '../components/RegistrationCountdown'
 import ImageCarousel from '../components/ImageCarousel'
@@ -11,6 +13,36 @@ import SEO from '../components/SEO'
 const Home = () => {
   // Set this to true to show the Trophy Sponsor memorial section
   const SHOW_TROPHY_SPONSOR = false
+
+  // Live "Teams Registered" count from the backend (null = still loading / unavailable)
+  const [teamsRegistered, setTeamsRegistered] = useState<number | null>(null)
+  const [teamsCountFailed, setTeamsCountFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    apiService
+      .getAllTeams()
+      .then((res: { total_teams?: number; teams?: unknown[]; data?: unknown[] }) => {
+        const count =
+          typeof res?.total_teams === 'number'
+            ? res.total_teams
+            : Array.isArray(res?.teams)
+              ? res.teams.length
+              : Array.isArray(res?.data)
+                ? res.data.length
+                : null
+        if (cancelled) return
+        if (count === null) setTeamsCountFailed(true)
+        else setTeamsRegistered(count)
+      })
+      .catch((err) => {
+        console.warn('Could not load registered team count:', err)
+        if (!cancelled) setTeamsCountFailed(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <motion.div
@@ -255,7 +287,14 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {TOURNAMENT_HIGHLIGHTS.map((highlight, index) => {
               const Icon = highlight.icon;
-              const displayValue = highlight.value;
+              const displayValue =
+                highlight.title === 'Teams Registered'
+                  ? teamsRegistered !== null
+                    ? String(teamsRegistered)
+                    : teamsCountFailed
+                      ? highlight.value
+                      : '…'
+                  : highlight.value;
               
               return (
                 <motion.div
