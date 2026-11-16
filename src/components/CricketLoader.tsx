@@ -1,636 +1,615 @@
-import { useEffect, useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Zap } from "lucide-react";
+/**
+ * ICCT'27 cinematic intro — "Matchday" theme, ~6s, skippable, once per session.
+ *
+ *   0.00s  OPEN     letterbox, floodlights bang on one by one, "presents" card
+ *   0.70s  BALL     fireball delivery from deep in the stadium, camera tremor
+ *   1.90s  IMPACT   white-out, double shockwave, sparks, hard shake, broadcast slashes
+ *   2.25s  MONTAGE  THE SPIRIT · THE SKILL · THE GLORY — full-screen trailer cuts
+ *   3.55s  TITLE    3D ICCT'27 slams in from blur, shockwave, lens flare, light sweep
+ *   5.45s  EXIT     letterbox retracts, fly-through zoom → site
+ *
+ * Always on: film grain, vignette, rising embers, perspective pitch grid.
+ * "Reduce motion" users get a calm 0.9s logo fade.
+ */
+
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 
 interface CricketLoaderProps {
-  onComplete?: () => void;
+  onComplete?: () => void
 }
 
-export default function CricketLoader({ onComplete }: CricketLoaderProps) {
-  const [stage, setStage] = useState(0); // 0: Welcome/Progress, 1: Countdown, 2: Get Ready
-  const [countdownNum, setCountdownNum] = useState(3);
-  const [progress, setProgress] = useState(0);
-  const [showFlash, setShowFlash] = useState(false);
+type Stage = 'open' | 'ball' | 'impact' | 'montage' | 'title' | 'exit'
 
-  // Stage 0: Progress animation before countdown
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setStage(1); // Move to countdown stage
-          return 100;
-        }
-        return prev + 1;
-      });
-    }, 45); // ~4.5 seconds to complete
+const T = { ball: 700, impact: 1900, montage: 2250, title: 3550, exit: 5450, done: 6000 }
+const T_REDUCED = { exit: 700, done: 900 }
+const MONTAGE = [
+  { word: 'THE SPIRIT', panel: 'bg-gold', text: 'text-ink-900' },
+  { word: 'THE SKILL', panel: 'bg-flame', text: 'text-white' },
+  { word: 'THE GLORY', panel: 'bg-ink-950', text: 'text-gold' },
+]
+const CUT_MS = (T.title - T.montage) / MONTAGE.length
 
-    return () => clearInterval(interval);
-  }, []);
+// 3D extrusions — stacked shadows darken with depth
+const GOLD_EXTRUDE = [
+  '0 1px 0 #F2B500', '0 2px 0 #E5A800', '0 3px 0 #D69C00', '0 4px 0 #C68F00', '0 5px 0 #B58200',
+  '0 6px 0 #A37400', '0 7px 0 #8F6600', '0 8px 0 #7A5700', '0 9px 0 #664800', '0 10px 0 #523A00',
+  '0 24px 34px rgba(0,0,0,0.6)', '0 0 80px rgba(255,194,26,0.35)',
+].join(', ')
+const WHITE_EXTRUDE = [
+  '0 1px 0 #D9DEE8', '0 2px 0 #C3CAD8', '0 3px 0 #AEB6C7', '0 4px 0 #98A2B6', '0 5px 0 #838EA4',
+  '0 6px 0 #6F7A92', '0 7px 0 #5B6680', '0 20px 30px rgba(0,0,0,0.6)',
+].join(', ')
 
-  // Stage 1: Cricket Countdown (4.5 seconds total) - 3 to 1 with cricket themes
-  // 1.5 seconds per number: 1s countdown + 0.5s icon display
-  useEffect(() => {
-    if (stage === 1) {
-      setCountdownNum(3);
-      const interval = setInterval(() => {
-        setCountdownNum((prev) => {
-          if (prev === 1) {
-            setTimeout(() => setStage(2), 100);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1500);
-      return () => clearInterval(interval);
-    }
-  }, [stage]);
+const GRAIN =
+  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.9'/></svg>\")"
 
-  // Stage 2: GET READY (final 1 second)
-  useEffect(() => {
-    if (stage === 2) {
-      const timer = setTimeout(() => {
-        setShowFlash(true);
-        if (onComplete) {
-          setTimeout(() => onComplete(), 500);
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [stage, onComplete]);
+const SHAKE_HARD = { x: [0, -16, 14, -11, 9, -6, 4, -2, 0], y: [0, 10, -12, 8, -6, 4, -3, 1, 0] }
+const SHAKE_SOFT = { x: [0, -3, 3, -2, 2, 0], y: [0, 2, -2, 1, -1, 0] }
 
-  // Generate floating sparks with stable keys and random properties
-  const sparks = useMemo(
+/* ================================================================== */
+/* Atmosphere                                                          */
+/* ================================================================== */
+
+const PitchGrid = () => (
+  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] overflow-hidden [perspective:420px]">
+    <div
+      className="absolute -inset-x-1/2 bottom-[-20%] h-[160%] origin-bottom"
+      style={{
+        transform: 'rotateX(72deg)',
+        backgroundImage:
+          'linear-gradient(rgba(255,194,26,0.4) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(255,194,26,0.2) 1.5px, transparent 1.5px)',
+        backgroundSize: '64px 64px',
+        animation: 'icct-grid 0.45s linear infinite',
+        maskImage: 'linear-gradient(to top, black 10%, transparent 85%)',
+        WebkitMaskImage: 'linear-gradient(to top, black 10%, transparent 85%)',
+      }}
+    />
+    <div
+      className="absolute bottom-[-20%] left-1/2 h-[160%] w-28 origin-bottom"
+      style={{
+        transform: 'translateX(-50%) rotateX(72deg)',
+        background: 'linear-gradient(to top, rgba(31,164,99,0.5), rgba(31,164,99,0) 80%)',
+      }}
+    />
+  </div>
+)
+
+/** Four floodlight towers that bang on one after another, then sweep. */
+const Floodlights = () => {
+  const towers = [
+    { left: '6%', delay: 0.05, side: -1 },
+    { left: '28%', delay: 0.2, side: -1 },
+    { left: '72%', delay: 0.35, side: 1 },
+    { left: '94%', delay: 0.5, side: 1 },
+  ]
+  return (
+    <>
+      {towers.map((t, i) => (
+        // Static wrapper does the centring; the inner beam only rotates
+        <div
+          key={i}
+          className="pointer-events-none absolute top-[-25%] h-[135%] w-[34vw] min-w-[180px] -translate-x-1/2"
+          style={{ left: t.left }}
+        >
+          <motion.div
+            className="h-full w-full mix-blend-screen blur-2xl"
+            style={{
+              transformOrigin: 'top center',
+              background: 'linear-gradient(to bottom, rgba(255,244,214,0.7), rgba(255,244,214,0) 72%)',
+              clipPath: 'polygon(42% 0, 58% 0, 100% 100%, 0 100%)',
+            }}
+            initial={{ opacity: 0, rotate: t.side * 22 }}
+            animate={{ opacity: [0, 1, 0.75, 0.55], rotate: [t.side * 22, t.side * 22, t.side * -8, t.side * 4] }}
+            transition={{ duration: 3.2, delay: t.delay, times: [0, 0.04, 0.45, 1], ease: 'easeInOut' }}
+          />
+        </div>
+      ))}
+      {towers.map((t, i) => (
+        <motion.span
+          key={`lamp-${i}`}
+          className="pointer-events-none absolute top-5 h-2.5 w-14 -translate-x-1/2 rounded-full bg-white shadow-[0_0_50px_16px_rgba(255,244,214,0.8)]"
+          style={{ left: t.left }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0.3, 1] }}
+          transition={{ duration: 0.35, delay: t.delay, times: [0, 0.2, 0.5, 1] }}
+        />
+      ))}
+    </>
+  )
+}
+
+/** Glowing embers drifting upward for the whole intro. */
+const Embers = () => {
+  const embers = useMemo(
     () =>
-      Array.from({ length: 12 }, (_, i) => ({
-        key: `spark-${i}`,
-        x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920),
-        y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1080),
-        delay: Math.random() * 3,
-        duration: 3 + Math.random() * 2,
+      Array.from({ length: 34 }, (_, i) => ({
+        left: Math.random() * 100,
+        size: 2 + Math.random() * 4,
+        duration: 2.6 + Math.random() * 2.4,
+        delay: Math.random() * 2.5,
+        drift: (Math.random() - 0.5) * 120,
+        gold: i % 3 !== 0,
       })),
     []
-  );
+  )
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {embers.map((e, i) => (
+        <motion.span
+          key={i}
+          className={`absolute bottom-[-10px] rounded-full ${e.gold ? 'bg-gold' : 'bg-flame-light'}`}
+          style={{
+            left: `${e.left}%`,
+            width: e.size,
+            height: e.size,
+            boxShadow: `0 0 ${e.size * 3}px ${e.size}px ${e.gold ? 'rgba(255,194,26,0.6)' : 'rgba(255,90,102,0.6)'}`,
+          }}
+          initial={{ y: 0, x: 0, opacity: 0 }}
+          animate={{ y: '-110vh', x: e.drift, opacity: [0, 1, 1, 0] }}
+          transition={{ duration: e.duration, delay: e.delay, repeat: Infinity, ease: 'easeOut', times: [0, 0.1, 0.7, 1] }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/** Cinematic letterbox bars — retract on exit. */
+const Letterbox = ({ open }: { open: boolean }) => (
+  <>
+    {(['top', 'bottom'] as const).map((side) => (
+      <motion.div
+        key={side}
+        className={`pointer-events-none absolute inset-x-0 z-30 h-[9vh] bg-black ${side === 'top' ? 'top-0' : 'bottom-0'}`}
+        initial={{ y: 0 }}
+        animate={{ y: open ? (side === 'top' ? '-100%' : '100%') : 0 }}
+        transition={{ duration: 0.45, ease: 'easeInOut' }}
+      />
+    ))}
+  </>
+)
+
+/* ================================================================== */
+/* Shots                                                               */
+/* ================================================================== */
+
+/** OPEN — the "presents" card. */
+const PresentsCard = () => (
+  <motion.div
+    className="absolute inset-0 z-10 flex items-center justify-center px-6 text-center"
+    exit={{ opacity: 0, scale: 1.08, filter: 'blur(6px)', transition: { duration: 0.25 } }}
+  >
+    <div>
+      <motion.p
+        className="font-display text-2xl text-white md:text-4xl"
+        initial={{ opacity: 0, letterSpacing: '0.6em', filter: 'blur(8px)' }}
+        animate={{ opacity: 1, letterSpacing: '0.18em', filter: 'blur(0px)' }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
+        CSI ST. PETER'S CHURCH
+      </motion.p>
+      <motion.p
+        className="mt-2 text-[11px] font-bold uppercase tracking-[0.4em] text-gold md:text-xs"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.3 }}
+      >
+        Youth Fellowship · presents
+      </motion.p>
+    </div>
+  </motion.div>
+)
+
+/** BALL — fireball delivery from deep in the stadium. */
+const FIREBALL_PATH = {
+  initial: { x: '45vw', y: '-38vh', scale: 0.04, opacity: 0 },
+  animate: { x: 0, y: 0, scale: 1, opacity: 1 },
+}
+
+const Ball = () => (
+  <motion.div
+    className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+    exit={{ opacity: 0, transition: { duration: 0.12 } }}
+  >
+    {/* Fire trail: copies following the same path a beat behind */}
+    {[5, 4, 3, 2, 1].map((n) => (
+      <motion.div
+        key={n}
+        className="absolute h-28 w-28 rounded-full blur-xl md:h-36 md:w-36"
+        style={{
+          background: n % 2 ? 'radial-gradient(circle, #FFC21A 0%, #E63946 60%, transparent 75%)' : 'radial-gradient(circle, #FF5A66 0%, #C1121F 60%, transparent 75%)',
+          opacity: 0.85 - n * 0.13,
+        }}
+        initial={FIREBALL_PATH.initial}
+        animate={{ ...FIREBALL_PATH.animate, scale: 1 - n * 0.08, opacity: 0.85 - n * 0.13 }}
+        transition={{ duration: 1.15, delay: n * 0.045, ease: [0.4, 0.05, 0.3, 1] }}
+      />
+    ))}
+
+    <motion.div
+      className="relative h-28 w-28 md:h-36 md:w-36"
+      initial={FIREBALL_PATH.initial}
+      animate={FIREBALL_PATH.animate}
+      transition={{ duration: 1.15, ease: [0.4, 0.05, 0.3, 1] }}
+    >
+      {/* heat halo */}
+      <motion.div
+        className="absolute -inset-6 rounded-full bg-flame/50 blur-2xl"
+        animate={{ scale: [1, 1.25, 1], opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 0.3, repeat: Infinity }}
+      />
+      <div
+        className="relative h-full w-full overflow-hidden rounded-full"
+        style={{
+          background: 'radial-gradient(circle at 32% 28%, #FF9AA0 0%, #E63946 22%, #B3101C 55%, #4A040C 100%)',
+          boxShadow:
+            'inset -12px -16px 28px rgba(0,0,0,0.6), inset 6px 8px 16px rgba(255,255,255,0.2), 0 0 60px 10px rgba(230,57,70,0.55)',
+        }}
+      >
+        <motion.div
+          className="absolute inset-y-[-4%] left-1/2 w-[34%] -translate-x-1/2"
+          animate={{ scaleX: [1, -1, 1] }}
+          transition={{ duration: 0.3, repeat: Infinity, ease: 'linear' }}
+        >
+          <div className="h-full w-full rounded-[50%] border-x-[3px] border-dashed border-white/90" />
+        </motion.div>
+        <span className="absolute left-[20%] top-[14%] h-[22%] w-[30%] rotate-[-25deg] rounded-full bg-white/50 blur-[3px]" />
+      </div>
+    </motion.div>
+  </motion.div>
+)
+
+/** Shockwave rings + sparks, anchored at screen centre. */
+const Shockwave = ({ sparks = 22, rings = 2 }: { sparks?: number; rings?: number }) => {
+  const pts = useMemo(
+    () =>
+      Array.from({ length: sparks }, (_, i) => {
+        const a = (i / sparks) * Math.PI * 2 + Math.random() * 0.2
+        const d = 180 + Math.random() * 220
+        return { x: Math.cos(a) * d, y: Math.sin(a) * d, gold: i % 2 === 0, len: 16 + Math.random() * 22 }
+      }),
+    [sparks]
+  )
+  return (
+    <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 h-0 w-0">
+      {Array.from({ length: rings }, (_, r) => (
+        <motion.div
+          key={r}
+          className={`absolute -left-24 -top-24 h-48 w-48 rounded-full ${r === 0 ? 'border-[6px] border-gold' : 'border-2 border-white'}`}
+          initial={{ scale: 0.2, opacity: 1 }}
+          animate={{ scale: r === 0 ? 7 : 10, opacity: 0 }}
+          transition={{ duration: 0.8, delay: r * 0.08, ease: 'easeOut' }}
+        />
+      ))}
+      {pts.map((s, i) => (
+        <motion.span
+          key={i}
+          className={`absolute -top-[3px] h-1.5 rounded-full ${s.gold ? 'bg-gold' : 'bg-flame-light'}`}
+          style={{
+            width: s.len,
+            left: -s.len / 2,
+            rotate: `${(Math.atan2(s.y, s.x) * 180) / Math.PI}deg`,
+            boxShadow: s.gold ? '0 0 12px rgba(255,194,26,0.9)' : '0 0 12px rgba(255,90,102,0.9)',
+          }}
+          initial={{ x: 0, y: 0, opacity: 1 }}
+          animate={{ x: s.x, y: s.y, opacity: 0, scale: 0.3 }}
+          transition={{ duration: 0.75, ease: 'easeOut' }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/** Landing shockwave for the title slam — mounts when the logo hits (~0.42s in). */
+const TitleShockwave = () => {
+  const [hit, setHit] = useState(false)
+  useEffect(() => {
+    const id = window.setTimeout(() => setHit(true), 420)
+    return () => clearTimeout(id)
+  }, [])
+  return hit ? <Shockwave sparks={16} rings={2} /> : null
+}
+
+/** IMPACT — white-out, shockwave, slashes. */
+const Impact = () => (
+  <>
+    <motion.div
+      className="pointer-events-none absolute inset-0 z-20 bg-white"
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    />
+    <Shockwave />
+    <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+      {[
+        { color: 'bg-gold', delay: 0, top: '24%', h: 'h-20 md:h-28' },
+        { color: 'bg-flame', delay: 0.04, top: '44%', h: 'h-12 md:h-16' },
+        { color: 'bg-white', delay: 0.08, top: '60%', h: 'h-3 md:h-4' },
+        { color: 'bg-gold', delay: 0.11, top: '68%', h: 'h-6 md:h-8' },
+      ].map((b, i) => (
+        <motion.div
+          key={i}
+          className={`absolute -left-1/4 w-[150%] ${b.h} ${b.color}`}
+          style={{ top: b.top, rotate: '-12deg' }}
+          initial={{ x: '-110%' }}
+          animate={{ x: ['-110%', '0%', '110%'] }}
+          transition={{ duration: 0.35, delay: b.delay, times: [0, 0.45, 1], ease: 'easeInOut' }}
+        />
+      ))}
+    </div>
+  </>
+)
+
+/** MONTAGE — full-screen trailer cuts: THE SPIRIT · THE SKILL · THE GLORY. */
+const Montage = () => {
+  const [cut, setCut] = useState(0)
+  useEffect(() => {
+    const ids = MONTAGE.slice(1).map((_, i) => window.setTimeout(() => setCut(i + 1), CUT_MS * (i + 1)))
+    return () => ids.forEach(clearTimeout)
+  }, [])
+  const shot = MONTAGE[cut]
 
   return (
-    <AnimatePresence mode="wait">
-      {(!showFlash) ? (
+    <div className="absolute inset-0 z-20 overflow-hidden">
+      <AnimatePresence mode="popLayout" initial={false}>
         <motion.div
-          key="loader-content"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#001C40] via-[#002B5C] to-[#0D1B2A] overflow-hidden z-50"
+          key={cut}
+          className={`absolute inset-0 flex items-center justify-center ${shot.panel}`}
+          initial={{ clipPath: 'polygon(0 0, 0 0, -20% 100%, -20% 100%)' }}
+          animate={{ clipPath: 'polygon(0 0, 120% 0, 100% 100%, -20% 100%)' }}
+          exit={{ opacity: 1, transition: { duration: 0.16 } }}
+          transition={{ duration: 0.16, ease: 'easeOut' }}
         >
-          {/* Animated stadium backdrop */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#002B5C]/30 via-[#001C40]/50 to-[#0D1B2A] opacity-60" />
-          
-          {/* Floodlight effects */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-0 left-1/4 w-32 h-32 bg-[#FFCC29] rounded-full blur-[120px]"
+          {/* speed lines */}
+          <div
+            className="absolute inset-0 opacity-20"
+            style={{ backgroundImage: 'repeating-linear-gradient(-12deg, transparent 0 22px, rgba(255,255,255,0.35) 22px 24px)' }}
           />
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.4, 0.7, 0.4] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="absolute top-0 right-1/4 w-32 h-32 bg-[#FFD65C] rounded-full blur-[120px]"
-          />
+          <motion.h2
+            className={`relative px-4 text-center font-display leading-none ${shot.text} text-[4.2rem] xs:text-[5rem] sm:text-[8rem] md:text-[11rem]`}
+            style={{ textShadow: shot.panel === 'bg-ink-950' ? GOLD_EXTRUDE : '0 10px 30px rgba(0,0,0,0.35)' }}
+            initial={{ scale: 1.9, opacity: 0, filter: 'blur(14px)', letterSpacing: '0.2em' }}
+            animate={{ scale: [1.9, 0.96, 1.04], opacity: 1, filter: 'blur(0px)', letterSpacing: '0.04em' }}
+            transition={{ duration: CUT_MS / 1000, times: [0, 0.35, 1], ease: 'easeOut' }}
+          >
+            {shot.word}
+          </motion.h2>
+        </motion.div>
+      </AnimatePresence>
+      {/* cut flash */}
+      <motion.div
+        key={`flash-${cut}`}
+        className="pointer-events-none absolute inset-0 bg-white"
+        initial={{ opacity: 0.6 }}
+        animate={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+      />
+    </div>
+  )
+}
 
-          {/* Floating golden sparks */}
-          {sparks.map((spark) => (
-            <motion.div
-              key={spark.key}
-              initial={{
-                x: spark.x,
-                y: spark.y,
-                opacity: 0
-              }}
-              animate={{
-                y: spark.y - 200,
-                opacity: [0, 1, 1, 0],
-              }}
-              transition={{
-                duration: spark.duration,
-                repeat: Infinity,
-                delay: spark.delay,
-                ease: "linear"
-              }}
-              className="absolute w-1 h-1 bg-[#FFCC29] rounded-full shadow-[0_0_8px_#FFCC29]"
+/** TITLE — 3D ICCT'27 slam, lens flare, light sweep. */
+const Title = () => (
+  <div className="relative z-10 flex flex-col items-center px-4 text-center [perspective:900px]">
+    {/* heat glow behind the logo */}
+    <div className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
+      <motion.div
+        className="h-[60vh] w-[90vw] shrink-0 rounded-full"
+        style={{ background: 'radial-gradient(ellipse, rgba(255,194,26,0.35) 0%, rgba(230,57,70,0.18) 35%, transparent 70%)' }}
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: [0, 1, 0.75], scale: [0.6, 1.1, 1] }}
+        transition={{ duration: 1.2, delay: 0.25 }}
+      />
+    </div>
+
+    <motion.h1
+      className="relative font-display leading-[0.82] text-[5.5rem] xs:text-[6.5rem] sm:text-[9rem] md:text-[13rem]"
+      style={{ transformStyle: 'preserve-3d' }}
+      initial={{ rotateX: 70, scale: 3.2, opacity: 0, filter: 'blur(18px)' }}
+      animate={{ rotateX: [70, -6, 0], scale: [3.2, 0.94, 1], opacity: 1, filter: ['blur(18px)', 'blur(0px)', 'blur(0px)'] }}
+      transition={{ duration: 0.55, ease: [0.5, 0, 0.3, 1], times: [0, 0.75, 1] }}
+    >
+      <span className="text-white" style={{ textShadow: WHITE_EXTRUDE }}>
+        ICCT
+      </span>
+      <span className="text-gold" style={{ textShadow: GOLD_EXTRUDE }}>
+        '27
+      </span>
+
+      {/* light sweep */}
+      <motion.span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-clip-text text-transparent"
+        style={{
+          backgroundImage: 'linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.95) 50%, transparent 62%)',
+          backgroundSize: '250% 100%',
+          WebkitBackgroundClip: 'text',
+        }}
+        initial={{ backgroundPosition: '130% 0' }}
+        animate={{ backgroundPosition: ['130% 0', '-130% 0', '-130% 0', '130% 0', '-130% 0'] }}
+        transition={{ delay: 0.7, duration: 1.6, times: [0, 0.4, 0.55, 0.56, 1], ease: 'easeInOut' }}
+      >
+        ICCT'27
+      </motion.span>
+    </motion.h1>
+
+    {/* anamorphic lens flare */}
+    <motion.div
+      className="pointer-events-none absolute left-1/2 top-[42%] h-[3px] w-[160vw]"
+      style={{
+        marginLeft: '-80vw',
+        background: 'linear-gradient(90deg, transparent, rgba(255,194,26,0.0) 20%, rgba(255,244,214,1) 50%, rgba(255,194,26,0) 80%, transparent)',
+        boxShadow: '0 0 24px 6px rgba(255,194,26,0.55)',
+      }}
+      initial={{ scaleX: 0, opacity: 0 }}
+      animate={{ scaleX: [0, 1, 1], opacity: [0, 1, 0] }}
+      transition={{ delay: 0.45, duration: 0.9, times: [0, 0.3, 1] }}
+    />
+
+    <motion.div
+      className="mt-6 flex items-center gap-3"
+      initial={{ opacity: 0, y: 16, filter: 'blur(6px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      transition={{ delay: 0.75, duration: 0.45 }}
+    >
+      <span className="h-0.5 w-8 bg-flame md:w-16" />
+      <span className="font-display text-xl tracking-[0.1em] text-white md:text-4xl">Inter Church Cricket Tournament</span>
+      <span className="h-0.5 w-8 bg-flame md:w-16" />
+    </motion.div>
+
+    <div className="mt-5 flex items-center gap-2">
+      {['Season 4', 'Coimbatore', '2027'].map((label, i) => (
+        <motion.span
+          key={label}
+          className={`rounded-md px-3 py-1 font-display text-lg tracking-wider md:text-2xl ${
+            i === 0 ? 'bg-gold text-ink-900' : i === 1 ? 'bg-flame text-white' : 'border border-white/40 text-white'
+          }`}
+          initial={{ opacity: 0, y: 20, scale: 0.6 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 1 + i * 0.12, type: 'spring', stiffness: 380, damping: 16 }}
+        >
+          {label}
+        </motion.span>
+      ))}
+    </div>
+  </div>
+)
+
+/* ================================================================== */
+/* Loader                                                              */
+/* ================================================================== */
+
+export default function CricketLoader({ onComplete }: CricketLoaderProps) {
+  const reduceMotion = useReducedMotion()
+  const [stage, setStage] = useState<Stage>(reduceMotion ? 'title' : 'open')
+  const [progress, setProgress] = useState(0)
+
+  // Keep the latest callback without restarting the timeline when the parent re-renders
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
+  const finished = useRef(false)
+  const finish = () => {
+    if (finished.current) return
+    finished.current = true
+    onCompleteRef.current?.()
+  }
+
+  useEffect(() => {
+    const timers: number[] = []
+    const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms))
+
+    if (reduceMotion) {
+      at(T_REDUCED.exit, () => setStage('exit'))
+      at(T_REDUCED.done, finish)
+    } else {
+      at(T.ball, () => setStage('ball'))
+      at(T.impact, () => setStage('impact'))
+      at(T.montage, () => setStage('montage'))
+      at(T.title, () => setStage('title'))
+      at(T.exit, () => setStage('exit'))
+      at(T.done, finish)
+    }
+
+    const total = reduceMotion ? T_REDUCED.exit : T.exit
+    const start = performance.now()
+    let raf = 0
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / total)
+      setProgress(p)
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+
+    return () => {
+      timers.forEach(clearTimeout)
+      cancelAnimationFrame(raf)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduceMotion])
+
+  const showTitle = stage === 'title' || stage === 'exit'
+
+  // Camera shake: tremor while the ball approaches, hard hit on impact and title slam
+  const shake =
+    stage === 'impact'
+      ? { ...SHAKE_HARD, transition: { duration: 0.45 } }
+      : stage === 'title'
+        ? { ...SHAKE_HARD, transition: { duration: 0.45, delay: 0.42 } }
+        : stage === 'ball'
+          ? { ...SHAKE_SOFT, transition: { duration: 0.25, delay: 0.85, repeat: 1 } }
+          : { x: 0, y: 0 }
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[100] overflow-hidden bg-ink-950"
+      animate={stage === 'exit' ? { opacity: 0, scale: reduceMotion ? 1 : 1.25 } : { opacity: 1, scale: 1 }}
+      transition={{ duration: 0.55, ease: 'easeIn' }}
+      role="status"
+      aria-label="Loading ICCT'27"
+    >
+      <style>{`
+        @keyframes icct-grid { from { background-position: 0 0; } to { background-position: 0 64px; } }
+        @keyframes icct-grain {
+          0% { transform: translate(0,0) } 25% { transform: translate(-3%,2%) }
+          50% { transform: translate(2%,-3%) } 75% { transform: translate(-2%,-1%) } 100% { transform: translate(0,0) }
+        }
+      `}</style>
+
+      <motion.div className="absolute inset-0" animate={shake}>
+        {/* Stadium atmosphere */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,#1C427D_0%,#0A1F44_45%,#040D1F_100%)]" />
+        <div className="absolute inset-0 bg-stripes opacity-60" />
+        {!reduceMotion && (
+          <>
+            <Floodlights />
+            <PitchGrid />
+            <Embers />
+          </>
+        )}
+
+        {/* Shots */}
+        <AnimatePresence>
+          {stage === 'open' && <PresentsCard key="open" />}
+          {stage === 'ball' && <Ball key="ball" />}
+        </AnimatePresence>
+        {stage === 'impact' && <Impact />}
+        {stage === 'montage' && <Montage />}
+
+        <div className="absolute inset-0 flex items-center justify-center">
+          <AnimatePresence>{showTitle && <Title key="title" />}</AnimatePresence>
+        </div>
+        {stage === 'title' && !reduceMotion && <TitleShockwave />}
+      </motion.div>
+
+      {/* Film look: vignette + grain */}
+      <div className="pointer-events-none absolute inset-0 z-20 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.75)_100%)]" />
+      {!reduceMotion && (
+        <div
+          className="pointer-events-none absolute -inset-[10%] z-20 opacity-[0.09] mix-blend-overlay"
+          style={{ backgroundImage: GRAIN, animation: 'icct-grain 0.5s steps(4) infinite' }}
+        />
+      )}
+
+      {!reduceMotion && <Letterbox open={stage === 'exit'} />}
+
+      {/* Progress + skip (above the letterbox) */}
+      <div className="absolute inset-x-0 bottom-0 z-40 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto flex max-w-md items-center gap-4 px-6">
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/15">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-flame via-gold to-gold"
+              style={{ width: `${Math.round(progress * 100)}%` }}
             />
-          ))}
-
-          {/* Main content container */}
-          <div className="relative z-10 flex flex-col items-center justify-center px-4 sm:px-6 md:px-8">
-            {/* STAGE 0: WELCOME/PROGRESS BAR */}
-            {stage === 0 && (
-              <>
-                {/* Church Name - Top Highlighted */}
-                <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="mb-6 sm:mb-8 md:mb-10 flex flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8"
-                >
-                  {/* Church Logo */}
-                  <motion.img
-                    src="/churchlogo.png"
-                    alt="Church Logo"
-                    className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 flex-shrink-0"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.1, duration: 0.6 }}
-                  />
-
-                  {/* Text Block */}
-                  <div className="flex flex-col items-center text-center">
-                    <motion.div
-                      className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bebas tracking-wider whitespace-nowrap mb-1"
-                    >
-                      <motion.span
-                        style={{
-                          textShadow: "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6), 0 0 60px rgba(255, 204, 41, 0.4)",
-                          background: "linear-gradient(45deg, #FFD65C, #FFCC29, #FFD65C)",
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                          backgroundClip: "text"
-                        }}
-                        animate={{
-                          textShadow: [
-                            "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6)",
-                            "0 0 25px rgba(255, 204, 41, 1), 0 0 50px rgba(255, 204, 41, 0.8)",
-                            "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6)"
-                          ]
-                        }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        CSI St. Peter's Church
-                      </motion.span>
-                    </motion.div>
-                    <motion.div
-                      className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bebas tracking-wider whitespace-nowrap"
-                    >
-                      <motion.span
-                        style={{
-                          textShadow: "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6), 0 0 60px rgba(255, 204, 41, 0.4)",
-                          background: "linear-gradient(45deg, #FFD65C, #FFCC29, #FFD65C)",
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                          backgroundClip: "text"
-                        }}
-                        animate={{
-                          textShadow: [
-                            "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6)",
-                            "0 0 25px rgba(255, 204, 41, 1), 0 0 50px rgba(255, 204, 41, 0.8)",
-                            "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.6)"
-                          ]
-                        }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        Youth Fellowship
-                      </motion.span>
-                    </motion.div>
-                  </div>
-
-                  {/* Adonai Logo */}
-                  <motion.img
-                    src="/adonailogo.png"
-                    alt="Adonai Logo"
-                    className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex-shrink-0"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.1, duration: 0.6 }}
-                  />
-                </motion.div>
-
-                {/* Logo with glow effect */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8, y: -20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  className="relative mb-6 sm:mb-8 md:mb-10"
-                >
-                  {/* Glow behind logo */}
-                  <div className="absolute inset-0 bg-[#FFCC29] blur-3xl opacity-20 scale-150" />
-
-                  {/* ICCT26 Logo */}
-                  <div className="relative text-center">
-                    <motion.h1
-                      className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] font-bebas font-black bg-gradient-to-br from-[#FFD65C] via-[#FFCC29] to-[#D4A017] bg-clip-text text-transparent tracking-wider"
-                      style={{
-                        textShadow: "0 0 50px rgba(255, 204, 41, 0.6), 0 0 30px rgba(255, 204, 41, 0.4), 0 0 80px rgba(255, 204, 41, 0.3)"
-                      }}
-                    >
-                      ICCT'27
-                    </motion.h1>
-                    <motion.p
-                      className="text-white/80 text-xs sm:text-sm md:text-base font-quicksand tracking-[0.2em] sm:tracking-[0.3em] text-center mt-2 leading-tight"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <span className="block sm:inline">INTER CHURCH</span>
-                      <span className="block sm:inline sm:ml-2">CRICKET TOURNAMENT</span>
-                    </motion.p>
-                  </div>
-                </motion.div>
-
-                {/* Progress bar container */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3, duration: 0.6 }}
-                  className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mb-6 sm:mb-8"
-                >
-                  {/* Progress bar background */}
-                  <div className="relative h-3 sm:h-4 bg-[#0D1B2A] rounded-full overflow-hidden shadow-lg border border-[#FFCC29]/20">
-                    {/* Animated progress fill */}
-                    <motion.div
-                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#FFCC29] via-[#FFD65C] to-[#FFCC29] rounded-full"
-                      style={{ width: `${progress}%` }}
-                      transition={{ duration: 0.1 }}
-                    >
-                      {/* Shimmer effect */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                        animate={{ x: ["-100%", "200%"] }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                      />
-                    </motion.div>
-
-                    {/* Energy sparks following the ball */}
-                    {progress > 5 && (
-                      <motion.div
-                        className="absolute top-1/2 -translate-y-1/2"
-                        style={{ left: `${progress}%` }}
-                        transition={{ type: "spring", stiffness: 100, damping: 15 }}
-                      >
-                        <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-[#FFD65C] fill-[#FFD65C] drop-shadow-[0_0_6px_#FFD65C]" />
-                      </motion.div>
-                    )}
-                  </div>
-
-                  {/* Rolling cricket ball */}
-                  <motion.div
-                    className="absolute -top-6 sm:-top-8"
-                    animate={{
-                      left: `${progress}%`,
-                      rotate: progress * 7.2 // Full rotation every ~50%
-                    }}
-                    transition={{ type: "spring", stiffness: 90, damping: 12 }}
-                  >
-                    {/* Ball glow */}
-                    <div className="absolute inset-0 bg-[#FFD65C] blur-xl opacity-50 scale-150" />
-
-                    {/* Cricket ball SVG */}
-                    <svg
-                      className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 relative drop-shadow-[0_0_12px_#FFD65C]"
-                      viewBox="0 0 100 100"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      {/* Ball body */}
-                      <defs>
-                        <radialGradient id="ballGradient" cx="35%" cy="35%">
-                          <stop offset="0%" stopColor="#FF6B6B" />
-                          <stop offset="70%" stopColor="#C92A2A" />
-                          <stop offset="100%" stopColor="#8B1C1C" />
-                        </radialGradient>
-                      </defs>
-                      <circle cx="50" cy="50" r="48" fill="url(#ballGradient)" />
-
-                      {/* Stitching */}
-                      <path
-                        d="M 30 20 Q 50 30 70 20"
-                        stroke="#FFF"
-                        strokeWidth="2"
-                        fill="none"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M 30 80 Q 50 70 70 80"
-                        stroke="#FFF"
-                        strokeWidth="2"
-                        fill="none"
-                        strokeLinecap="round"
-                      />
-                      <line x1="28" y1="22" x2="26" y2="26" stroke="#FFF" strokeWidth="1.5" />
-                      <line x1="50" y1="18" x2="50" y2="22" stroke="#FFF" strokeWidth="1.5" />
-                      <line x1="72" y1="22" x2="74" y2="26" stroke="#FFF" strokeWidth="1.5" />
-                      <line x1="28" y1="78" x2="26" y2="74" stroke="#FFF" strokeWidth="1.5" />
-                      <line x1="50" y1="82" x2="50" y2="78" stroke="#FFF" strokeWidth="1.5" />
-                      <line x1="72" y1="78" x2="74" y2="74" stroke="#FFF" strokeWidth="1.5" />
-
-                      {/* Shine effect */}
-                      <ellipse cx="38" cy="35" rx="12" ry="8" fill="white" opacity="0.3" />
-                    </svg>
-
-                    {/* Motion trail */}
-                    {progress > 0 && (
-                      <motion.div
-                        className="absolute top-1/2 right-full w-12 sm:w-16 h-1 bg-gradient-to-l from-[#FFD65C] to-transparent blur-sm"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: [0.6, 0.3, 0.6] }}
-                        transition={{ duration: 0.5, repeat: Infinity }}
-                      />
-                    )}
-                  </motion.div>
-                </motion.div>
-
-                {/* Percentage counter */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="flex items-center justify-center mb-4 sm:mb-6"
-                >
-                  <motion.p
-                    key={progress}
-                    initial={{ scale: 1 }}
-                    animate={{ scale: progress % 10 === 0 ? [1, 1.1, 1] : 1 }}
-                    className="text-[#FFCC29] font-bold text-2xl sm:text-3xl md:text-4xl tracking-widest font-bebas"
-                    style={{
-                      textShadow: "0 0 20px rgba(255, 204, 41, 0.8), 0 0 40px rgba(255, 204, 41, 0.4)"
-                    }}
-                  >
-                    {progress}%
-                  </motion.p>
-                </motion.div>
-
-                {/* Warming up tagline */}
-                <motion.p
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="text-white/80 text-sm sm:text-base md:text-lg font-quicksand font-medium tracking-wide text-center px-4"
-                >
-                  Warming up the pitch...
-                </motion.p>
-              </>
-            )}
-
-            {/* STAGE 1: CRICKET COUNTDOWN - 4.5 SECONDS */}
-            {stage === 1 && (
-              <motion.div
-                key={`countdown-${countdownNum}`}
-                initial={{ opacity: 1 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.1 }}
-                className="flex flex-col items-center justify-center w-full h-full"
-              >
-                {/* Number 3 - BATTING */}
-                {countdownNum === 3 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.5 }}
-                    transition={{ duration: 0.15, ease: "easeOut" }}
-                    className="relative flex flex-col items-center justify-center"
-                  >
-                    {/* Impact Number */}
-                    <motion.div
-                      initial={{ scale: 0, rotate: -45 }}
-                      animate={{
-                        scale: [0, 1.3, 1],
-                        rotate: [45, -5, 0],
-                        y: [0, -10, 0]
-                      }}
-                      exit={{ opacity: 0, scale: 0 }}
-                      transition={{
-                        duration: 0.4,
-                        times: [0, 0.6, 1],
-                        ease: [0.34, 1.56, 0.64, 1]
-                      }}
-                      className="text-[12rem] sm:text-[16rem] md:text-[20rem] font-black leading-none"
-                      style={{
-                        color: '#FFCC29',
-                        textShadow: '0 0 60px rgba(255, 204, 41, 1), 0 0 100px rgba(255, 204, 41, 0.6), 0 10px 40px rgba(0, 0, 0, 0.8)',
-                        WebkitTextStroke: '3px rgba(255, 215, 0, 0.5)',
-                      }}
-                    >
-                      3
-                    </motion.div>
-
-                    {/* Batting Icon Image */}
-                    <motion.img
-                      src="/intro/batting.png"
-                      alt="Batting"
-                      initial={{ x: -200, opacity: 0, scale: 0.5 }}
-                      animate={{ x: 0, opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ delay: 1, duration: 0.5, ease: "easeOut" }}
-                      className="absolute -top-20 w-80 h-80 sm:w-[28rem] sm:h-[28rem] md:w-[32rem] md:h-[32rem] object-contain z-10"
-                    />
-
-                    {/* Batting Streak Effect */}
-                    <motion.div
-                      initial={{ scaleX: 0, opacity: 0 }}
-                      animate={{ scaleX: [0, 1, 0], opacity: [0, 1, 0] }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                      className="absolute w-96 h-2 bg-gradient-to-r from-transparent via-[#FFCC29] to-transparent"
-                    />
-                  </motion.div>
-                )}
-
-                {/* Number 2 - BOWLING */}
-                {countdownNum === 2 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.5 }}
-                    transition={{ duration: 0.15, ease: "easeOut" }}
-                    className="relative flex flex-col items-center justify-center"
-                  >
-                    {/* Impact Number */}
-                    <motion.div
-                      initial={{ scale: 0, rotate: 45 }}
-                      animate={{
-                        scale: [0, 1.3, 1],
-                        rotate: [-45, 5, 0],
-                        y: [0, -10, 0]
-                      }}
-                      exit={{ opacity: 0, scale: 0 }}
-                      transition={{
-                        duration: 0.4,
-                        times: [0, 0.6, 1],
-                        ease: [0.34, 1.56, 0.64, 1]
-                      }}
-                      className="text-[12rem] sm:text-[16rem] md:text-[20rem] font-black leading-none"
-                      style={{
-                        color: '#FFCC29',
-                        textShadow: '0 0 60px rgba(255, 204, 41, 1), 0 0 100px rgba(255, 204, 41, 0.6), 0 10px 40px rgba(0, 0, 0, 0.8)',
-                        WebkitTextStroke: '3px rgba(255, 215, 0, 0.5)',
-                      }}
-                    >
-                      2
-                    </motion.div>
-
-                    {/* Bowling Icon Image */}
-                    <motion.img
-                      src="/intro/bowling.png"
-                      alt="Bowling"
-                      initial={{ x: 200, opacity: 0, scale: 0.5 }}
-                      animate={{ x: 0, opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ delay: 1, duration: 0.5, ease: "easeOut" }}
-                      className="absolute -top-20 w-80 h-80 sm:w-[28rem] sm:h-[28rem] md:w-[32rem] md:h-[32rem] object-contain z-10"
-                    />
-
-                    {/* Ball Whoosh Effect */}
-                    <motion.div
-                      initial={{ x: -200, opacity: 0, scaleX: 2 }}
-                      animate={{ x: 200, opacity: [0, 1, 0], scaleX: [2, 1, 2] }}
-                      transition={{ duration: 0.6, ease: "linear" }}
-                      className="absolute w-32 h-32 bg-[#FFCC29] rounded-full blur-xl opacity-40"
-                    />
-                  </motion.div>
-                )}
-
-                {/* Number 1 - WICKET KEEPING */}
-                {countdownNum === 1 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.5 }}
-                    transition={{ duration: 0.15, ease: "easeOut" }}
-                    className="relative flex flex-col items-center justify-center"
-                  >
-                    {/* Impact Number */}
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{
-                        scale: [0, 1.5, 1],
-                        y: [0, -15, 0]
-                      }}
-                      exit={{ opacity: 0, scale: 0 }}
-                      transition={{
-                        duration: 0.4,
-                        times: [0, 0.5, 1],
-                        ease: [0.34, 1.56, 0.64, 1]
-                      }}
-                      className="text-[12rem] sm:text-[16rem] md:text-[20rem] font-black leading-none"
-                      style={{
-                        color: '#FFCC29',
-                        textShadow: '0 0 60px rgba(255, 204, 41, 1), 0 0 100px rgba(255, 204, 41, 0.6), 0 10px 40px rgba(0, 0, 0, 0.8)',
-                        WebkitTextStroke: '3px rgba(255, 215, 0, 0.5)',
-                      }}
-                    >
-                      1
-                    </motion.div>
-
-                    {/* Wicket Keeping Icon Image */}
-                    <motion.img
-                      src="/intro/wicketkeeping.png"
-                      alt="Wicket Keeper"
-                      initial={{ y: -200, opacity: 0, scale: 0.5 }}
-                      animate={{ y: 0, opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ delay: 1, duration: 0.5, ease: "easeOut" }}
-                      className="absolute -top-20 w-80 h-80 sm:w-[28rem] sm:h-[28rem] md:w-[32rem] md:h-[32rem] object-contain z-10"
-                    />
-
-                    {/* Explosion Ring Effect */}
-                    <motion.div
-                      initial={{ scale: 0, opacity: 1 }}
-                      animate={{ scale: [0, 3], opacity: [1, 0] }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                      className="absolute w-64 h-64 border-4 border-[#FFCC29] rounded-full"
-                    />
-                    <motion.div
-                      initial={{ scale: 0, opacity: 1 }}
-                      animate={{ scale: [0, 2.5], opacity: [1, 0] }}
-                      transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-                      className="absolute w-64 h-64 border-4 border-[#FFCC29] rounded-full"
-                    />
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-
-            {/* STAGE 2: GET READY */}
-            {stage === 2 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="flex flex-col items-center justify-center"
-              >
-                <motion.div
-                  initial={{ scale: 0, rotate: -10 }}
-                  animate={{
-                    scale: [0, 1.2, 1],
-                    rotate: [-10, 5, 0]
-                  }}
-                  transition={{
-                    duration: 0.5,
-                    times: [0, 0.6, 1],
-                    ease: [0.34, 1.56, 0.64, 1]
-                  }}
-                  className="text-center"
-                >
-                  <div
-                    className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black uppercase tracking-wider"
-                    style={{
-                      color: '#FFCC29',
-                      textShadow: '0 0 80px rgba(255, 204, 41, 1), 0 0 120px rgba(255, 204, 41, 0.8), 0 15px 50px rgba(0, 0, 0, 0.9)',
-                      WebkitTextStroke: '2px rgba(255, 215, 0, 0.6)',
-                    }}
-                  >
-                    GET READY
-                  </div>
-                </motion.div>
-
-                {/* Explosive Flash Effect */}
-                <motion.div
-                  initial={{ scale: 0, opacity: 0.8 }}
-                  animate={{ scale: [0, 4], opacity: [0.8, 0] }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="absolute w-96 h-96 bg-[#FFCC29] rounded-full blur-3xl"
-                />
-              </motion.div>
-            )}
           </div>
-
-          {/* Bottom light sweep */}
-          <motion.div
-            className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-[#FFCC29] to-transparent opacity-30"
-            animate={{ x: ["-100%", "100%"] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-
-          {/* Skip Button */}
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1, duration: 0.5 }}
-            onClick={() => {
-              setShowFlash(true);
-              if (onComplete) {
-                setTimeout(() => onComplete(), 500);
-              }
-            }}
-            className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-[60] px-4 py-1.5 sm:px-6 sm:py-2 rounded-full border border-white/20 text-white/60 text-xs sm:text-sm font-quicksand tracking-widest uppercase hover:text-[#FFCC29] hover:border-[#FFCC29]/50 hover:bg-[#FFCC29]/10 transition-all duration-300 backdrop-blur-sm"
+          <button
+            type="button"
+            onClick={finish}
+            className="rounded-lg border border-white/25 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white/85 transition-colors hover:border-gold hover:text-gold"
           >
             Skip
-          </motion.button>
-        </motion.div>
-      ) : null}
-
-      {/* White flash transition */}
-      <AnimatePresence>
-        {showFlash && (
-          <motion.div
-            key="flash-transition"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 0] }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="fixed inset-0 bg-white z-[60]"
-          />
-        )}
-      </AnimatePresence>
-    </AnimatePresence>
-  );
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  )
 }

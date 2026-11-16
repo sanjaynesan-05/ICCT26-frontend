@@ -1,114 +1,116 @@
-import { useState } from 'react'
-import comingSoonLogo from '../assets/coming soon.png'
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { X, LayoutGrid } from 'lucide-react'
+import { CO_SPONSORS, type Sponsor } from '../data/sponsors'
 
-// Sponsor images - Add or remove sponsor logos here by updating the file paths
-// Simply add new image paths to the array when you update the sponsors folder
-const SPONSOR_IMAGES = [
-  comingSoonLogo,
-  comingSoonLogo,
-  comingSoonLogo,
-  comingSoonLogo,
-  comingSoonLogo,
-  comingSoonLogo,
-  comingSoonLogo,
-  comingSoonLogo,
-  comingSoonLogo,
-  comingSoonLogo,
-  comingSoonLogo,
-  comingSoonLogo,
-]
-
-const ImageCarousel = () => {
-  const [isHovered, setIsHovered] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  // Create a much longer continuous strip by repeating images multiple times
-  const repeatedImages = Array(5).fill(SPONSOR_IMAGES).flat()
-
+const LogoTile = ({ sponsor, className = '' }: { sponsor: Sponsor; className?: string }) => {
+  const img = <img src={sponsor.logo} alt={sponsor.name} className="h-full w-full object-contain" loading="lazy" />
   return (
-    <div className="w-full bg-primary overflow-hidden relative py-8">
-      <div className="container mx-auto px-4 mb-6">
-        <h2 className="font-heading text-3xl md:text-4xl text-accent text-center">CO SPONSORS</h2>
-      </div>
-      {/* Continuous fast scrolling strip of sponsor images */}
-      <div className="overflow-hidden relative">
-        <div
-          className="flex gap-0 h-40"
-          style={{
-            animation: 'scroll 45s linear infinite',
-            animationPlayState: isHovered ? 'paused' : 'running',
-          }}
-        >
-          {repeatedImages.map((image, index) => (
-            <div
-              key={index}
-              className="flex-shrink-0 w-40 h-40 relative group overflow-hidden bg-white/5 border border-accent/20 rounded-lg flex items-center justify-center"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              <img
-                src={image}
-                alt={`Sponsor ${index + 1}`}
-                className="w-full h-full object-contain p-3"
-              />
-              {/* Hover effect overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
-            </div>
-          ))}
-        </div>
-
-        {/* Fade overlay on edges for smooth effect */}
-        <div className="absolute top-0 left-0 w-20 h-40 bg-gradient-to-r from-primary to-transparent pointer-events-none z-10" />
-        <div className="absolute top-0 right-0 w-20 h-40 bg-gradient-to-l from-primary to-transparent pointer-events-none z-10" />
-      </div>
-
-      {/* View More Button */}
-      <div className="container mx-auto px-4 mt-4">
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-3 py-1 text-xs font-medium text-accent bg-accent/10 hover:bg-accent/20 border border-accent/30 rounded transition-colors duration-200"
-        >
-          View More
-        </button>
-      </div>
-
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-primary border border-accent/20 rounded-lg p-8 w-11/12 max-w-5xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-            {/* Modal Header */}
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-heading text-2xl text-accent">All Sponsors</h3>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-accent hover:text-accent/70 text-2xl transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Grid of Sponsor Logos */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {SPONSOR_IMAGES.map((image, index) => (
-                <div
-                  key={index}
-                  className="aspect-square relative group overflow-hidden bg-white/5 border border-accent/20 rounded-lg flex items-center justify-center hover:border-accent/40 transition-colors"
-                >
-                  <img
-                    src={image}
-                    alt={`Sponsor ${index + 1}`}
-                    className="w-full h-full object-contain p-2"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+    <div
+      className={`flex items-center justify-center rounded-2xl border border-surface-line bg-white p-4 shadow-card transition-colors hover:border-gold ${className}`}
+      title={sponsor.name}
+    >
+      {sponsor.url ? (
+        <a href={sponsor.url} target="_blank" rel="noopener noreferrer" className="h-full w-full">
+          {img}
+        </a>
+      ) : (
+        img
       )}
     </div>
   )
 }
 
+/** Co-sponsor logo strip: continuous scroll, pauses on hover, "View all" opens a grid. */
+const ImageCarousel = () => {
+  const [showAll, setShowAll] = useState(false)
+
+  // Two copies back-to-back make the -50% marquee loop seamless
+  const strip = [...CO_SPONSORS, ...CO_SPONSORS]
+  const duration = Math.max(30, CO_SPONSORS.length * 4)
+
+  useEffect(() => {
+    if (!showAll) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setShowAll(false)
+    window.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [showAll])
+
+  return (
+    <div>
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-eyebrow uppercase text-flame">Co-Sponsors</p>
+          <p className="mt-1 text-sm text-muted-dark">Thank you for backing ICCT'27</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="inline-flex items-center gap-2 rounded-lg border border-ink/15 px-3 py-2 text-xs font-bold uppercase tracking-wider text-ink transition-colors hover:border-ink hover:bg-ink hover:text-white"
+        >
+          <LayoutGrid className="h-4 w-4" /> View all
+        </button>
+      </div>
+
+      <div className="group relative overflow-hidden">
+        <div
+          className="flex w-max gap-4 py-2 group-hover:[animation-play-state:paused]"
+          style={{ animation: `marquee ${duration}s linear infinite` }}
+        >
+          {strip.map((sponsor, index) => (
+            <LogoTile key={index} sponsor={sponsor} className="h-28 w-40 shrink-0 md:h-32 md:w-48" />
+          ))}
+        </div>
+        {/* Soft edges */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-surface to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-surface to-transparent" />
+      </div>
+
+      <AnimatePresence>
+        {showAll && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 p-4 backdrop-blur-sm"
+            onClick={() => setShowAll(false)}
+          >
+            <motion.div
+              initial={{ y: 16, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 16, opacity: 0 }}
+              className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-surface p-6 text-ink md:p-8"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label="All sponsors"
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="text-3xl text-ink">All Co-Sponsors</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAll(false)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-ink/10"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                {CO_SPONSORS.map((sponsor, index) => (
+                  <LogoTile key={index} sponsor={sponsor} className="aspect-square" />
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 export default ImageCarousel
-
-

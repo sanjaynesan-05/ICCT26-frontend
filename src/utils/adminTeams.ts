@@ -141,7 +141,7 @@ export const extractTeamList = (response: unknown): unknown[] => {
 }
 
 export const STATUS_BADGE_CLASSES: Record<RegistrationStatus, string> = {
-  pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
-  confirmed: 'bg-green-500/20 text-green-400 border-green-500/50',
-  rejected: 'bg-red-500/20 text-red-400 border-red-500/50',
+  pending: 'bg-gold/15 text-gold border-gold/40',
+  confirmed: 'bg-pitch/15 text-pitch-light border-pitch/40',
+  rejected: 'bg-flame/15 text-flame-light border-flame/40',
 }

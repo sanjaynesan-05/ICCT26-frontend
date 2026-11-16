@@ -91,3 +91,71 @@ export const getRuleTitles = (): string[] => {
 export const getRuleContentByTitle = (title: string): string[] | undefined => {
   return TOURNAMENT_RULES.find(r => r.title === title)?.content
 }
+
+/**
+ * ICCT'27 match rules — single source for the Rules page and the
+ * "Key rules" panel on Registration. Edit here and both update.
+ */
+export interface RuleSection {
+  id: string
+  title: string
+  rules: string[]
+}
+
+export const RULE_SECTIONS: RuleSection[] = [
+  {
+    id: 'registration',
+    title: 'Registration',
+    rules: [
+      'Each church may enter only one team.',
+      'All details entered in the registration form must be accurate and match official records.',
+      'A registration is confirmed only after the organisers verify the entry-fee payment. The captain then receives the Team ID by email.',
+    ],
+  },
+  {
+    id: 'format',
+    title: 'Format',
+    rules: [
+      'Matches are played with a Red Tennis Ball.',
+      'Each team plays 10 overs per side.',
+      'There is no age limit for participation.',
+    ],
+  },
+  {
+    id: 'squad',
+    title: 'Squad',
+    rules: ['Each team registers 13 to 17 players, including the captain and vice-captain.'],
+  },
+  {
+    id: 'powerplay',
+    title: 'Powerplays',
+    rules: [
+      'First powerplay (overs 1–2): only 2 fielders are allowed outside the 30-yard circle.',
+      'Second powerplay: taken in any one over from overs 6, 7 or 8; only 5 fielders are allowed outside the 30-yard circle.',
+    ],
+  },
+  {
+    id: 'bowling',
+    title: 'Bowling',
+    rules: [
+      'A bowler can bowl a maximum of 3 overs in a match.',
+      'No bowler may exceed this limit under any circumstances.',
+    ],
+  },
+  {
+    id: 'results',
+    title: 'Results & conduct',
+    rules: [
+      'If a match ends in a tie, a Super Over decides the winner.',
+      "The umpire's decision is final and binding on all teams.",
+      'Arguments or disputes against umpire decisions will not be entertained.',
+    ],
+  },
+]
+
+/** Closing note — shown at the end of the Rules page and the PDF rulebook */
+export const IMPORTANT_NOTE =
+  'All participants are expected to read and understand these rules. The tournament committee may modify rules if necessary for fair play. Any disputes are resolved by the organising committee, whose decision is final and binding. Failure to comply with these rules may lead to disqualification without refund.'
+
+/** Short list shown on the Registration page */
+export const KEY_RULES: string[] = RULE_SECTIONS.flatMap((s) => s.rules)

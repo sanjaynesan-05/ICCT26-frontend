@@ -1,108 +1,133 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, Trophy } from 'lucide-react'
+import { Menu, X, Trophy, ArrowRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { cn } from '../lib/utils'
+
+const navLinks = [
+  { name: 'Home', path: '/' },
+  { name: 'Rules', path: '/rules' },
+  { name: 'Registration', path: '/registration' },
+  { name: 'Gallery', path: '/gallery' },
+  { name: 'Contact', path: '/contact' },
+]
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const location = useLocation()
 
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Rules', path: '/rules' },
-    { name: 'Registration', path: '/registration' },
-    { name: 'Gallery', path: '/gallery' },
-    { name: 'Contact', path: '/contact' },
-  ]
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Close the mobile menu on navigation and lock body scroll while it is open
+  useEffect(() => setIsMobileMenuOpen(false), [location.pathname])
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isMobileMenuOpen])
+
+  // Transparent over the Home hero, solid everywhere else / once scrolled
+  const solid = scrolled || location.pathname !== '/' || isMobileMenuOpen
 
   return (
     <nav
-      className="w-full transition-all duration-300 bg-primary shadow-lg"
+      className={cn(
+        'fixed inset-x-0 top-0 z-50 transition-colors duration-300',
+        solid ? 'bg-ink-900/90 backdrop-blur-md shadow-nav' : 'bg-transparent'
+      )}
     >
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 group">
-            <Trophy className="w-8 h-8 text-accent group-hover:rotate-12 transition-transform duration-300" />
-            <div className="flex flex-col">
-              <span className="font-heading text-2xl text-accent tracking-wider">ICCT27</span>
-              <span className="text-xs text-gray-300 -mt-1">Cricket Tournament</span>
-            </div>
+      <div className="page-container">
+        <div className="flex h-16 md:h-20 items-center justify-between">
+          {/* Wordmark */}
+          <Link to="/" className="flex items-center gap-3" aria-label="ICCT'27 home">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold text-ink-900">
+              <Trophy className="h-5 w-5" strokeWidth={2.5} />
+            </span>
+            <span className="flex flex-col leading-none">
+              <span className="font-display text-2xl tracking-wide text-white">
+                ICCT<span className="text-gold">'27</span>
+              </span>
+              <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
+                Inter Church Cricket
+              </span>
+            </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`font-subheading font-semibold transition-all duration-300 relative group ${
-                  location.pathname === link.path
-                    ? 'text-accent'
-                    : 'text-white hover:text-accent'
-                }`}
-              >
-                {link.name}
-                <span
-                  className={`absolute -bottom-1 left-0 h-0.5 bg-accent transition-all duration-300 ${
-                    location.pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'
-                  }`}
-                />
-              </Link>
-            ))}
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => {
+              const active = location.pathname === link.path
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={cn(
+                    'relative px-4 py-2 text-sm font-semibold transition-colors',
+                    active ? 'text-white' : 'text-white/70 hover:text-white'
+                  )}
+                >
+                  {link.name}
+                  <span
+                    className={cn(
+                      'absolute inset-x-4 -bottom-0.5 h-0.5 rounded-full bg-gold transition-opacity',
+                      active ? 'opacity-100' : 'opacity-0'
+                    )}
+                  />
+                </Link>
+              )
+            })}
           </div>
 
-          {/* CTA Button */}
-          <Link
-            to="/registration"
-            className="hidden md:block btn-gold text-sm transition-shadow"
-            style={{ boxShadow: '0 0 18px rgba(255,214,92,0.32)' }}
-          >
-            Register Now
+          <Link to="/registration" className="hidden md:inline-flex btn-gold !px-5 !py-2.5">
+            Register <ArrowRight className="h-4 w-4" />
           </Link>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile menu button */}
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-white p-2 hover:text-accent transition-colors"
+            onClick={() => setIsMobileMenuOpen((o) => !o)}
+            className="md:hidden -mr-2 p-2 text-white"
+            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isMobileMenuOpen}
           >
-            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile full-screen menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden bg-primary overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden fixed inset-x-0 top-16 bottom-0 overflow-y-auto bg-ink-900 bg-stripes"
           >
-            <div className="container mx-auto px-4 py-6 space-y-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block font-subheading font-semibold text-lg py-2 transition-colors ${
-                    location.pathname === link.path
-                      ? 'text-accent'
-                      : 'text-white hover:text-accent'
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <Link
-                to="/registration"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block btn-gold text-center text-sm mt-4 transition-shadow"
-                style={{ boxShadow: '0 0 14px rgba(255,214,92,0.28)' }}
-              >
-                Register Now
+            <div className="page-container flex min-h-full flex-col py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+              <div className="flex flex-col">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={cn(
+                      'border-b border-white/10 py-3.5 font-display text-4xl tracking-wide transition-colors',
+                      location.pathname === link.path ? 'text-gold' : 'text-white'
+                    )}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
+              <Link to="/registration" className="btn-gold mt-8 w-full !py-4 !text-base">
+                Register Your Team <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
           </motion.div>

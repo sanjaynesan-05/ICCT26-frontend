@@ -6,15 +6,31 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Plus, CheckCircle, ChevronRight, ChevronLeft, AlertTriangle, Sparkles } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import {
+  Plus,
+  Check,
+  ChevronRight,
+  ChevronLeft,
+  ChevronDown,
+  AlertTriangle,
+  ArrowRight,
+  Copy,
+  Lock,
+  Mail,
+  QrCode,
+  Send,
+  ShieldCheck,
+} from 'lucide-react'
 import confetti from 'canvas-confetti'
 import FileUpload from '../components/FileUpload'
 import PlayerFormCard from '../components/PlayerFormCard'
-import { DetailedProgressBar } from '../components/ProgressBar'
+import { PageHero } from '../components/ui'
 import { SearchableSelect } from '../components/SearchableSelect'
 import { fetchChurchAvailability, isChurchLocked, type ChurchAvailability } from '../utils/churchAvailability'
 import SEO from '../components/SEO'
 import { REGISTRATION_CONFIG } from '../data/registration'
+import { KEY_RULES } from '../data/rules'
 import { warmUpBackend, ensureBackendAwake, useBackendStatus } from '../utils/backendWarmup'
 
 // Import production utilities
@@ -481,7 +497,14 @@ const Registration = () => {
 
     if (validationResult.length > 0) {
       setValidationErrors(validationResult)
-      setCurrentStep(1) // Go back to first step with errors
+      // Jump to the earliest step that contains an error (was hard-coded to step 2)
+      const stepForField = (field: string): number => {
+        if (field === 'churchName' || field === 'teamName' || field === 'terms') return 0
+        if (field.startsWith('captain') || field.startsWith('vice')) return 1
+        if (field === 'players' || field.startsWith('player_')) return 2
+        return 3 // paymentReceipt and anything else on the review step
+      }
+      setCurrentStep(Math.min(...validationResult.map((e) => stepForField(e.field))))
       return
     }
 
@@ -681,258 +704,252 @@ const Registration = () => {
   }
 
   // ========== RENDER ==========
-  
-  // Show coming soon message if flag is true
+
+  const inputClass =
+    'w-full rounded-xl border border-surface-line bg-white px-4 py-3 text-ink placeholder:text-muted-dark/70 input-focus disabled:bg-surface disabled:opacity-70'
+  const labelClass = 'mb-1.5 block text-sm font-semibold text-ink'
+
+  // Captain / vice-captain contact block (same fields, same rules)
+  const renderContactFields = (role: 'captain' | 'viceCaptain') => {
+    const person = formData[role]
+    const update = (patch: Partial<CaptainInfo>) => {
+      clearValidationErrors()
+      setFormData({ ...formData, [role]: { ...person, ...patch } })
+    }
+    const id = (field: string) => `${role}-${field}`
+    const who = role === 'captain' ? "Captain's" : "Vice-Captain's"
+
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <label htmlFor={id('name')} className={labelClass}>Full name *</label>
+          <input
+            id={id('name')}
+            type="text"
+            className={inputClass}
+            placeholder={`${who} name`}
+            value={person.name}
+            onChange={(e) => update({ name: e.target.value })}
+            disabled={isSubmitting}
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor={id('phone')} className={labelClass}>Phone number *</label>
+          <input
+            id={id('phone')}
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
+            className={inputClass}
+            placeholder="10-digit number"
+            value={person.phone}
+            onChange={(e) => update({ phone: e.target.value.replace(/[^0-9]/g, '') })}
+            disabled={isSubmitting}
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor={id('whatsapp')} className={labelClass}>WhatsApp number *</label>
+          <input
+            id={id('whatsapp')}
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
+            className={inputClass}
+            placeholder="10-digit number"
+            value={person.whatsapp}
+            onChange={(e) => update({ whatsapp: e.target.value.replace(/[^0-9]/g, '') })}
+            disabled={isSubmitting}
+            required
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label htmlFor={id('email')} className={labelClass}>Email *</label>
+          <input
+            id={id('email')}
+            type="email"
+            className={inputClass}
+            placeholder="email@example.com"
+            value={person.email}
+            onChange={(e) => update({ email: e.target.value })}
+            disabled={isSubmitting}
+            required
+          />
+        </div>
+      </div>
+    )
+  }
+
+  const stepMotion = {
+    initial: { opacity: 0, x: 24 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -24 },
+    transition: { duration: 0.25 },
+  }
+
+  // Registration closed view
   if (REGISTRATION_CLOSED) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
-      >
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
         <SEO title="Team Registration" description="Register your team for ICCT'27." />
-        <div className="container mx-auto max-w-6xl">
-          {/* Header */}
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="text-center mb-12"
-          >
-            <h1 className="font-heading text-6xl md:text-7xl text-accent mb-4">
-              Team Registration
-            </h1>
-            <p className="font-subheading text-xl text-gray-300">
-              Closed
-            </p>
-          </motion.div>
-
-          {/* Coming Soon Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-2xl p-12 md:p-16 text-center border-2 border-accent/40 shadow-2xl shadow-accent/30 bg-gradient-to-br from-accent/20 via-accent/10 to-transparent backdrop-blur-xl glass-effect"
-          >
-            {/* Animated Icon */}
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="mb-8"
-            >
-              <div className="inline-block">
-                <div className="text-6xl md:text-8xl font-heading text-accent mb-6">🔒</div>
-              </div>
-            </motion.div>
-
-            {/* Main Message */}
-            <h2 className="font-heading text-4xl md:text-5xl text-accent mb-6">
-              Registration Closed
-            </h2>
-            
-            <p className="font-body text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl mx-auto">
-              Team registrations for the ICCT ’27 Inter Church Cricket Tournament are now officially closed. Please stay tuned for further updates and announcements.
-            </p>
-
-            {/* Follow Updates */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="font-body text-gray-400 text-sm md:text-base mt-12"
-            >
-              Follow us on social media for latest announcements and updates
-            </motion.p>
-          </motion.div>
-        </div>
+        <PageHero eyebrow="Registration" title="Registration closed" />
+        <section className="bg-surface py-16 text-ink">
+          <div className="page-container max-w-2xl">
+            <div className="card-light flex flex-col items-center p-10 text-center">
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-ink text-gold">
+                <Lock className="h-8 w-8" />
+              </span>
+              <h2 className="mt-6 text-4xl text-ink">Entries are closed</h2>
+              <p className="mt-3 max-w-md text-muted-dark">
+                Team registrations for ICCT'27 are now closed. Follow us on social media for fixtures and announcements.
+              </p>
+            </div>
+          </div>
+        </section>
       </motion.div>
     )
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
-      className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
-    >
+    <motion.div initial={{ opacity: 1 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <SEO title="Team Registration" description="Register your team for ICCT'27." />
-      <div className="container mx-auto max-w-6xl">
-        {/* Header */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-center mb-12"
-        >
-          <h1 className="font-heading text-6xl md:text-7xl text-accent mb-4">
-            Team Registration
-          </h1>
-          <p className="font-subheading text-xl text-gray-300">
-            Complete all steps to register your team
-          </p>
 
-          {/* Server connection status (backend may be waking from sleep) */}
-          {backendStatus !== 'awake' && backendStatus !== 'idle' && (
-            <div
-              className={`mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${
-                backendStatus === 'waking'
-                  ? 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/40'
-                  : 'bg-red-500/15 text-red-300 border border-red-500/40'
-              }`}
-              role="status"
-            >
-              {backendStatus === 'waking' ? (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-yellow-300 animate-pulse" />
-                  Connecting to server… you can keep filling the form
-                </>
-              ) : (
-                <>
-                  <span className="w-2 h-2 rounded-full bg-red-400" />
-                  Server not reachable yet.
-                  <button type="button" onClick={() => void warmUpBackend()} className="underline hover:text-white">
-                    Retry
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </motion.div>
-
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="h-3 bg-secondary/50 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-primary via-accent to-accent"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.5 }}
-            />
+      <PageHero
+        eyebrow={`Season 4 · Entry ₹2,027 per team`}
+        title="Register your team"
+        description="Four short steps — team, leaders, players, then review & pay. Takes about 5 minutes."
+      >
+        {/* Server connection status (backend may be waking from sleep) */}
+        {backendStatus !== 'awake' && backendStatus !== 'idle' && (
+          <div
+            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-left text-sm font-semibold sm:rounded-full ${
+              backendStatus === 'waking'
+                ? 'border-gold/40 bg-gold/10 text-gold'
+                : 'border-flame/40 bg-flame/10 text-flame-light'
+            }`}
+            role="status"
+          >
+            {backendStatus === 'waking' ? (
+              <>
+                <span className="h-2 w-2 rounded-full bg-gold animate-live-dot" />
+                Connecting to server… you can keep filling the form
+              </>
+            ) : (
+              <>
+                <span className="h-2 w-2 rounded-full bg-flame-light" />
+                Server not reachable yet.
+                <button type="button" onClick={() => void warmUpBackend()} className="underline hover:text-white">
+                  Retry
+                </button>
+              </>
+            )}
           </div>
-          <div className="flex justify-between mt-4">
-            {steps.map((step) => (
-              <div
-                key={step.number}
-                className={`flex flex-col items-center transition-all duration-300 ${
-                  currentStep >= step.number - 1 ? 'opacity-100' : 'opacity-40'
-                }`}
-              >
-                <div
-                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold mb-2 transition-all duration-300 ${
-                    currentStep >= step.number - 1
-                      ? 'bg-gradient-gold text-primary shadow-[0_0_20px_rgba(255,204,41,0.5)]'
-                      : 'bg-secondary text-gray-500'
-                  }`}
-                >
-                  {currentStep > step.number ? <CheckCircle className="w-6 h-6" /> : step.number}
-                </div>
-                <span className="text-xs md:text-sm font-subheading font-semibold text-white text-center hidden md:block">
-                  {step.title}
+        )}
+      </PageHero>
+
+      <section className="bg-surface py-10 text-ink md:py-14">
+        <div className="page-container max-w-3xl">
+          {/* ===== Stepper ===== */}
+          <div className="mb-6">
+            <ol className="hidden items-center sm:flex">
+              {steps.map((step, i) => {
+                const done = currentStep > i
+                const active = currentStep === i
+                return (
+                  <li key={step.number} className={`flex items-center ${i < steps.length - 1 ? 'flex-1' : ''}`}>
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors ${
+                          done
+                            ? 'bg-pitch text-white'
+                            : active
+                              ? 'bg-ink text-gold ring-4 ring-gold/30'
+                              : 'border-2 border-surface-line bg-white text-muted-dark'
+                        }`}
+                      >
+                        {done ? <Check className="h-4 w-4" strokeWidth={3} /> : step.number}
+                      </span>
+                      <span className={`text-sm font-semibold ${active ? 'text-ink' : 'text-muted-dark'}`}>{step.title}</span>
+                    </div>
+                    {i < steps.length - 1 && (
+                      <span className={`mx-3 h-0.5 flex-1 rounded-full ${done ? 'bg-pitch' : 'bg-surface-line'}`} />
+                    )}
+                  </li>
+                )
+              })}
+            </ol>
+
+            {/* Mobile: compact label + bar */}
+            <div className="sm:hidden">
+              <div className="mb-2 flex items-baseline justify-between">
+                <span className="text-sm font-bold text-ink">{steps[currentStep].title}</span>
+                <span className="text-xs font-semibold text-muted-dark">
+                  Step {currentStep + 1} of {totalSteps}
                 </span>
               </div>
-            ))}
+              <div className="h-1.5 overflow-hidden rounded-full bg-surface-line">
+                <motion.div className="h-full rounded-full bg-gold" animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} />
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Form Container */}
-        <div className="max-w-3xl mx-auto">
-          <motion.div
-            initial={{ x: 30, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="glass-card rounded-2xl p-6 md:p-8"
-          >
-            {/* Upload Progress Bar */}
+          {/* ===== Form card ===== */}
+          <div className="card-light p-5 md:p-8">
+            {/* Upload progress */}
             {showProgress && (
-              <DetailedProgressBar
-                progress={uploadProgress}
-                isVisible={showProgress}
-                className="mb-6"
-              />
+              <div className="mb-6 rounded-xl border border-surface-line bg-surface p-4">
+                <div className="mb-2 flex justify-between text-sm font-semibold">
+                  <span>{uploadProgress >= 100 ? 'Upload complete — finishing up…' : 'Uploading your registration…'}</span>
+                  <span className="text-ink">{uploadProgress}%</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-surface-line">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${uploadProgress >= 100 ? 'bg-pitch' : 'bg-gold'}`}
+                    style={{ width: `${Math.min(100, uploadProgress)}%` }}
+                  />
+                </div>
+              </div>
             )}
 
             <AnimatePresence mode="wait">
-              {/* Step 1: Team Details */}
+              {/* ---------- Step 1: Team ---------- */}
               {currentStep === 0 && (
-                <motion.div
-                  key="step1"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">Team Information</h3>
-                  <div className="space-y-6 mb-6 text-gray-800">
-                    <div className="bg-blue-50 border-2 border-blue-400 rounded-lg p-4">
-                      <p className="text-blue-800 font-semibold text-sm mb-2">Registration Overview</p>
-                      <p className="text-blue-700 text-sm mb-3">
-                        Complete the team details, captain and vice-captain information, player details, payment, and receipt upload to submit your registration.
-                      </p>
-                    </div>
+                <motion.div key="step1" {...stepMotion}>
+                  <h2 className="text-3xl text-ink md:text-4xl">Team information</h2>
+                  <p className="mt-1 text-sm text-muted-dark">One team per church. Pick your church and name your team.</p>
 
-                    <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4">
-                      <p className="text-green-800 font-semibold text-sm mb-3">Rules and Regulations</p>
-                      <ul className="list-disc list-inside space-y-2 text-green-700 text-sm">
-                        <li>Matches will be played using a <strong>Red Tennis Ball</strong> format</li>
-                        <li>Each team can have a <strong>maximum of 17 players</strong></li>
-                        <li>There is <strong>no age limit</strong> for participation</li>
-                        <li>Each team will play <strong>10 overs per side</strong></li>
-                        <li><strong>Powerplay (Overs 1–2):</strong> Only <strong>2 fielders</strong> are allowed outside the <strong>30-yard circle</strong></li>
-                        <li><strong>Second Powerplay:</strong> Can be taken in any one over between <strong>Overs 6, 7, or 8</strong>; only <strong>5 fielders</strong> are allowed outside the <strong>30-yard circle</strong></li>
-                        <li>A bowler can bowl a <strong>maximum of 3 overs</strong> in a match</li>
-                        <li>If a match ends in a tie, a <strong>Super Over</strong> will be played to decide the winner</li>
-                        <li>The <strong>Umpire&apos;s decision</strong> is final</li>
-                      </ul>
-                    </div>
-
-                    <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
-                      <p className="text-yellow-800 font-semibold text-sm mb-2">Important</p>
-                      <p className="text-yellow-700 text-sm">
-                        By proceeding with registration, you agree to comply with all tournament rules and regulations. All submitted information must be accurate and authentic.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 mb-6 p-3 bg-yellow-50 rounded-lg border-2 border-yellow-200">
-                    <input type="checkbox" id="acceptTerms" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-600" />
-                    <label htmlFor="acceptTerms" className="text-gray-800 font-medium text-sm">I agree to the tournament rules and regulations and confirm that all information I provide will be accurate and authentic.</label>
-                  </div>
-                  <div className="space-y-6">
-                    <div className="space-y-3">
-                      <SearchableSelect
-                        options={CHURCH_NAMES}
-                        value={formData.churchName}
-                        onChange={(value) => {
-                          clearValidationErrors()
-                          setChurchLimitError('')
-                          setFormData({ ...formData, churchName: value })
-                        }}
-                        label="Church Name"
-                        placeholder="Search and select your church..."
-                        disabled={isSubmitting || loadingChurches}
-                        disabledOptions={
-                          churchAvailability
-                            ?.filter(c => c.locked)
-                            .map(c => c.church_name) || []
-                        }
-                        optionCapacities={
-                          churchAvailability?.reduce((acc, church) => {
-                            acc[church.church_name] = `${church.team_count}/1`
-                            return acc
-                          }, {} as Record<string, string>) || {}
-                        }
-                        required
-                      />
-                    </div>
+                  <div className="mt-6 space-y-5">
+                    <SearchableSelect
+                      options={CHURCH_NAMES}
+                      value={formData.churchName}
+                      onChange={(value) => {
+                        clearValidationErrors()
+                        setChurchLimitError('')
+                        setFormData({ ...formData, churchName: value })
+                      }}
+                      label="Church name"
+                      placeholder="Search and select your church..."
+                      disabled={isSubmitting || loadingChurches}
+                      disabledOptions={churchAvailability?.filter((c) => c.locked).map((c) => c.church_name) || []}
+                      optionCapacities={
+                        churchAvailability?.reduce((acc, church) => {
+                          acc[church.church_name] = `${church.team_count}/1`
+                          return acc
+                        }, {} as Record<string, string>) || {}
+                      }
+                      required
+                    />
 
                     <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Team Name *
-                      </label>
+                      <label htmlFor="teamName" className={labelClass}>Team name *</label>
                       <input
+                        id="teamName"
                         type="text"
-                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                        placeholder="Enter team name (3-80 characters)"
+                        className={inputClass}
+                        placeholder="3–80 characters"
                         value={formData.teamName}
                         onChange={(e) => {
                           clearValidationErrors()
@@ -942,637 +959,358 @@ const Registration = () => {
                         required
                       />
                     </div>
-
                   </div>
+
+                  {/* Key rules */}
+                  <details className="group mt-8 rounded-xl border border-surface-line bg-surface" open>
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+                      <span className="flex items-center gap-2 font-semibold text-ink">
+                        <ShieldCheck className="h-5 w-5 text-pitch" /> Key rules
+                      </span>
+                      <ChevronDown className="h-5 w-5 text-muted-dark transition-transform group-open:rotate-180" />
+                    </summary>
+                    <ul className="space-y-2.5 border-t border-surface-line px-4 py-4 text-sm text-ink/80">
+                      {KEY_RULES.map((rule, i) => (
+                        <li key={i} className="flex gap-3">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
+                          <span>{rule}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="border-t border-surface-line px-4 py-3">
+                      <Link to="/rules" className="inline-flex items-center gap-1 text-sm font-semibold text-ink hover:underline">
+                        Read the full rules <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  </details>
+
+                  <label
+                    htmlFor="acceptTerms"
+                    className={`mt-5 flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${
+                      acceptTerms ? 'border-pitch/50 bg-pitch/5' : 'border-surface-line bg-white hover:border-ink/30'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      id="acceptTerms"
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-surface-line accent-[#0A1F44]"
+                    />
+                    <span className="text-sm font-medium text-ink">
+                      I agree to the tournament rules and confirm that all information I provide is accurate and authentic.
+                    </span>
+                  </label>
                 </motion.div>
               )}
 
-              {/* Step 3: Captain & Vice-Captain */}
+              {/* ---------- Step 2: Captain & Vice-Captain ---------- */}
               {currentStep === 1 && (
-                <motion.div
-                  key="step2"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">
-                    Captain & Vice-Captain
-                  </h3>
-                  <div className="space-y-8">
-                    <div className="bg-blue-50 rounded-xl p-6">
-                      <h4 className="font-subheading font-bold text-primary text-xl mb-4">
-                        Captain Details
-                      </h4>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                            placeholder="Captain's name"
-                            value={formData.captain.name}
-                            onChange={(e) => {
-                              clearValidationErrors()
-                              setFormData({
-                                ...formData,
-                                captain: { ...formData.captain, name: e.target.value }
-                              })
-                            }}
-                            disabled={isSubmitting}
-                            required
-                          />
-                        </div>
+                <motion.div key="step2" {...stepMotion}>
+                  <h2 className="text-3xl text-ink md:text-4xl">Captain &amp; vice-captain</h2>
+                  <p className="mt-1 text-sm text-muted-dark">We'll send the confirmation and Team ID to the captain's email.</p>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Phone Number (10 digits) *
-                            </label>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              maxLength={10}
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                              placeholder="Enter 10-digit number"
-                              value={formData.captain.phone}
-                              onChange={(e) => {
-                                clearValidationErrors()
-                                const value = e.target.value.replace(/[^0-9]/g, '')
-                                setFormData({
-                                  ...formData,
-                                  captain: { ...formData.captain, phone: value }
-                                })
-                              }}
-                              disabled={isSubmitting}
-                              required
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              WhatsApp Number (10 digits) *
-                            </label>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              maxLength={10}
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                              placeholder="Enter 10-digit number"
-                              value={formData.captain.whatsapp}
-                              onChange={(e) => {
-                                clearValidationErrors()
-                                const value = e.target.value.replace(/[^0-9]/g, '')
-                                setFormData({
-                                  ...formData,
-                                  captain: { ...formData.captain, whatsapp: value }
-                                })
-                              }}
-                              disabled={isSubmitting}
-                              required
-                            />
-                          </div>
+                  <div className="mt-6 space-y-6">
+                    {(['captain', 'viceCaptain'] as const).map((role) => (
+                      <div key={role} className="rounded-xl border border-surface-line p-5">
+                        <div className="mb-4 flex items-center gap-3">
+                          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink font-display text-lg text-gold">
+                            {role === 'captain' ? 'C' : 'VC'}
+                          </span>
+                          <h3 className="text-2xl text-ink">{role === 'captain' ? 'Captain' : 'Vice-Captain'}</h3>
                         </div>
-
-                        <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Email *
-                          </label>
-                          <input
-                            type="email"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                            placeholder="email@example.com"
-                            value={formData.captain.email}
-                            onChange={(e) => {
-                              clearValidationErrors()
-                              setFormData({
-                                ...formData,
-                                captain: { ...formData.captain, email: e.target.value }
-                              })
-                            }}
-                            disabled={isSubmitting}
-                            required
-                          />
-                        </div>
+                        {renderContactFields(role)}
                       </div>
-                    </div>
-
-                    <div className="bg-green-50 rounded-xl p-6">
-                      <h4 className="font-subheading font-bold text-green-700 text-xl mb-4">
-                        Vice-Captain Details
-                      </h4>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                            placeholder="Vice-Captain's name"
-                            value={formData.viceCaptain.name}
-                            onChange={(e) => {
-                              clearValidationErrors()
-                              setFormData({
-                                ...formData,
-                                viceCaptain: { ...formData.viceCaptain, name: e.target.value }
-                              })
-                            }}
-                            disabled={isSubmitting}
-                            required
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Phone Number (10 digits) *
-                            </label>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              maxLength={10}
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                              placeholder="Enter 10-digit number"
-                              value={formData.viceCaptain.phone}
-                              onChange={(e) => {
-                                clearValidationErrors()
-                                const value = e.target.value.replace(/[^0-9]/g, '')
-                                setFormData({
-                                  ...formData,
-                                  viceCaptain: { ...formData.viceCaptain, phone: value }
-                                })
-                              }}
-                              disabled={isSubmitting}
-                              required
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              WhatsApp Number (10 digits) *
-                            </label>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              maxLength={10}
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                              placeholder="Enter 10-digit number"
-                              value={formData.viceCaptain.whatsapp}
-                              onChange={(e) => {
-                                clearValidationErrors()
-                                const value = e.target.value.replace(/[^0-9]/g, '')
-                                setFormData({
-                                  ...formData,
-                                  viceCaptain: { ...formData.viceCaptain, whatsapp: value }
-                                })
-                              }}
-                              disabled={isSubmitting}
-                              required
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Email *
-                          </label>
-                          <input
-                            type="email"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                            placeholder="email@example.com"
-                            value={formData.viceCaptain.email}
-                            onChange={(e) => {
-                              clearValidationErrors()
-                              setFormData({
-                                ...formData,
-                                viceCaptain: { ...formData.viceCaptain, email: e.target.value }
-                              })
-                            }}
-                            disabled={isSubmitting}
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 4: Player Details */}
+              {/* ---------- Step 3: Players ---------- */}
               {currentStep === 2 && (
-                <motion.div
-                  key="step3"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                  className="max-h-[600px] overflow-y-auto overflow-x-hidden"
-                >
-                  <div className="sticky top-0 bg-white pb-4 mb-4 z-10">
-                    <h3 className="font-heading text-3xl text-primary mb-2">Player Details</h3>
-                    <p className="text-sm text-gray-600">
-                      Add 13-17 players (Captain & Vice-Captain included)
-                    </p>
+                <motion.div key="step3" {...stepMotion}>
+                  <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                      <h2 className="text-3xl text-ink md:text-4xl">Players</h2>
+                      <p className="mt-1 text-sm text-muted-dark">
+                        {MIN_PLAYERS}–{MAX_PLAYERS} players, including captain &amp; vice-captain.
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                        formData.players.length >= MAX_PLAYERS ? 'bg-gold/20 text-ink' : 'bg-surface text-muted-dark'
+                      }`}
+                    >
+                      {formData.players.length} / {MAX_PLAYERS} players
+                    </span>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
                     {formData.players.map((player, index) => (
                       <PlayerFormCard
                         key={index}
                         playerNumber={index + 1}
                         player={player}
                         onChange={(data) => updatePlayer(index, data)}
-                        onRemove={index === formData.players.length - 1 && formData.players.length > MIN_PLAYERS ? removeLastPlayer : undefined}
+                        onRemove={removeLastPlayer}
                         canRemove={index === formData.players.length - 1 && formData.players.length > MIN_PLAYERS}
+                        disabled={isSubmitting}
                       />
                     ))}
                   </div>
 
                   {formData.players.length < MAX_PLAYERS && (
                     <button
+                      type="button"
                       onClick={addPlayer}
                       disabled={isSubmitting}
-                      className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary hover:shadow-lg hover:shadow-primary/50 text-white font-subheading font-semibold rounded-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink/20 py-3 text-sm font-bold uppercase tracking-wider text-ink transition-colors hover:border-ink hover:bg-ink hover:text-white disabled:opacity-50"
                     >
-                      <Plus className="w-5 h-5" />
-                      Add Player
+                      <Plus className="h-4 w-4" /> Add player
                     </button>
                   )}
                 </motion.div>
               )}
 
-              {/* Step 4: Review (top) → Payment & Submit (below) */}
+              {/* ---------- Step 4: Review (top) → Payment & Submit (below) ---------- */}
               {currentStep === 3 && (
-                <motion.div
-                  key="step4"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-10"
-                >
-                  {/* ===== SECTION A: REVIEW ===== */}
+                <motion.div key="step4" {...stepMotion} className="space-y-10">
+                  {/* A. Review — styled as a team sheet */}
                   <section>
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">A</span>
-                      <h3 className="font-heading text-3xl text-primary">Review Your Details</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-6">
-                      Check everything carefully. Use <strong>Previous</strong> to make changes. Payment is further below.
+                    <p className="text-eyebrow uppercase text-flame">Part A</p>
+                    <h2 className="mt-1 text-3xl text-ink md:text-4xl">Review your team sheet</h2>
+                    <p className="mt-1 text-sm text-muted-dark">
+                      Check everything carefully. Use <strong>Previous</strong> to make changes. Payment is below.
                     </p>
 
-                    {/* Team */}
-                    <div className="rounded-xl border-2 border-primary/20 bg-blue-50 p-5 mb-4">
-                      <p className="text-xs uppercase tracking-wider font-bold text-primary/70 mb-3">Team</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-800">
-                        <div>
-                          <p className="text-xs text-gray-500">Team Name</p>
-                          <p className="font-subheading font-bold text-lg break-words">{formData.teamName || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">Church</p>
-                          <p className="font-subheading font-semibold break-words">{formData.churchName || 'N/A'}</p>
-                        </div>
+                    <div className="mt-6 overflow-hidden rounded-2xl border border-surface-line">
+                      {/* Sheet header */}
+                      <div className="bg-ink px-5 py-5 text-white">
+                        <p className="text-eyebrow uppercase text-gold">{formData.churchName || 'Church not selected'}</p>
+                        <p className="mt-1 break-words font-display text-4xl leading-tight">{formData.teamName || 'Team name'}</p>
                       </div>
-                    </div>
 
-                    {/* Captain & Vice-Captain */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      {[
-                        { label: 'Captain', data: formData.captain, tone: 'bg-blue-50 border-blue-200' },
-                        { label: 'Vice-Captain', data: formData.viceCaptain, tone: 'bg-green-50 border-green-200' },
-                      ].map(({ label, data, tone }) => (
-                        <div key={label} className={`rounded-xl border-2 p-5 ${tone}`}>
-                          <p className="text-xs uppercase tracking-wider font-bold text-gray-500 mb-2">{label}</p>
-                          <p className="font-subheading font-bold text-lg text-gray-900 mb-3 break-words">{data.name || 'N/A'}</p>
-                          <dl className="space-y-1 text-sm text-gray-700">
-                            <div className="flex gap-2"><dt className="text-gray-500 w-20 shrink-0">Phone</dt><dd className="break-all">{data.phone || 'N/A'}</dd></div>
-                            <div className="flex gap-2"><dt className="text-gray-500 w-20 shrink-0">WhatsApp</dt><dd className="break-all">{data.whatsapp || 'N/A'}</dd></div>
-                            <div className="flex gap-2"><dt className="text-gray-500 w-20 shrink-0">Email</dt><dd className="break-all">{data.email || 'N/A'}</dd></div>
-                          </dl>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Players */}
-                    <div className="rounded-xl border-2 border-gray-200 bg-white p-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs uppercase tracking-wider font-bold text-gray-500">Players</p>
-                        <span className="text-xs font-bold bg-primary text-white px-3 py-1 rounded-full">
-                          {formData.players.length} total
-                        </span>
+                      {/* Leaders */}
+                      <div className="grid divide-y divide-surface-line md:grid-cols-2 md:divide-x md:divide-y-0">
+                        {(['captain', 'viceCaptain'] as const).map((role) => {
+                          const p = formData[role]
+                          return (
+                            <div key={role} className="p-5">
+                              <p className="text-eyebrow uppercase text-muted-dark">{role === 'captain' ? 'Captain' : 'Vice-Captain'}</p>
+                              <p className="mt-1 break-words text-lg font-bold text-ink">{p.name || 'N/A'}</p>
+                              <dl className="mt-2 space-y-1 text-sm text-ink/80">
+                                <div className="flex gap-2"><dt className="w-20 shrink-0 text-muted-dark">Phone</dt><dd className="break-all">{p.phone || 'N/A'}</dd></div>
+                                <div className="flex gap-2"><dt className="w-20 shrink-0 text-muted-dark">WhatsApp</dt><dd className="break-all">{p.whatsapp || 'N/A'}</dd></div>
+                                <div className="flex gap-2"><dt className="w-20 shrink-0 text-muted-dark">Email</dt><dd className="break-all">{p.email || 'N/A'}</dd></div>
+                              </dl>
+                            </div>
+                          )
+                        })}
                       </div>
-                      <ol className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {formData.players.map((player, index) => (
-                          <li key={index} className="flex items-center gap-3 rounded-lg bg-gray-50 px-3 py-2">
-                            <span className="w-7 h-7 shrink-0 rounded-full bg-accent text-primary text-xs font-bold flex items-center justify-center">
-                              {index + 1}
-                            </span>
-                            <span className="text-gray-800 font-medium break-words">{player.name || 'N/A'}</span>
-                          </li>
-                        ))}
-                      </ol>
+
+                      {/* Squad */}
+                      <div className="border-t border-surface-line bg-surface p-5">
+                        <div className="mb-3 flex items-center justify-between">
+                          <p className="text-eyebrow uppercase text-muted-dark">Squad</p>
+                          <span className="rounded-full bg-ink px-3 py-1 text-xs font-bold text-white">
+                            {formData.players.length} players
+                          </span>
+                        </div>
+                        <ol className="grid gap-2 sm:grid-cols-2">
+                          {formData.players.map((player, index) => (
+                            <li key={index} className="flex items-center gap-3 rounded-lg bg-white px-3 py-2">
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gold font-display text-sm text-ink">
+                                {index + 1}
+                              </span>
+                              <span className="break-words font-medium text-ink">{player.name || 'N/A'}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
                     </div>
                   </section>
 
-                  {/* ===== SECTION B: PAYMENT & SUBMIT ===== */}
-                  <section className="pt-8 border-t-2 border-dashed border-gray-300">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">B</span>
-                      <h3 className="font-heading text-3xl text-primary">Payment & Submit</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-6">
-                      Pay the registration fee, upload the receipt, then press <strong>Submit</strong>.
+                  {/* B. Payment & Submit */}
+                  <section className="border-t-2 border-dashed border-surface-line pt-10">
+                    <p className="text-eyebrow uppercase text-flame">Part B</p>
+                    <h2 className="mt-1 text-3xl text-ink md:text-4xl">Payment &amp; submit</h2>
+                    <p className="mt-1 text-sm text-muted-dark">
+                      Pay the entry fee, upload the receipt, then press <strong>Submit</strong>.
                     </p>
 
-                    <div className="bg-blue-50 border-l-4 border-primary p-4 rounded mb-6 flex items-center justify-between gap-4">
-                      <p className="font-subheading text-primary font-semibold">Registration Fee</p>
-                      <p className="text-green-600 font-bold text-xl">₹2,027</p>
-                    </div>
-
-                    <div className="flex flex-col items-center justify-center mb-6">
-                      <div className="bg-white p-4 rounded-xl shadow-lg mb-3 border-2 border-primary">
+                    <div className="mt-6 grid items-center gap-6 rounded-2xl border border-surface-line p-5 md:grid-cols-[auto,1fr]">
+                      <div className="mx-auto rounded-xl border-2 border-ink p-3">
                         <img
                           src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=9944257713@kotak811%26pn=ICCT27%26am=2027%26cu=INR%26tn=ICCT%2727%20Team%20Registration"
-                          alt="Payment QR Code"
-                          className="w-56 h-56 md:w-64 md:h-64 object-cover rounded-lg"
+                          alt="UPI payment QR code for ₹2,027"
+                          className="h-52 w-52 md:h-56 md:w-56"
                         />
                       </div>
-                      <p className="text-center font-subheading text-gray-600">Scan with any UPI app</p>
+                      <div className="text-center md:text-left">
+                        <p className="text-eyebrow uppercase text-muted-dark">Entry fee</p>
+                        <p className="font-display text-6xl leading-none text-ink">₹2,027</p>
+                        <p className="mt-2 flex items-center justify-center gap-2 text-sm text-muted-dark md:justify-start">
+                          <QrCode className="h-4 w-4" /> Scan with any UPI app (GPay, PhonePe, Paytm…)
+                        </p>
+                        <p className="mt-1 text-sm text-muted-dark">Take a screenshot of the successful payment.</p>
+                      </div>
                     </div>
 
-                    <div className="mb-6">
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Upload Payment Receipt * (Required)
-                      </label>
+                    <div className="mt-6">
+                      <label className={labelClass}>Upload payment receipt *</label>
                       <FileUpload
                         file={formData.paymentReceipt}
                         onFileChange={handleFileChange}
                         accept=".jpg,.jpeg,.png,.pdf"
-                        placeholder="Upload Receipt"
+                        placeholder="Tap to upload or drag the receipt here"
                       />
                     </div>
 
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-                      <p className="text-sm text-yellow-800">
-                        <strong>Note:</strong> By submitting this form, you agree to the tournament
-                        rules and regulations. All information provided must be accurate.
-                      </p>
-                    </div>
+                    <p className="mt-6 rounded-xl bg-gold/15 px-4 py-3 text-sm text-ink">
+                      By submitting, you agree to the tournament rules. All information provided must be accurate.
+                    </p>
                   </section>
                 </motion.div>
               )}
-
             </AnimatePresence>
 
-            {/* Validation Errors Display */}
+            {/* Validation errors */}
             {validationErrors.length > 0 && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg max-h-64 overflow-y-auto"
+                className="mt-6 max-h-64 overflow-y-auto rounded-xl border border-flame/30 bg-flame/5 p-4"
+                role="alert"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <h4 className="text-red-700 font-semibold">Please fix the following errors:</h4>
+                <div className="mb-2 flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-flame" />
+                  <h4 className="font-body text-base font-bold text-flame-dark">Please fix the following:</h4>
                 </div>
-                <ul className="space-y-1">
+                <ul className="space-y-1 pl-7 text-sm text-flame-dark">
                   {validationErrors.map((error, index) => (
-                    <li key={index} className="text-red-600 text-sm">
-                      • {error.error}
-                    </li>
+                    <li key={index} className="list-disc">{error.error}</li>
                   ))}
                 </ul>
               </motion.div>
             )}
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+            {/* Navigation */}
+            <div className="mt-8 flex items-center justify-between gap-3 border-t border-surface-line pt-6">
               <button
+                type="button"
                 onClick={handlePrevious}
                 disabled={currentStep === 0 || isSubmitting}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-subheading font-semibold transition-all ${
-                  currentStep === 0 || isSubmitting
-                    ? 'opacity-50 cursor-not-allowed bg-gray-200 text-gray-500'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                className="btn flex-1 border-2 border-surface-line !px-4 text-ink hover:border-ink disabled:hover:border-surface-line sm:flex-none sm:!px-6"
               >
-                <ChevronLeft className="w-5 h-5" />
-                Previous
+                <ChevronLeft className="h-5 w-5" /> <span>Previous</span>
               </button>
 
-              <button
-                onClick={handleNext}
-                disabled={isSubmitting}
-                className={`flex items-center gap-2 btn-gold ${
-                  isSubmitting
-                    ? 'opacity-60 cursor-not-allowed' 
-                    : ''
-                }`}
-                title={''}
-              >
+              <button type="button" onClick={handleNext} disabled={isSubmitting} className="btn-gold flex-1 !px-4 sm:min-w-[9rem] sm:flex-none sm:!px-6">
                 {isSubmitting ? (
-                  <span className="inline-flex items-center gap-2 text-black">
-                    <svg
-                      className="w-4 h-4 animate-spin text-black"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                      ></path>
-                    </svg>
-                    {waitingForServer ? 'Connecting to server...' : 'Submitting...'}
-                  </span>
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink border-t-transparent" />
+                    {waitingForServer ? (<><span className="sm:hidden">Connecting…</span><span className="hidden sm:inline">Connecting to server…</span></>) : 'Submitting…'}
+                  </>
+                ) : currentStep === totalSteps - 1 ? (
+                  <>
+                    Submit <Send className="h-4 w-4" />
+                  </>
                 ) : (
                   <>
-                    {currentStep === 3 ? 'Submit' : 'Next'}
-                    {currentStep < totalSteps - 1 && <ChevronRight className="w-5 h-5" />}
+                    Next <ChevronRight className="h-5 w-5" />
                   </>
                 )}
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Success Modal */}
+      {/* ===== Success: registration "ticket" ===== */}
       <AnimatePresence>
         {showSuccess && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm"
           >
             <motion.div
-              initial={{ scale: 0.8, opacity: 0, rotate: -5 }}
-              animate={{ scale: 1, opacity: 1, rotate: 0 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: 'spring', duration: 0.6 }}
-              className="glass-card rounded-2xl p-6 md:p-8 max-w-lg w-full text-center relative overflow-x-hidden overflow-y-auto max-h-[90vh]"
+              initial={{ y: 24, opacity: 0, scale: 0.97 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 24, opacity: 0 }}
+              transition={{ type: 'spring', duration: 0.5 }}
+              className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white text-ink shadow-2xl"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Registration submitted"
             >
-              {/* Animated background elements */}
-              <motion.div
-                className="absolute top-0 left-0 w-full h-full"
-                animate={{
-                  background: [
-                    'radial-gradient(circle at 20% 30%, rgba(255, 204, 41, 0.15) 0%, transparent 50%)',
-                    'radial-gradient(circle at 80% 70%, rgba(255, 204, 41, 0.15) 0%, transparent 50%)',
-                    'radial-gradient(circle at 20% 30%, rgba(255, 204, 41, 0.15) 0%, transparent 50%)'
-                  ]
-                }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              
-              {/* Success icon with animation */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                className="w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl relative"
-              >
-                <CheckCircle className="w-14 h-14 text-white" />
-                <motion.div
-                  className="absolute inset-0 rounded-full border-4 border-green-400"
-                  animate={{ scale: [1, 1.3, 1], opacity: [1, 0, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              </motion.div>
-              
-              {/* Sparkles decoration */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="flex items-center justify-center gap-2 mb-4"
-              >
-                <Sparkles className="w-5 h-5 text-accent" />
-                <Sparkles className="w-4 h-4 text-accent" />
-                <Sparkles className="w-5 h-5 text-accent" />
-              </motion.div>
-              
-              <motion.h2
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="font-heading text-4xl text-primary mb-3 tracking-wide"
-              >
-                Registration Submitted!
-              </motion.h2>
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="font-heading text-5xl bg-gradient-to-r from-accent via-yellow-500 to-accent bg-clip-text text-transparent mb-6 tracking-wider"
-                style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-              >
-                {formData.teamName}
-              </motion.div>
-              <motion.p
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="font-subheading text-lg text-gray-700 mb-6"
-              >
-                🎉 Your registration has been received! 🏏
-              </motion.p>
+              {/* Ticket head */}
+              <div className="relative bg-ink px-6 pb-8 pt-7 text-center text-white">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-pitch">
+                  <Check className="h-8 w-8" strokeWidth={3} />
+                </span>
+                <p className="mt-4 text-eyebrow uppercase text-gold">Registration submitted</p>
+                <p className="mt-1 break-words font-display text-4xl leading-tight">{formData.teamName}</p>
+                <p className="mt-1 text-sm text-muted">{formData.churchName}</p>
+              </div>
 
-              {/* Team ID */}
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.55 }}
-                className="relative rounded-xl p-5 mb-4 bg-primary text-white shadow-lg"
-              >
-                <p className="text-xs uppercase tracking-widest text-white/70 mb-1">Team ID</p>
-                {registeredTeamId && registeredTeamId !== 'PENDING' ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <p className="font-heading text-4xl tracking-wider text-accent break-all">{registeredTeamId}</p>
-                    <button
-                      type="button"
-                      onClick={() => { void navigator.clipboard?.writeText(registeredTeamId) }}
-                      className="text-xs px-2 py-1 rounded bg-white/15 hover:bg-white/25"
-                      title="Copy Team ID"
-                    >
-                      Copy
-                    </button>
-                  </div>
-                ) : (
-                  <p className="font-subheading text-lg text-accent">Will be emailed after approval</p>
-                )}
-                <p className="text-xs text-white/70 mt-2">Save this ID for all future communication.</p>
-              </motion.div>
-
-              {/* Registration summary */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="relative text-left rounded-xl border border-gray-200 bg-white/80 p-4 mb-4 text-sm text-gray-700 space-y-2"
-              >
-                <div className="flex justify-between gap-4"><span className="text-gray-500">Team</span><span className="font-semibold text-right break-words">{formData.teamName}</span></div>
-                <div className="flex justify-between gap-4"><span className="text-gray-500">Church</span><span className="font-semibold text-right break-words">{formData.churchName}</span></div>
-                <div className="flex justify-between gap-4"><span className="text-gray-500">Captain</span><span className="font-semibold text-right break-words">{formData.captain.name}</span></div>
-                <div className="flex justify-between gap-4"><span className="text-gray-500">Vice-Captain</span><span className="font-semibold text-right break-words">{formData.viceCaptain.name}</span></div>
-                <div className="flex justify-between gap-4"><span className="text-gray-500">Players</span><span className="font-semibold">{formData.players.length}</span></div>
-                <div className="flex justify-between gap-4 items-center">
-                  <span className="text-gray-500">Status</span>
-                  <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full ${
-                    registeredStatus === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                  }`}>
-                    {registeredStatus === 'confirmed' ? 'Confirmed' : 'Pending Admin Approval'}
-                  </span>
+              <div className="border-t-2 border-dashed border-surface-line px-6 py-6">
+                {/* Team ID */}
+                <div className="rounded-2xl bg-surface p-4 text-center">
+                  <p className="text-eyebrow uppercase text-muted-dark">Team ID</p>
+                  {registeredTeamId && registeredTeamId !== 'PENDING' ? (
+                    <div className="mt-1 flex items-center justify-center gap-3">
+                      <p className="break-all font-display text-4xl tracking-wider text-ink">{registeredTeamId}</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void navigator.clipboard?.writeText(registeredTeamId)
+                        }}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-surface-line text-ink hover:bg-ink hover:text-white"
+                        title="Copy Team ID"
+                        aria-label="Copy Team ID"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="mt-1 font-semibold text-ink">Will be emailed after approval</p>
+                  )}
+                  <p className="mt-1 text-xs text-muted-dark">Screenshot this and keep the ID for all communication.</p>
                 </div>
-              </motion.div>
 
-              {/* Email Confirmation Notice */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.8 }}
-                className="mb-6 p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-300"
-              >
-                <p className="text-sm text-gray-700 font-medium mb-2">
-                  📧 <strong>Check Your Email</strong>
-                </p>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Confirmation will be sent to: <strong className="text-primary">{formData.captain.email}</strong>
-                  <br/>
-                  <span className="text-blue-600 mt-1 inline-block">Please wait for admin approval. This may take 24-48 hours.</span>
-                </p>
-              </motion.div>
+                {/* Summary */}
+                <dl className="mt-5 space-y-2 text-sm">
+                  <div className="flex justify-between gap-4"><dt className="text-muted-dark">Captain</dt><dd className="break-words text-right font-semibold">{formData.captain.name}</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-muted-dark">Vice-Captain</dt><dd className="break-words text-right font-semibold">{formData.viceCaptain.name}</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-muted-dark">Players</dt><dd className="font-semibold">{formData.players.length}</dd></div>
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-muted-dark">Status</dt>
+                    <dd>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
+                          registeredStatus === 'confirmed' ? 'bg-pitch/15 text-pitch-dark' : 'bg-gold/20 text-ink'
+                        }`}
+                      >
+                        {registeredStatus === 'confirmed' ? 'Confirmed' : 'Pending approval'}
+                      </span>
+                    </dd>
+                  </div>
+                </dl>
 
-              <motion.button
-                type="button"
-                onClick={closeSuccess}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.9 }}
-                className="btn-gold w-full text-lg py-4 shadow-lg"
-              >
-                Close
-              </motion.button>
+                <div className="mt-5 flex gap-3 rounded-xl border border-surface-line p-4 text-sm">
+                  <Mail className="mt-0.5 h-5 w-5 shrink-0 text-ink" />
+                  <p className="text-muted-dark">
+                    Confirmation goes to <strong className="break-all text-ink">{formData.captain.email}</strong> once our team
+                    verifies the payment (usually within 24–48 hours).
+                  </p>
+                </div>
+
+                <button type="button" onClick={closeSuccess} className="btn-gold mt-6 w-full !py-4">
+                  Done
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

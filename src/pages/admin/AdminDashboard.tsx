@@ -14,7 +14,21 @@ import {
   normalizeTeamResponse,
 } from '../../utils/adminTeams'
 import { exportTeamsToExcel } from '../../utils/teamExcel'
-import { Download } from 'lucide-react'
+import {
+  AlertTriangle,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Download,
+  ExternalLink,
+  FileText,
+  Inbox,
+  LogOut,
+  RefreshCw,
+  Search,
+  X,
+} from 'lucide-react'
+import { AdminButton, AdminHeader, useToasts } from '../../components/admin/AdminShell'
 
 type StatusTab = RegistrationStatus | 'all'
 
@@ -30,11 +44,12 @@ const AdminDashboard = () => {
   const [exporting, setExporting] = useState(false)
   const navigate = useNavigate()
   const { logout } = useAdmin()
+  const { notify, toasts } = useToasts()
 
   // Payment receipt thumbnail / badge
   const getReceiptPreview = (url: string) => {
     if (!url) {
-      return <span className="text-red-500 font-semibold text-xs">No Receipt</span>
+      return <span className="text-xs font-semibold text-flame-light">Missing</span>
     }
 
     const open = (e: React.MouseEvent) => {
@@ -47,15 +62,15 @@ const AdminDashboard = () => {
         <img
           src={url}
           alt="Payment receipt"
-          className="w-12 h-12 rounded border-2 border-accent/50 object-cover cursor-pointer hover:border-accent transition-colors"
+          className="h-10 w-10 cursor-pointer rounded-lg border border-white/15 object-cover transition-colors hover:border-gold"
           onClick={open}
         />
       )
     }
 
     return (
-      <button onClick={open} className="text-blue-400 underline text-xs font-semibold">
-        {getFileKind(url) === 'pdf' ? 'PDF' : 'File'}
+      <button onClick={open} className="inline-flex items-center gap-1 text-xs font-semibold text-white/85 hover:text-gold">
+        <FileText className="h-4 w-4" /> {getFileKind(url) === 'pdf' ? 'PDF' : 'File'}
       </button>
     )
   }
@@ -166,14 +181,14 @@ const AdminDashboard = () => {
       const response = await apiService.confirmTeam(teamId)
       
       if (response.success) {
-        alert(`✅ Team approved! Email ${response.email_notification || 'sent'}`)
+        notify('success', `Team approved. Email ${response.email_notification || 'sent'}.`)
         fetchAllTeams() // Refresh list
       } else {
-        alert('❌ Failed to approve team: ' + (response.message || 'Unknown error'))
+        notify('error', 'Failed to approve team: ' + (response.message || 'Unknown error'))
       }
     } catch (error) {
       console.error('Error approving team:', error)
-      alert('❌ Error approving team: ' + (error instanceof Error ? error.message : 'Unknown error'))
+      notify('error', 'Error approving team: ' + (error instanceof Error ? error.message : 'Unknown error'))
     } finally {
       setActionLoading(null)
     }
@@ -191,14 +206,14 @@ const AdminDashboard = () => {
       const response = await apiService.rejectTeam(teamId)
       
       if (response.success) {
-        alert('❌ Team rejected.')
+        notify('info', 'Team rejected. The church slot is free again.')
         fetchAllTeams() // Refresh list
       } else {
-        alert('❌ Failed to reject team: ' + (response.message || 'Unknown error'))
+        notify('error', 'Failed to reject team: ' + (response.message || 'Unknown error'))
       }
     } catch (error) {
       console.error('Error rejecting team:', error)
-      alert('❌ Error rejecting team: ' + (error instanceof Error ? error.message : 'Unknown error'))
+      notify('error', 'Error rejecting team: ' + (error instanceof Error ? error.message : 'Unknown error'))
     } finally {
       setActionLoading(null)
     }
@@ -207,7 +222,7 @@ const AdminDashboard = () => {
   // Export the teams in the current tab (+ search) — one sheet per team
   const handleExportAll = async () => {
     if (displayedTeams.length === 0) {
-      alert('No teams to export in this view.')
+      notify('info', 'No teams to export in this view.')
       return
     }
     setExporting(true)
@@ -245,280 +260,199 @@ const AdminDashboard = () => {
   const confirmedCount = allTeams.filter(t => t.registrationStatus === 'confirmed').length
   const rejectedCount = allTeams.filter(t => t.registrationStatus === 'rejected').length
 
+  const tabs: { key: StatusTab; label: string; count: number; dot: string }[] = [
+    { key: 'pending', label: 'Pending', count: pendingCount, dot: 'bg-gold' },
+    { key: 'confirmed', label: 'Confirmed', count: confirmedCount, dot: 'bg-pitch-light' },
+    { key: 'rejected', label: 'Rejected', count: rejectedCount, dot: 'bg-flame-light' },
+    { key: 'all', label: 'All teams', count: allTeams.length, dot: 'bg-white/60' },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-primary">
-      {/* Admin Header */}
-      <header className="bg-primary/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white tracking-wider">ICCT'27 ADMIN</h1>
-              <p className="font-body text-accent text-xs sm:text-sm">Team Management Dashboard</p>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto flex-wrap">
-              <button
-                onClick={() => navigate('/admin/schedule')}
-                className="font-body text-sm sm:text-base text-accent hover:text-yellow-300 transition-colors border border-accent/40 hover:border-accent px-4 py-2 rounded-lg"
-              >
-                📅 Schedule Manager
-              </button>
-              <button
-                onClick={() => navigate('/')}
-                className="font-body text-sm sm:text-base text-white/80 hover:text-accent transition-colors"
-              >
-                View Site
-              </button>
-              <button
-                onClick={handleLogout}
-                className="bg-red-500/80 hover:bg-red-500 text-white px-4 sm:px-6 py-2 rounded-lg font-body text-sm sm:text-base transition-all"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-ink-900">
+      <AdminHeader
+        title={
+          <>
+            ICCT<span className="text-gold">'27</span> Admin
+          </>
+        }
+        subtitle="Team management"
+        actions={
+          <>
+            <AdminButton onClick={() => navigate('/admin/schedule')}>
+              <CalendarDays className="h-4 w-4" /> Schedule
+            </AdminButton>
+            <AdminButton onClick={() => navigate('/')}>
+              <ExternalLink className="h-4 w-4" /> View site
+            </AdminButton>
+            <AdminButton tone="danger" onClick={handleLogout}>
+              <LogOut className="h-4 w-4" /> Logout
+            </AdminButton>
+          </>
+        }
+      />
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          {[
-            { label: 'Total Teams', value: allTeams.length },
-            { label: 'Pending', value: pendingCount, color: 'text-yellow-400' },
-            { label: 'Confirmed', value: confirmedCount, color: 'text-green-400' },
-            { label: 'Rejected', value: rejectedCount, color: 'text-red-400' }
-          ].map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="glass-effect rounded-xl p-4 sm:p-6 glow-border"
-            >
-              <div className="text-accent font-body text-xs sm:text-sm mb-2">{stat.label}</div>
-              <div className={`font-heading text-3xl sm:text-4xl md:text-5xl tracking-wide ${stat.color || 'text-white'}`}>
-                {stat.value}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Status Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="glass-effect rounded-xl p-2 mb-6"
-        >
-          <div className="flex flex-wrap gap-2">
-            {([
-              { key: 'pending', label: 'Pending', count: pendingCount },
-              { key: 'confirmed', label: 'Confirmed', count: confirmedCount },
-              { key: 'rejected', label: 'Rejected', count: rejectedCount },
-              { key: 'all', label: 'All Teams', count: allTeams.length }
-            ] as { key: StatusTab; label: string; count: number }[]).map(tab => (
+      <main className="page-container py-8">
+        {/* Status tabs double as stat cards */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {tabs.map((tab) => {
+            const active = activeTab === tab.key
+            return (
               <button
                 key={tab.key}
+                type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 min-w-[100px] px-4 py-3 rounded-lg font-body font-semibold text-sm transition-all ${
-                  activeTab === tab.key
-                    ? 'bg-accent text-black'
-                    : 'bg-white/10 text-white/70 hover:bg-white/20'
+                className={`rounded-2xl border p-4 text-left transition-colors ${
+                  active ? 'border-gold bg-gold/10' : 'border-white/10 bg-ink-800 hover:border-white/25'
                 }`}
+                aria-pressed={active}
               >
-                {tab.label}
-                <span className="ml-2 text-xs opacity-75">({tab.count})</span>
+                <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted">
+                  <span className={`h-2 w-2 rounded-full ${tab.dot}`} /> {tab.label}
+                </span>
+                <span className="mt-2 block font-display text-4xl leading-none text-white tabular-nums">{tab.count}</span>
               </button>
-            ))}
-          </div>
-        </motion.div>
+            )
+          })}
+        </div>
 
-        {/* Search & Filter */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="glass-effect rounded-xl p-4 sm:p-6 mb-6"
-        >
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+        {/* Search + actions */}
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-dark" />
             <input
               type="text"
-              placeholder="Search team, ID, church, captain, phone or player..."
+              placeholder="Search team, ID, church, captain, phone or player…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 input-focus focus:outline-none font-body text-sm sm:text-base"
+              className="w-full rounded-xl border border-white/10 bg-white py-3 pl-11 pr-4 text-sm text-ink placeholder:text-muted-dark input-focus"
             />
-            <button onClick={fetchAllTeams} className="btn-gold px-6 sm:px-8 py-3 rounded-lg font-body text-sm sm:text-base whitespace-nowrap">
-              Refresh
-            </button>
-            <button
-              onClick={handleExportAll}
-              disabled={exporting || loading || displayedTeams.length === 0}
-              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-body font-semibold text-sm sm:text-base whitespace-nowrap transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Download one Excel file with a separate sheet for each team in this view"
-            >
-              {exporting ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-              {exporting ? 'Exporting...' : `Export All Teams (${displayedTeams.length})`}
-            </button>
           </div>
-        </motion.div>
+          <AdminButton onClick={fetchAllTeams} disabled={loading} className="!py-3">
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </AdminButton>
+          <AdminButton
+            tone="gold"
+            onClick={handleExportAll}
+            disabled={exporting || loading || displayedTeams.length === 0}
+            title="Download one Excel file with a separate sheet for each team in this view"
+            className="!py-3"
+          >
+            {exporting ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-900 border-t-transparent" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {exporting ? 'Exporting…' : `Export ${displayedTeams.length} team${displayedTeams.length === 1 ? '' : 's'}`}
+          </AdminButton>
+        </div>
 
-        {/* Teams List */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-          <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white mb-4 sm:mb-6 tracking-wide">
-            Registered Teams ({displayedTeams.length})
-          </h2>
-
+        {/* Team list */}
+        <div className="mt-6">
           {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
-              <p className="text-white font-body mt-4">Loading teams...</p>
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="card-dark h-28 animate-pulse" />
+              ))}
             </div>
           ) : error ? (
-            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-6 text-red-200 font-body">
-              {error}
+            <div className="flex items-start gap-3 rounded-2xl border border-flame/40 bg-flame/10 p-5 text-sm text-flame-light">
+              <AlertTriangle className="h-5 w-5 shrink-0" /> {error}
             </div>
           ) : displayedTeams.length === 0 ? (
-            <div className="glass-effect rounded-xl p-12 text-center">
-              <p className="text-white font-body text-lg">No teams found</p>
+            <div className="card-dark flex flex-col items-center p-12 text-center">
+              <Inbox className="h-10 w-10 text-white/30" />
+              <p className="mt-3 font-semibold text-white">No teams here</p>
+              <p className="text-sm text-muted">{searchQuery ? 'Try a different search.' : 'Nothing in this tab yet.'}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-3">
               {displayedTeams.map((team, index) => (
                 <motion.div
                   key={team.teamId}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min(index, 10) * 0.03 }}
                   onClick={() => navigate(`/admin/team/${team.teamId}`)}
-                  className="glass-effect rounded-xl p-4 sm:p-6 hover:border-accent hover:bg-white/20 transition-all cursor-pointer group glow-border"
+                  className="group card-dark cursor-pointer p-5 transition-colors hover:border-gold/50"
                 >
-                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 sm:gap-4 w-full">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3">
-                          <span className="bg-accent/20 text-accent px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-body font-semibold">
-                            {team.teamId}
-                          </span>
-                          <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-body font-semibold border ${STATUS_BADGE_CLASSES[team.registrationStatus]}`}>
-                            {team.registrationStatus.toUpperCase()}
-                          </span>
-                          <h3 className="font-heading text-xl sm:text-2xl md:text-3xl text-white group-hover:text-accent transition-colors tracking-wide break-words">
-                            {team.teamName || 'Unnamed Team'}
-                          </h3>
-                        </div>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+                    {/* Identity */}
+                    <div className="min-w-0 lg:w-72">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-xs font-semibold text-gold">{team.teamId}</span>
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${STATUS_BADGE_CLASSES[team.registrationStatus]}`}
+                        >
+                          {team.registrationStatus}
+                        </span>
+                      </div>
+                      <h3 className="mt-1 truncate text-2xl leading-tight text-white group-hover:text-gold">
+                        {team.teamName || 'Unnamed team'}
+                      </h3>
+                      <p className="truncate text-sm text-muted">{team.churchName || 'Unknown church'}</p>
+                    </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                          <div>
-                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Church Name</p>
-                            <p className="text-white font-body text-sm sm:text-base break-words">{team.churchName || 'Unknown'}</p>
-                          </div>
-                          <div>
-                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Registration Date</p>
-                            <p className="text-white font-body text-sm sm:text-base">{formatRegistrationDate(team.registrationDate) || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Total Players</p>
-                            <p className="text-white font-body text-sm sm:text-base">{team.playerCount || 0} players</p>
-                          </div>
-                          <div>
-                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Captain</p>
-                            <p className="text-white font-body text-sm sm:text-base break-words">{team.captainName || 'N/A'}</p>
-                              <p className="text-white/60 text-xs sm:text-sm font-body">{team.captainPhone || ''}</p>
-                            {team.captainEmail && (
-                              <p className="text-white/60 text-xs font-body break-all">{team.captainEmail}</p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-accent text-xs sm:text-sm font-body mb-1">Vice Captain</p>
-                            <p className="text-white font-body text-sm sm:text-base break-words">{team.viceCaptainName || 'N/A'}</p>
-                            <p className="text-white/60 text-xs sm:text-sm font-body">{team.viceCaptainPhone || ''}</p>
-                            {team.viceCaptainEmail && (
-                              <p className="text-white/60 text-xs font-body break-all">{team.viceCaptainEmail}</p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-accent text-xs sm:text-sm font-body mb-2">Payment Receipt</p>
-                            {getReceiptPreview(team.paymentReceipt)}
-                          </div>
-                        </div>
+                    {/* Facts */}
+                    <div className="grid flex-1 grid-cols-2 gap-x-6 gap-y-3 text-sm md:grid-cols-4">
+                      <Fact label="Captain" value={team.captainName} sub={team.captainPhone} />
+                      <Fact label="Vice-captain" value={team.viceCaptainName} sub={team.viceCaptainPhone} />
+                      <Fact label="Players" value={`${team.playerCount || 0}`} sub={formatRegistrationDate(team.registrationDate)} />
+                      <div>
+                        <p className="text-xs font-semibold text-muted">Receipt</p>
+                        <div className="mt-1">{getReceiptPreview(team.paymentReceipt)}</div>
                       </div>
                     </div>
 
-                    <div className="ml-auto sm:ml-4 flex-shrink-0 self-start flex flex-col gap-2">
-                      {/* Approve/Reject Buttons for Pending Teams */}
+                    {/* Actions */}
+                    <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
                       {team.registrationStatus === 'pending' && (
                         <>
-                          <button
+                          <AdminButton
+                            tone="success"
                             onClick={(e) => handleApprove(team.teamId, e)}
                             disabled={actionLoading === team.teamId}
-                            className="bg-green-500/20 hover:bg-green-500/30 text-green-400 px-3 py-2 rounded-lg text-xs font-body transition-all flex items-center gap-1 whitespace-nowrap disabled:opacity-50"
+                            className="!px-3"
                           >
                             {actionLoading === team.teamId ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin"></div>
-                                Processing...
-                              </>
+                              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                             ) : (
-                              <>
-                                ✅ Approve
-                              </>
+                              <Check className="h-4 w-4" />
                             )}
-                          </button>
-                          <button
+                            Approve
+                          </AdminButton>
+                          <AdminButton
+                            tone="danger"
                             onClick={(e) => handleReject(team.teamId, e)}
                             disabled={actionLoading === team.teamId}
-                            className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-lg text-xs font-body transition-all flex items-center gap-1 whitespace-nowrap disabled:opacity-50"
+                            className="!px-3"
+                            aria-label={`Reject ${team.teamName}`}
                           >
-                            {actionLoading === team.teamId ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
-                                Processing...
-                              </>
-                            ) : (
-                              <>
-                                ❌ Reject
-                              </>
-                            )}
-                          </button>
+                            <X className="h-4 w-4" />
+                            <span className="hidden sm:inline">Reject</span>
+                          </AdminButton>
                         </>
                       )}
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          navigate(`/admin/team/${team.teamId}`)
-                        }}
-                        className="bg-accent/20 hover:bg-accent/30 text-accent px-3 py-2 rounded-lg text-xs font-body transition-all flex items-center gap-1 whitespace-nowrap"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        View Details
-                      </button>
-                      <svg
-                        className="w-5 h-5 sm:w-6 sm:h-6 text-accent group-hover:translate-x-1 transition-transform self-center"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+                      <ChevronRight className="hidden h-5 w-5 text-white/30 transition-transform group-hover:translate-x-0.5 group-hover:text-gold lg:block" />
                     </div>
                   </div>
                 </motion.div>
               ))}
             </div>
           )}
-        </motion.div>
-      </div>
+        </div>
+      </main>
+
+      {toasts}
     </div>
   )
 }
+
+const Fact = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
+  <div className="min-w-0">
+    <p className="text-xs font-semibold text-muted">{label}</p>
+    <p className="truncate font-semibold text-white">{value || 'N/A'}</p>
+    {sub && <p className="truncate text-xs text-white/45">{sub}</p>}
+  </div>
+)
 
 export default AdminDashboard

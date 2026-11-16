@@ -18,6 +18,10 @@ import TeamDetail from './pages/admin/TeamDetail'
 import ScheduleManager from './pages/admin/ScheduleManager'
 import { warmUpBackend } from './utils/backendWarmup'
 
+// ~6s cinematic intro, skippable, shown once per browser session.
+// Set to false to send visitors straight to the site.
+const SHOW_INTRO_LOADER = true
+
 function App() {
   // Wake the (possibly sleeping) backend immediately — runs during the intro loader too
   useEffect(() => {
@@ -25,6 +29,7 @@ function App() {
   }, [])
 
   const [loading, setLoading] = useState(() => {
+    if (!SHOW_INTRO_LOADER) return false
     // Only show loader on initial page load, not on page refresh or navigation
     const hasShownLoader = sessionStorage.getItem('cricketLoaderShown')
     return !hasShownLoader
@@ -35,9 +40,9 @@ function App() {
       // Mark that loader has been shown
       sessionStorage.setItem('cricketLoaderShown', 'true')
       
-      // Loader duration: ~10.5 seconds (4.5s progress + 4.5s countdown + 1s get ready + 0.5s flash)
-      // onComplete callback in CricketLoader will also trigger setLoading(false)
-      const timer = setTimeout(() => setLoading(false), 10500)
+      // The loader calls onComplete itself after ~6s (or on Skip);
+      // this is only a safety net in case the animation never finishes.
+      const timer = setTimeout(() => setLoading(false), 9000)
       return () => clearTimeout(timer)
     }
   }, [loading])
@@ -84,9 +89,10 @@ function App() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6 }}
-                className="min-h-screen bg-gradient-primary"
+                className="min-h-screen bg-ink-900 flex flex-col"
               >
                 <Navbar />
+                <main className="flex-1">
                 <AnimatePresence mode="wait">
                   <Routes>
                     <Route path="/" element={<Home />} />
@@ -96,6 +102,7 @@ function App() {
                     <Route path="/contact" element={<Contact />} />
                   </Routes>
                 </AnimatePresence>
+                </main>
                 <Footer />
               </motion.div>
             }

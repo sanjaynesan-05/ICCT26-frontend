@@ -11,24 +11,43 @@ interface Props {
   onChange: (data: Partial<PlayerData>) => void
   onRemove?: () => void
   canRemove?: boolean
+  disabled?: boolean
 }
 
-const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRemove, canRemove }) => {
+/** Compact numbered player row: [#] [name input] [remove] */
+const PlayerFormCard: React.FC<Props> = ({ playerNumber, player, onChange, onRemove, canRemove, disabled }) => {
+  const id = `player-${playerNumber}`
   return (
-    <div className="bg-white rounded-xl p-4 shadow">
-      <div className="flex justify-between items-start">
-        <h4 className="font-subheading font-semibold text-gray-900">Player {playerNumber}</h4>
-        {canRemove && onRemove && (
-          <button onClick={onRemove} className="text-gray-400 hover:text-red-500" aria-label="Remove player"><X /></button>
-        )}
-      </div>
-
-      <div className="mt-4">
-        <div>
-          <label className="block text-sm font-subheading text-gray-700 mb-1">Full Name *</label>
-          <input type="text" value={player.name} onChange={(e) => onChange({ name: e.target.value })} className="w-full px-3 py-2 border rounded bg-white text-gray-900" required />
-        </div>
-      </div>
+    <div className="flex items-center gap-2 rounded-xl border border-surface-line bg-white p-2 pl-2.5 transition-colors focus-within:border-gold">
+      <label
+        htmlFor={id}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink font-display text-lg text-gold"
+        title={`Player ${playerNumber}`}
+      >
+        {playerNumber}
+      </label>
+      <input
+        id={id}
+        type="text"
+        value={player.name}
+        onChange={(e) => onChange({ name: e.target.value })}
+        placeholder={`Player ${playerNumber} full name`}
+        aria-label={`Player ${playerNumber} full name`}
+        className="min-w-0 flex-1 border-0 bg-transparent px-1 py-2 text-ink outline-none placeholder:text-muted-dark/60 focus:ring-0"
+        disabled={disabled}
+        required
+      />
+      {canRemove && onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          disabled={disabled}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-dark hover:bg-flame/10 hover:text-flame"
+          aria-label={`Remove player ${playerNumber}`}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   )
 }

@@ -1,10 +1,23 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Maximize2, Camera } from 'lucide-react'
 import SEO from '../components/SEO'
+import { PageHero } from '../components/ui'
+
+/**
+ * Seasons shown as tabs. To publish a season's photos, add its Cloudinary
+ * links to `urls` — the tab switches from "coming soon" to the photo grid.
+ */
+const SEASONS = [
+  { id: 's2', label: 'Season 2', edition: "ICCT '25" },
+  { id: 's3', label: 'Season 3', edition: "ICCT '26" },
+] as const
+
+type SeasonId = (typeof SEASONS)[number]['id']
 
 interface GalleryImage {
   id: string
+  season: SeasonId
   filename: string
   src: string
   width: number
@@ -47,10 +60,16 @@ const loadGalleryImages = (): GalleryImage[] => {
     'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004286739_vofuif.jpg',
   ]
 
-  return CLOUDINARY_URLS.map((src, idx) => {
-    const filename = src.split('/').pop() || `image-${idx + 1}`
-    return { id: String(idx + 1), filename, src, width: 800, height: 600 }
-  })
+  // Season 3 (ICCT '26) photos go here when they are ready
+  const SEASON_3_URLS: string[] = []
+
+  const toImages = (season: SeasonId, urls: string[]): GalleryImage[] =>
+    urls.map((src, idx) => {
+      const filename = src.split('/').pop() || `${season}-image-${idx + 1}`
+      return { id: `${season}-${idx + 1}`, season, filename, src, width: 800, height: 600 }
+    })
+
+  return [...toImages('s2', CLOUDINARY_URLS), ...toImages('s3', SEASON_3_URLS)]
 }
 
 // Load images using metaglob
@@ -58,14 +77,27 @@ const GALLERY_IMAGES = loadGalleryImages()
 
 const Gallery = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null)
-  const [images, setImages] = useState<GalleryImage[]>(GALLERY_IMAGES)
+  const [allImages, setAllImages] = useState<GalleryImage[]>(GALLERY_IMAGES)
+  const [activeSeason, setActiveSeason] = useState<SeasonId>('s2')
+  // Everything below (grid, viewer, swipe, keys) works on the selected season only
+  const images = useMemo(() => allImages.filter((img) => img.season === activeSeason), [allImages, activeSeason])
+  const seasonCounts = useMemo(
+    () => Object.fromEntries(SEASONS.map((s) => [s.id, allImages.filter((img) => img.season === s.id).length])) as Record<SeasonId, number>,
+    [allImages]
+  )
+  const season = SEASONS.find((s) => s.id === activeSeason)!
+
+  const selectSeason = (id: SeasonId) => {
+    setCurrentImageIndex(null)
+    setActiveSeason(id)
+  }
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
   // Function to get actual image dimensions
   const updateImageDimensions = (filename: string, width: number, height: number) => {
-    setImages(prevImages =>
+    setAllImages(prevImages =>
       prevImages.map(img =>
         img.filename === filename ? { ...img, width, height } : img
       )
@@ -174,197 +206,195 @@ const Gallery = () => {
   // For a clean, uniform gallery we render a simple responsive grid.
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="min-h-screen bg-gradient-to-b from-bg-start via-primary to-bg-end py-20 px-4"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <SEO title="Tournament Gallery" description="View photos and highlights from previous ICCT tournaments." />
-      <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="mb-12 text-center"
-        >
-          <h1 className="font-heading text-5xl md:text-6xl text-accent mb-4">
-            Gallery
-          </h1>
-          <p className="font-subheading text-lg text-gray-300">
-            Tournament Photo Gallery
-          </p>
-        </motion.div>
 
-        {/* Error Message */}
-        {false && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-effect border-2 border-red-500/30 rounded-xl p-6 mb-8 text-center"
-          >
-            <p className="text-red-400 font-semibold mb-4">Error loading gallery</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-accent hover:bg-yellow-500 text-black rounded-lg transition-colors font-semibold"
-            >
-              Try Again
-            </button>
-          </motion.div>
-        )}
+      <PageHero
+        eyebrow="Gallery"
+        title="Moments from the middle"
+        description="Photos from previous ICCT seasons. Pick a season, then tap any photo to view it full screen."
+      />
 
-        {/* Loading State */}
-        {false && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <p className="text-gray-300 font-subheading">Loading gallery...</p>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {images.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <p className="text-gray-400 font-subheading text-lg mb-4">No images found in gallery folder</p>
-            <p className="text-gray-500 text-sm mb-4">Add images to /public/gallery/ folder</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-accent hover:bg-yellow-500 text-black rounded-lg transition-colors font-semibold"
-            >
-              Refresh Gallery
-            </button>
-          </div>
-        )}
-
-        {/* Image Grid */}
-        {images.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-max"
-          >
-            {images.map((image, index) => {
-                const isLoaded = loadedImages.has(image.filename)
-
+      <section className="py-12 md:py-16">
+        <div className="page-container">
+          {/* Season tabs */}
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div role="tablist" aria-label="Gallery seasons" className="inline-flex w-full rounded-2xl border border-white/10 bg-ink-800 p-1.5 sm:w-auto">
+              {SEASONS.map((s) => {
+                const active = s.id === activeSeason
+                const count = seasonCounts[s.id]
                 return (
-                  <motion.div
-                    key={image.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.03 }}
-                    className="relative overflow-hidden rounded-lg cursor-pointer group"
-                    onClick={() => setCurrentImageIndex(index)}
+                  <button
+                    key={s.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    aria-controls="gallery-panel"
+                    onClick={() => selectSeason(s.id)}
+                    className={`relative flex flex-1 flex-col items-center rounded-xl px-5 py-2.5 transition-colors sm:flex-none sm:px-8 ${
+                      active ? 'text-ink-900' : 'text-white/70 hover:text-white'
+                    }`}
                   >
-                    <div className="w-full bg-gradient-to-br from-gray-800 to-gray-900">
-                      <div className="aspect-video w-full flex items-center justify-center overflow-hidden relative">
-                        {!isLoaded && (
-                          <div className="absolute inset-0 bg-gray-700 animate-pulse flex items-center justify-center">
-                            <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
-                          </div>
-                        )}
-                        <img
-                          src={image.src}
-                          alt={`Gallery image ${index + 1}`}
-                          className={`max-w-full max-h-full object-contain transition-all duration-300 ${
-                            isLoaded ? 'opacity-100' : 'opacity-0'
-                          }`}
-                          loading="lazy"
-                          onLoad={() => markImageLoaded(image.filename)}
-                        />
-                      </div>
-                    </div>
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        Click to view
-                      </div>
-                    </div>
-                    {/* Image counter badge */}
-                    <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      {index + 1}
-                    </div>
-                  </motion.div>
+                    {active && (
+                      <motion.span
+                        layoutId="gallery-tab"
+                        className="absolute inset-0 rounded-xl bg-gold"
+                        transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                      />
+                    )}
+                    <span className="relative font-display text-2xl leading-none">{s.label}</span>
+                    <span className={`relative mt-1 text-[11px] font-bold uppercase tracking-wider ${active ? 'text-ink-900/70' : 'text-white/40'}`}>
+                      {s.edition} · {count > 0 ? `${count} photos` : 'Soon'}
+                    </span>
+                  </button>
                 )
               })}
-          </motion.div>
-        )}
-      </div>
+            </div>
+            {images.length > 0 && (
+              <p className="text-sm text-muted">
+                Showing <strong className="text-white">{images.length}</strong> photos from {season.edition}
+              </p>
+            )}
+          </div>
 
-      {/* Fullscreen Image Viewer */}
+          <div id="gallery-panel" role="tabpanel">
+          {images.length === 0 ? (
+            <motion.div
+              key={`soon-${activeSeason}`}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative mx-auto max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-ink-800 px-6 py-14 text-center md:px-12 md:py-20"
+            >
+              <div className="pointer-events-none absolute inset-0 bg-stripes opacity-70" />
+              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gold/10 blur-3xl" />
+              <div className="relative">
+                <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gold text-ink-900">
+                  <Camera className="h-8 w-8" />
+                </span>
+                <p className="mt-6 text-eyebrow uppercase text-flame-light">{season.edition}</p>
+                <h2 className="mt-2 text-4xl text-white md:text-5xl">{season.label} photos are coming soon</h2>
+                <p className="mx-auto mt-3 max-w-md text-sm text-muted md:text-base">
+                  We're sorting through the best moments from {season.edition}. Check back soon, or follow us on Instagram for
+                  the first look.
+                </p>
+                {seasonCounts.s2 > 0 && activeSeason !== 's2' && (
+                  <button type="button" onClick={() => selectSeason('s2')} className="btn-outline mt-8">
+                    Browse Season 2 photos
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            // Masonry: CSS columns keep each photo's real aspect ratio
+            <div key={activeSeason} className="columns-2 gap-3 md:columns-3 md:gap-4 lg:columns-4">
+              {images.map((image, index) => {
+                const isLoaded = loadedImages.has(image.filename)
+                return (
+                  <motion.button
+                    type="button"
+                    key={image.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-20px' }}
+                    transition={{ duration: 0.35 }}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className="group relative mb-3 block w-full overflow-hidden rounded-xl bg-ink-800 break-inside-avoid md:mb-4"
+                    style={{ aspectRatio: `${image.width} / ${image.height}` }}
+                    aria-label={`Open photo ${index + 1}`}
+                  >
+                    {!isLoaded && <div className="absolute inset-0 animate-pulse bg-ink-700" />}
+                    <img
+                      src={image.src}
+                      alt={`${season.edition} photo ${index + 1}`}
+                      loading="lazy"
+                      onLoad={() => markImageLoaded(image.filename)}
+                      className={`h-full w-full object-cover transition duration-500 group-hover:scale-[1.03] ${
+                        isLoaded ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                    <span className="absolute inset-0 bg-gradient-to-t from-ink-950/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                    <span className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink opacity-0 transition-opacity group-hover:opacity-100">
+                      <Maximize2 className="h-4 w-4" />
+                    </span>
+                  </motion.button>
+                )
+              })}
+            </div>
+          )}
+          </div>
+        </div>
+      </section>
+
+      {/* Full-screen viewer */}
       <AnimatePresence>
         {currentImageIndex !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/95"
             onClick={() => setCurrentImageIndex(null)}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Photo viewer"
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setCurrentImageIndex(null)}
-              className="absolute top-4 right-4 z-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-              aria-label="Close gallery"
-            >
-              <X className="w-6 h-6 text-white" />
-            </button>
-
-            {/* Image Counter */}
-            <div className="absolute top-4 left-4 z-10 px-4 py-2 bg-white/10 rounded-lg">
-              <p className="text-white font-semibold">
+            <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between p-4">
+              <span className="rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white tabular-nums">
                 {currentImageIndex + 1} / {images.length}
-              </p>
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentImageIndex(null)}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                aria-label="Close"
+              >
+                <X className="h-6 w-6" />
+              </button>
             </div>
 
-            {/* Navigation Buttons */}
             {currentImageIndex > 0 && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation()
                   prevImage()
                 }}
-                className="absolute left-4 z-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-                aria-label="Previous image"
+                className="absolute left-3 z-10 hidden h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:flex"
+                aria-label="Previous photo"
               >
-                <ChevronLeft className="w-8 h-8 text-white" />
+                <ChevronLeft className="h-7 w-7" />
               </button>
             )}
-
             {currentImageIndex < images.length - 1 && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation()
                   nextImage()
                 }}
-                className="absolute right-4 z-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-                aria-label="Next image"
+                className="absolute right-3 z-10 hidden h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:flex"
+                aria-label="Next photo"
               >
-                <ChevronRight className="w-8 h-8 text-white" />
+                <ChevronRight className="h-7 w-7" />
               </button>
             )}
 
-            {/* Main Image */}
-            <motion.div
-              className="relative p-6 flex items-center justify-center"
+            <motion.img
+              key={currentImageIndex}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2 }}
+              src={images[currentImageIndex].src}
+              alt={`ICCT photo ${currentImageIndex + 1}`}
+              draggable={false}
               onClick={(e) => e.stopPropagation()}
-            >
-              <motion.div className="bg-black/0 rounded-md flex items-center justify-center">
-                <motion.img
-                  key={currentImageIndex}
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  src={images[currentImageIndex].src}
-                  alt={`Gallery image ${currentImageIndex + 1}`}
-                  draggable={false}
-                  className="w-auto h-auto object-contain"
-                  style={{
-                    maxWidth: 'calc(100vw - 160px)',
-                    maxHeight: 'calc(100vh - 160px)'
-                  }}
-                />
-              </motion.div>
-            </motion.div>
+              className="max-h-[calc(100svh-140px)] max-w-[calc(100vw-32px)] rounded-lg object-contain sm:max-w-[calc(100vw-160px)]"
+            />
+
+            <p className="absolute bottom-4 left-0 right-0 text-center text-xs text-white/50 sm:hidden">Swipe to browse</p>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Download } from 'lucide-react'
+import { Check, Download, ExternalLink, FileText, Mail, MessageCircle, Phone, X, AlertTriangle } from 'lucide-react'
 import { apiService } from '../../services/api'
 import { exportTeamToExcel } from '../../utils/teamExcel'
 import {
@@ -13,6 +13,7 @@ import {
   normalizeTeam,
   normalizeTeamResponse,
 } from '../../utils/adminTeams'
+import { AdminButton, AdminHeader, useToasts } from '../../components/admin/AdminShell'
 
 const TeamDetail = () => {
   const { teamId } = useParams<{ teamId: string }>()
@@ -21,6 +22,7 @@ const TeamDetail = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+  const { notify, toasts } = useToasts()
 
   useEffect(() => {
     fetchTeamDetails()
@@ -49,7 +51,7 @@ const TeamDetail = () => {
       }
 
       if (!fetchedTeam) {
-        setError('⚠️ Team not found in backend data.')
+        setError('Team not found in backend data.')
         setTeam(null)
         return
       }
@@ -57,7 +59,7 @@ const TeamDetail = () => {
       setTeam(fetchedTeam)
     } catch (err) {
       console.error('Error fetching team details:', err)
-      setError('❌ Failed to load team details. Connection issue.')
+      setError('Failed to load team details. Check your connection and try again.')
     } finally {
       setLoading(false)
     }
@@ -72,13 +74,13 @@ const TeamDetail = () => {
     try {
       const response = await apiService.confirmTeam(team.teamId)
       if (response.success) {
-        alert(`✅ Team approved! Email ${response.email_notification || 'sent'}`)
+        notify('success', `Team approved. Email ${response.email_notification || 'sent'}.`)
         await fetchTeamDetails()
       } else {
-        alert('❌ Failed to approve team: ' + (response.message || 'Unknown error'))
+        notify('error', 'Failed to approve team: ' + (response.message || 'Unknown error'))
       }
     } catch (err) {
-      alert('❌ Error approving team: ' + (err instanceof Error ? err.message : 'Unknown error'))
+      notify('error', 'Error approving team: ' + (err instanceof Error ? err.message : 'Unknown error'))
     } finally {
       setActionLoading(false)
     }
@@ -93,13 +95,13 @@ const TeamDetail = () => {
     try {
       const response = await apiService.rejectTeam(team.teamId)
       if (response.success) {
-        alert('❌ Team rejected.')
+        notify('info', 'Team rejected. The church slot is free again.')
         await fetchTeamDetails()
       } else {
-        alert('❌ Failed to reject team: ' + (response.message || 'Unknown error'))
+        notify('error', 'Failed to reject team: ' + (response.message || 'Unknown error'))
       }
     } catch (err) {
-      alert('❌ Error rejecting team: ' + (err instanceof Error ? err.message : 'Unknown error'))
+      notify('error', 'Error rejecting team: ' + (err instanceof Error ? err.message : 'Unknown error'))
     } finally {
       setActionLoading(false)
     }
@@ -112,10 +114,10 @@ const TeamDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-primary flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-ink-900">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
-          <p className="text-white font-body mt-4">Loading team details...</p>
+          <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-gold border-t-transparent" />
+          <p className="mt-4 text-sm text-muted">Loading team details…</p>
         </div>
       </div>
     )
@@ -123,169 +125,158 @@ const TeamDetail = () => {
 
   if (error || !team) {
     return (
-      <div className="min-h-screen bg-gradient-primary flex items-center justify-center">
-        <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-6 text-red-200 font-body text-center max-w-md">
-          <p className="mb-2 text-lg font-semibold">{error || 'Team not found'}</p>
-          <button
-            onClick={() => navigate('/admin/dashboard')}
-            className="btn-gold px-6 py-2 rounded-lg font-body mt-4"
-          >
-            Back to Dashboard
-          </button>
+      <div className="flex min-h-screen items-center justify-center bg-ink-900 px-4">
+        <div className="card-dark max-w-md p-8 text-center">
+          <AlertTriangle className="mx-auto h-10 w-10 text-flame-light" />
+          <p className="mt-4 font-semibold text-white">{error || 'Team not found'}</p>
+          <AdminButton tone="gold" className="mt-6" onClick={() => navigate('/admin/dashboard')}>
+            Back to dashboard
+          </AdminButton>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-primary">
-      {/* Header */}
-      <header className="bg-primary/80 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-            <button
-              onClick={() => navigate('/admin/dashboard')}
-              className="text-accent hover:text-white transition-colors flex-shrink-0"
-              aria-label="Back to dashboard"
+    <div className="min-h-screen bg-ink-900">
+      <AdminHeader
+        backTo="/admin/dashboard"
+        title={team.teamName}
+        subtitle={
+          <span className="flex items-center gap-2">
+            <span className="font-mono text-gold">{team.teamId}</span>
+            <span
+              className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${STATUS_BADGE_CLASSES[team.registrationStatus]}`}
             >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div className="min-w-0 flex-1">
-              <h1 className="font-heading text-xl sm:text-2xl md:text-3xl text-white tracking-wide truncate">{team.teamName}</h1>
-              <div className="flex items-center gap-2">
-                <p className="font-body text-accent text-xs sm:text-sm truncate">{team.teamId}</p>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-body font-semibold border ${STATUS_BADGE_CLASSES[team.registrationStatus]}`}>
-                  {team.registrationStatus.toUpperCase()}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2 self-end sm:self-auto">
+              {team.registrationStatus}
+            </span>
+          </span>
+        }
+        actions={
+          <>
             {team.registrationStatus === 'pending' && (
               <>
-                <button
-                  onClick={handleApprove}
-                  disabled={actionLoading}
-                  className="bg-green-500/20 hover:bg-green-500/30 text-green-400 px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap disabled:opacity-50"
-                >
-                  {actionLoading ? 'Processing...' : '✅ Approve'}
-                </button>
-                <button
-                  onClick={handleReject}
-                  disabled={actionLoading}
-                  className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap disabled:opacity-50"
-                >
-                  {actionLoading ? 'Processing...' : '❌ Reject'}
-                </button>
+                <AdminButton tone="success" onClick={handleApprove} disabled={actionLoading}>
+                  <Check className="h-4 w-4" /> {actionLoading ? 'Working…' : 'Approve'}
+                </AdminButton>
+                <AdminButton tone="danger" onClick={handleReject} disabled={actionLoading}>
+                  <X className="h-4 w-4" /> Reject
+                </AdminButton>
               </>
             )}
-            <button
-              onClick={exportToExcel}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap flex items-center gap-2"
-              title="Download team data as Excel"
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Download Excel</span>
-              <span className="sm:hidden">Excel</span>
-            </button>
-            <button
-              onClick={() => navigate('/admin/dashboard')}
-              className="bg-accent/20 hover:bg-accent/30 text-accent px-4 py-2 rounded-lg font-body text-sm sm:text-base transition-all whitespace-nowrap"
-            >
-              Back
-            </button>
+            <AdminButton tone="gold" onClick={exportToExcel} title="Download team sheet as Excel">
+              <Download className="h-4 w-4" /> Excel
+            </AdminButton>
+          </>
+        }
+      />
+
+      <motion.main initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="page-container space-y-6 py-8">
+        {/* Overview */}
+        <section className="card-dark p-6">
+          <p className="text-eyebrow uppercase text-muted">Team</p>
+          <div className="mt-3 grid gap-5 sm:grid-cols-3">
+            <Info label="Team name" value={team.teamName} />
+            <Info label="Church" value={team.churchName} />
+            <Info label="Registered" value={formatRegistrationDate(team.registrationDate)} />
           </div>
-        </div>
-      </header>
+        </section>
 
-      <div className="container mx-auto px-4 py-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="glass-effect rounded-xl p-4 sm:p-6 md:p-8 glow-border mb-6 sm:mb-8"
-        >
-          <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white mb-6 sm:mb-8 tracking-wide">Team Details</h2>
-
-          {/* Team Info Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 pb-8 border-b border-white/10">
-            <InfoCard label="Team Name" value={team.teamName} />
-            <InfoCard label="Church Name" value={team.churchName} />
-            <InfoCard label="Registration Date" value={formatRegistrationDate(team.registrationDate)} />
-          </div>
-
-          {/* Captain Section */}
-          <div className="mb-8 pb-8 border-b border-white/10">
-            <h3 className="font-heading text-lg sm:text-xl text-accent mb-4 tracking-wide">Captain Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              <InfoCard label="Name" value={team.captainName} />
-              <InfoCard label="Phone" value={team.captainPhone} />
-              <InfoCard label="Email" value={team.captainEmail} />
-              <InfoCard label="WhatsApp" value={team.captainWhatsapp} />
+        {/* Leaders */}
+        <section className="grid gap-6 md:grid-cols-2">
+          {[
+            { label: 'Captain', name: team.captainName, phone: team.captainPhone, whatsapp: team.captainWhatsapp, email: team.captainEmail },
+            {
+              label: 'Vice-Captain',
+              name: team.viceCaptainName,
+              phone: team.viceCaptainPhone,
+              whatsapp: team.viceCaptainWhatsapp,
+              email: team.viceCaptainEmail,
+            },
+          ].map((p) => (
+            <div key={p.label} className="card-dark p-6">
+              <p className="text-eyebrow uppercase text-muted">{p.label}</p>
+              <p className="mt-2 break-words text-xl font-bold text-white">{p.name || 'N/A'}</p>
+              <div className="mt-4 space-y-2 text-sm">
+                <ContactRow icon={Phone} value={p.phone} href={p.phone ? `tel:${p.phone}` : undefined} />
+                <ContactRow
+                  icon={MessageCircle}
+                  value={p.whatsapp}
+                  href={p.whatsapp ? `https://wa.me/91${p.whatsapp.replace(/\D/g, '').slice(-10)}` : undefined}
+                />
+                <ContactRow icon={Mail} value={p.email} href={p.email ? `mailto:${p.email}` : undefined} />
+              </div>
             </div>
-          </div>
+          ))}
+        </section>
 
-          {/* Vice Captain Section */}
-          <div className="mb-8 pb-8 border-b border-white/10">
-            <h3 className="font-heading text-lg sm:text-xl text-accent mb-4 tracking-wide">Vice Captain Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              <InfoCard label="Name" value={team.viceCaptainName} />
-              <InfoCard label="Phone" value={team.viceCaptainPhone} />
-              <InfoCard label="Email" value={team.viceCaptainEmail} />
-              <InfoCard label="WhatsApp" value={team.viceCaptainWhatsapp} />
+        <div className="grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+          {/* Squad */}
+          <section className="card-dark p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-eyebrow uppercase text-muted">Squad</p>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white">{team.players.length} players</span>
             </div>
-          </div>
-
-          {/* Players Section */}
-          <div className="mb-8 pb-8 border-b border-white/10">
-            <h2 className="font-heading text-2xl sm:text-3xl md:text-4xl text-white mb-6 tracking-wide">
-              Squad ({team.players.length} Players)
-            </h2>
             {team.players.length > 0 ? (
-              <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <ol className="grid gap-2 sm:grid-cols-2">
                 {team.players.map((p, index) => (
-                  <li
-                    key={`${p.playerId}-${index}`}
-                    className="bg-white/5 rounded-lg px-4 py-3 border border-white/10 flex items-center gap-3"
-                  >
-                    <span className="font-heading text-accent text-lg w-8 text-right flex-shrink-0">{index + 1}</span>
+                  <li key={`${p.playerId}-${index}`} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gold font-display text-base text-ink-900">
+                      {index + 1}
+                    </span>
                     <div className="min-w-0">
-                      <p className="text-white font-body text-sm sm:text-base break-words">{p.name}</p>
-                      <p className="text-white/50 font-body text-xs">{p.playerId}</p>
+                      <p className="break-words text-sm font-semibold text-white">{p.name}</p>
+                      <p className="font-mono text-[11px] text-white/45">{p.playerId}</p>
                     </div>
                   </li>
                 ))}
               </ol>
             ) : (
-              <div className="glass-effect rounded-xl p-8 sm:p-12 text-center">
-                <p className="text-white font-body text-base sm:text-lg">No players found for this team.</p>
-              </div>
+              <p className="rounded-xl border border-dashed border-white/15 p-8 text-center text-sm text-muted">
+                No players found for this team.
+              </p>
             )}
-          </div>
+          </section>
 
-          {/* Payment Receipt */}
-          <div>
-            <h3 className="font-heading text-xl sm:text-2xl text-white mb-6 tracking-wide">Payment Receipt</h3>
+          {/* Receipt */}
+          <section className="card-dark p-6">
+            <p className="mb-4 text-eyebrow uppercase text-muted">Payment receipt</p>
             <ReceiptPreview url={team.paymentReceipt} />
-          </div>
-        </motion.div>
-      </div>
+          </section>
+        </div>
+      </motion.main>
+
+      {toasts}
     </div>
   )
 }
 
-/* ♻️ Reusable subcomponents */
-const InfoCard = ({ label, value }: { label: string; value: string }) => (
-  <div className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-accent/50 transition-colors">
-    <p className="text-accent text-xs sm:text-sm font-body font-semibold mb-2 uppercase tracking-wide">{label}</p>
-    <p className="text-white font-body text-sm sm:text-base break-words line-clamp-2">{value || 'N/A'}</p>
+/* Reusable subcomponents */
+const Info = ({ label, value }: { label: string; value: string }) => (
+  <div className="min-w-0">
+    <p className="text-xs font-semibold text-muted">{label}</p>
+    <p className="mt-1 break-words font-semibold text-white">{value || 'N/A'}</p>
+  </div>
+)
+
+const ContactRow = ({ icon: Icon, value, href }: { icon: typeof Phone; value: string; href?: string }) => (
+  <div className="flex items-center gap-3">
+    <Icon className="h-4 w-4 shrink-0 text-white/40" />
+    {value && href ? (
+      <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="break-all text-white/85 hover:text-gold">
+        {value}
+      </a>
+    ) : (
+      <span className="text-white/40">N/A</span>
+    )}
   </div>
 )
 
 const ReceiptPreview = ({ url }: { url: string }) => {
   if (!url) {
     return (
-      <div className="rounded-xl p-6 border border-red-500/50 bg-red-500/10">
-        <p className="text-red-200 font-body text-sm">No payment receipt on file for this team.</p>
+      <div className="flex items-center gap-3 rounded-xl border border-flame/40 bg-flame/10 p-4 text-sm text-flame-light">
+        <AlertTriangle className="h-5 w-5 shrink-0" /> No payment receipt on file for this team.
       </div>
     )
   }
@@ -294,22 +285,20 @@ const ReceiptPreview = ({ url }: { url: string }) => {
 
   if (kind === 'image') {
     return (
-      <img
-        src={url}
-        alt="Payment receipt"
-        className="max-w-full sm:max-w-2xl w-full rounded-lg border-2 border-accent/50 cursor-pointer hover:border-accent transition-colors"
-        onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
-      />
+      <a href={url} target="_blank" rel="noopener noreferrer" className="group block">
+        <img src={url} alt="Payment receipt" className="w-full rounded-xl border border-white/10 transition-colors group-hover:border-gold" />
+        <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-muted group-hover:text-gold">
+          Open full size <ExternalLink className="h-3.5 w-3.5" />
+        </span>
+      </a>
     )
   }
 
   return (
-    <div className="w-full max-w-2xl h-[240px] rounded-lg border-2 border-accent/50 bg-white/5 flex flex-col items-center justify-center gap-4">
-      <svg className="w-16 h-16 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
-      <a href={url} target="_blank" rel="noopener noreferrer" className="btn-gold px-6 py-3 rounded-lg">
-        {kind === 'pdf' ? 'View PDF' : 'Download File'}
+    <div className="flex flex-col items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-8">
+      <FileText className="h-12 w-12 text-gold" />
+      <a href={url} target="_blank" rel="noopener noreferrer" className="btn-gold">
+        {kind === 'pdf' ? 'View PDF' : 'Download file'} <ExternalLink className="h-4 w-4" />
       </a>
     </div>
   )

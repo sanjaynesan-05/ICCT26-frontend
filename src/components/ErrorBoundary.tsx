@@ -87,7 +87,7 @@ export class ErrorBoundary extends Component<Props, State> {
       // Default error UI
       return (
         <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
-          <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-8 border-2 border-red-200">
+          <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-5 sm:p-8 border-2 border-red-200">
             {/* Error Icon */}
             <div className="flex justify-center mb-6">
               <div className="bg-red-100 rounded-full p-6">

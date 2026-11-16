@@ -12,6 +12,24 @@ import { Trophy, MapPin, Calendar, Users } from 'lucide-react'
 
 
 /**
+ * Tournament facts — single source for the Home page.
+ * Update dates / fee here and every section follows.
+ */
+export const TOURNAMENT = {
+  season: 4,
+  registrationCloses: '2026-12-25T19:00:00', // local time
+  firstBall: '2027-01-23T00:00:00', // day 1
+  lastDay: '2027-01-24T00:00:00', // final day
+  entryFee: 2027,
+  oversPerSide: 10,
+  minPlayers: 13,
+  maxPlayers: 17,
+  format: 'Red Tennis Ball',
+  city: 'Coimbatore',
+  pastSeasons: ["'17", "'25", "'26"],
+}
+
+/**
  * Hero Section Information
  */
 export const HERO_SECTION = {

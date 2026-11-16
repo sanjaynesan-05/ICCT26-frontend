@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { ArrowLeft, Lock, Trophy, AlertCircle } from 'lucide-react'
 import { useAdmin } from '../../contexts/AdminContext'
 
 const AdminLogin = () => {
@@ -18,108 +19,86 @@ const AdminLogin = () => {
     if (success) {
       navigate('/admin/dashboard')
     } else {
-      setError('Invalid credentials.')
+      setError('Invalid username or password.')
     }
   }
 
+  const inputClass =
+    'w-full rounded-xl border border-surface-line bg-white px-4 py-3 text-ink placeholder:text-muted-dark/70 input-focus'
+
   return (
-    <div className="min-h-screen bg-gradient-primary flex items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <h1 className="font-heading text-6xl text-white mb-2 tracking-wider">
-            ICCT26
-          </h1>
-          <p className="font-body text-accent text-lg">
-            Admin Panel
+    <div className="flex min-h-screen items-center justify-center bg-ink-900 bg-stripes px-4">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gold text-ink-900">
+            <Trophy className="h-7 w-7" strokeWidth={2.5} />
+          </span>
+          <p className="mt-4 font-display text-4xl leading-none text-white">
+            ICCT<span className="text-gold">'27</span>
           </p>
+          <p className="mt-1 text-eyebrow uppercase text-muted">Admin panel</p>
         </div>
 
-        {/* Login Card */}
-        <div className="glass-effect rounded-2xl p-8 shadow-2xl">
-          <h2 className="font-heading text-4xl text-white mb-6 text-center tracking-wide">
-            Login
-          </h2>
+        <div className="card-light p-7">
+          <div className="mb-6 flex items-center gap-2">
+            <Lock className="h-5 w-5 text-ink" />
+            <h2 className="text-3xl text-ink">Sign in</h2>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username Field */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label 
-                htmlFor="username" 
-                className="block font-body text-sm font-medium text-accent mb-2"
-              >
+              <label htmlFor="username" className="mb-1.5 block text-sm font-semibold text-ink">
                 Username
               </label>
               <input
                 id="username"
                 type="text"
+                autoComplete="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 input-focus focus:outline-none transition-all"
+                className={inputClass}
                 placeholder="Enter username"
                 required
               />
             </div>
 
-            {/* Password Field */}
             <div>
-              <label 
-                htmlFor="password" 
-                className="block font-body text-sm font-medium text-accent mb-2"
-              >
+              <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-ink">
                 Password
               </label>
               <input
                 id="password"
                 type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 input-focus focus:outline-none transition-all"
+                className={inputClass}
                 placeholder="Enter password"
                 required
               />
             </div>
 
-            {/* Error Message */}
             {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
+              <motion.p
+                initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-200 text-sm font-body"
+                className="flex items-center gap-2 rounded-xl bg-flame/10 px-3 py-2.5 text-sm font-semibold text-flame-dark"
+                role="alert"
               >
-                {error}
-              </motion.div>
+                <AlertCircle className="h-4 w-4" /> {error}
+              </motion.p>
             )}
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full btn-gold text-xl py-4 rounded-lg shadow-lg"
-            >
-              Login
+            <button type="submit" className="btn-gold w-full !py-3.5">
+              Sign in
             </button>
           </form>
-
-          {/* Demo Credentials Hint */}
-          <div className="mt-6 text-center">
-            <p className="text-white/60 text-sm font-body">
-            </p>
-          </div>
         </div>
 
-        {/* Back to Home */}
-        <div className="text-center mt-6">
-          <a
-            href="/"
-            className="text-accent hover:text-white transition-colors font-body text-sm"
-          >
-            ← Back to Home
-          </a>
+        <div className="mt-6 text-center">
+          <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-white">
+            <ArrowLeft className="h-4 w-4" /> Back to site
+          </Link>
         </div>
       </motion.div>
     </div>
