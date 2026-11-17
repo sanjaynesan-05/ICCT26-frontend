@@ -1,50 +1,60 @@
 import { Link } from 'react-router-dom'
-import { Trophy, Instagram, Youtube, MessageCircle } from 'lucide-react'
+import { Trophy, Phone, MapPin } from 'lucide-react'
+import { SOCIAL_LINKS, ORGANIZERS } from '../data/contact'
+
+const footerLinks = [
+  { name: 'Home', path: '/' },
+  { name: 'Registration', path: '/registration' },
+  { name: 'Fixtures', path: '/fixtures' },
+  { name: 'Rules', path: '/rules' },
+  { name: 'Gallery', path: '/gallery' },
+  { name: 'Contact', path: '/contact' },
+]
 
 const Footer = () => {
-  const footerLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Schedule', path: '/schedule' },
-    { name: 'Registration', path: '/registration' },
-    { name: 'Rules', path: '/rules' },
-    { name: 'Contact', path: '/contact' },
-  ]
-
-  const socialLinks = [
-    { icon: Instagram, href: 'https://instagram.com', label: 'Instagram' },
-    { icon: Youtube, href: 'https://youtube.com', label: 'YouTube' },
-    { icon: MessageCircle, href: 'https://wa.me/1234567890', label: 'WhatsApp' },
-  ]
+  const keyContacts = ORGANIZERS.slice(0, 2)
 
   return (
-    <footer className="relative bg-gradient-to-br from-secondary via-primary to-secondary mt-20">
-      <div className="container mx-auto px-4 lg:px-8 py-12">
-        {/* Top Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          {/* Logo & Description */}
-          <div className="text-center md:text-left">
-            <Link to="/" className="inline-flex items-center space-x-3 group mb-4">
-              <Trophy className="w-10 h-10 text-accent group-hover:rotate-12 transition-transform duration-300" />
-              <div className="flex flex-col">
-                <span className="font-heading text-3xl text-accent tracking-wider">ICCT27</span>
-                <span className="text-sm text-gray-300">Cricket Tournament</span>
-              </div>
+    <footer className="border-t-4 border-gold bg-ink-950">
+      <div className="page-container py-14">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
+          {/* Brand */}
+          <div className="md:col-span-5">
+            <Link to="/" className="inline-flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gold text-ink-900">
+                <Trophy className="h-5 w-5" strokeWidth={2.5} />
+              </span>
+              <span className="font-display text-3xl tracking-wide text-white">
+                ICCT<span className="text-gold">'27</span>
+              </span>
             </Link>
-            <p className="text-gray-300 font-subheading mt-4">
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted">
+              Inter Church Cricket Tournament organised by CSI St. Peter's Church, Rathinapuri Youth Fellowship.
               The Spirit. The Skill. The Glory.
             </p>
+            <div className="mt-6 flex gap-3">
+              {SOCIAL_LINKS.map((social) => (
+                <a
+                  key={social.name}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.name}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 text-white/80 transition-colors hover:border-gold hover:text-gold"
+                >
+                  <social.icon className="h-5 w-5" />
+                </a>
+              ))}
+            </div>
           </div>
 
-          {/* Quick Links */}
-          <div className="text-center">
-            <h3 className="font-heading text-xl text-accent mb-4">Quick Links</h3>
-            <ul className="space-y-2">
+          {/* Links */}
+          <div className="md:col-span-3">
+            <h3 className="text-eyebrow uppercase text-white/50 font-body">Explore</h3>
+            <ul className="mt-4 space-y-3">
               {footerLinks.map((link) => (
                 <li key={link.path}>
-                  <Link
-                    to={link.path}
-                    className="text-gray-300 hover:text-accent transition-colors font-subheading"
-                  >
+                  <Link to={link.path} className="text-sm font-medium text-muted transition-colors hover:text-white">
                     {link.name}
                   </Link>
                 </li>
@@ -52,43 +62,33 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Social Links */}
-          <div className="text-center md:text-right">
-            <h3 className="font-heading text-xl text-accent mb-4">Follow Us</h3>
-            <div className="flex justify-center md:justify-end space-x-4">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-12 h-12 rounded-full bg-accent/20 hover:bg-accent flex items-center justify-center transition-all duration-300 hover:scale-110 group"
-                  aria-label={social.label}
-                >
-                  <social.icon className="w-6 h-6 text-accent group-hover:text-primary" />
-                </a>
+          {/* Contact */}
+          <div className="md:col-span-4">
+            <h3 className="text-eyebrow uppercase text-white/50 font-body">Contact</h3>
+            <ul className="mt-4 space-y-4">
+              {keyContacts.map((person) => (
+                <li key={person.phone} className="flex items-start gap-3">
+                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                  <div>
+                    <a href={`tel:${person.phone.replace(/\s/g, '')}`} className="text-sm font-semibold text-white hover:text-gold">
+                      {person.phone}
+                    </a>
+                    <p className="text-xs text-muted">
+                      {person.name} · {person.role}
+                    </p>
+                  </div>
+                </li>
               ))}
-            </div>
-            <div className="mt-6">
-              <p className="text-gray-300 text-sm font-subheading">
-                CSI St. Peter's Church
-              </p>
-              <p className="text-gray-400 text-sm">Coimbatore, Tamil Nadu</p>
-            </div>
+              <li className="flex items-start gap-3">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                <p className="text-sm text-muted">CSI St. Peter's Church, Rathinapuri, Coimbatore</p>
+              </li>
+            </ul>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-accent/20 my-8"></div>
-
-        {/* Bottom Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center text-gray-400 text-sm">
-          <p className="font-subheading mb-4 md:mb-0">
-            © 2026 ICCT Tournament | All Rights Reserved
-          </p>
-          <p className="font-subheading">
-            Organized by CSI St. Peter's Church, Coimbatore
-          </p>
+        <div className="mt-12 border-t border-white/10 pt-6 text-center text-xs text-white/50">
+          <p>© CSI St. Peter's Church, Rathinapuri Youth Fellowship. All Rights Reserved.</p>
         </div>
       </div>
     </footer>

@@ -1,71 +1,66 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Maximize2, Camera, Crown, Download, Medal, Sparkles, Clock } from 'lucide-react'
 import SEO from '../components/SEO'
+import { PageHero } from '../components/ui'
+import { SEASONS } from '../data/seasons'
+import Portal from '../components/Portal'
+
+type SeasonNo = number
 
 interface GalleryImage {
   id: string
+  season: SeasonNo
   filename: string
   src: string
   width: number
   height: number
 }
 
-// Load images directly from the Cloudinary links you provided (preserves order).
-const loadGalleryImages = (): GalleryImage[] => {
-  const CLOUDINARY_URLS = [
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257447/FB_IMG_1764004248243_nchaj5.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004301211_iqeh7i.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257452/FB_IMG_1764004308540_daecqo.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257453/FB_IMG_1764004331596_z3sjto.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257453/FB_IMG_1764004336507_gz1gae.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257453/FB_IMG_1764004341831_ymzl9j.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257453/FB_IMG_1764004327055_his2vj.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257452/FB_IMG_1764004314928_rkce2o.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257452/FB_IMG_1764004305889_p4zk7i.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257452/FB_IMG_1764004295841_dzgnbz.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257447/DSC07329-min_eryezp.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257447/DSC05672-min_gccrmp.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257447/DSC05673-min_cc216i.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257448/FB_IMG_1764004209103_i12pou.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004229577_isw4dd.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257448/FB_IMG_1764004253832_bahvx9.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004298138_zdich5.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257448/FB_IMG_1764004213900_h59pxc.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257448/FB_IMG_1764004257657_zsnnvk.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257449/FB_IMG_1764004216534_xjd28r.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257449/FB_IMG_1764004264240_vrjkut.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257449/FB_IMG_1764004260958_ezcb5w.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004225526_sbk2xr.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004269042_pdsy0f.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004272390_mouhft.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004276157_gjigeq.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004280397_ufphwf.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004283980_rktg28.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004236901_mgjyqa.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004293412_os7eql.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004286739_vofuif.jpg',
-  ]
+// Photos per season are managed in src/data/seasons.ts
+const GALLERY_IMAGES: GalleryImage[] = SEASONS.flatMap((season) =>
+  season.photos.map((src, idx) => ({
+    id: `s${season.season}-${idx + 1}`,
+    season: season.season,
+    filename: src.split('/').pop() || `s${season.season}-image-${idx + 1}`,
+    src,
+    width: 800,
+    height: 600,
+  }))
+)
 
-  return CLOUDINARY_URLS.map((src, idx) => {
-    const filename = src.split('/').pop() || `image-${idx + 1}`
-    return { id: String(idx + 1), filename, src, width: 800, height: 600 }
-  })
-}
+// Open on the most recent season that has photos
+const DEFAULT_SEASON =
+  [...SEASONS].reverse().find((sn) => sn.photos.length > 0)?.season ?? SEASONS[0]?.season ?? 1
 
-// Load images using metaglob
-const GALLERY_IMAGES = loadGalleryImages()
+/** Cloudinary: ask the CDN to send the file as a download; other hosts fall back to the plain URL. */
+const downloadUrl = (src: string) =>
+  src.includes('res.cloudinary.com') && src.includes('/upload/') ? src.replace('/upload/', '/upload/fl_attachment/') : src
 
 const Gallery = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null)
-  const [images, setImages] = useState<GalleryImage[]>(GALLERY_IMAGES)
+  const [allImages, setAllImages] = useState<GalleryImage[]>(GALLERY_IMAGES)
+  const [activeSeason, setActiveSeason] = useState<SeasonNo>(DEFAULT_SEASON)
+  // Everything below (grid, viewer, swipe, keys) works on the selected season only
+  const images = useMemo(() => allImages.filter((img) => img.season === activeSeason), [allImages, activeSeason])
+  const seasonCounts = useMemo(
+    () => Object.fromEntries(SEASONS.map((sn) => [sn.season, allImages.filter((img) => img.season === sn.season).length])) as Record<SeasonNo, number>,
+    [allImages]
+  )
+  const season = SEASONS.find((sn) => sn.season === activeSeason)!
+  const seasonLabel = `Season ${season.season}`
+
+  const selectSeason = (id: SeasonNo) => {
+    setCurrentImageIndex(null)
+    setActiveSeason(id)
+  }
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
   // Function to get actual image dimensions
   const updateImageDimensions = (filename: string, width: number, height: number) => {
-    setImages(prevImages =>
+    setAllImages(prevImages =>
       prevImages.map(img =>
         img.filename === filename ? { ...img, width, height } : img
       )
@@ -174,200 +169,287 @@ const Gallery = () => {
   // For a clean, uniform gallery we render a simple responsive grid.
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="min-h-screen bg-gradient-to-b from-bg-start via-primary to-bg-end py-20 px-4"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <SEO title="Tournament Gallery" description="View photos and highlights from previous ICCT tournaments." />
-      <div className="container mx-auto max-w-7xl">
-        {/* Header */}
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="mb-12 text-center"
-        >
-          <h1 className="font-heading text-5xl md:text-6xl text-accent mb-4">
-            Gallery
-          </h1>
-          <p className="font-subheading text-lg text-gray-300">
-            Tournament Photo Gallery
-          </p>
-        </motion.div>
 
-        {/* Error Message */}
-        {false && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-effect border-2 border-red-500/30 rounded-xl p-6 mb-8 text-center"
-          >
-            <p className="text-red-400 font-semibold mb-4">Error loading gallery</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-accent hover:bg-yellow-500 text-black rounded-lg transition-colors font-semibold"
+      <PageHero
+        eyebrow="Gallery"
+        title="Moments from the middle"
+        description="Season-by-season photos, champions and highlights. Tap any photo to view it full screen or download it."
+      />
+
+      <section className="py-12 md:py-16">
+        <div className="page-container">
+          {/* Season tabs */}
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div
+              role="tablist"
+              aria-label="Gallery seasons"
+              className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:inline-flex sm:rounded-2xl sm:border sm:border-white/10 sm:bg-ink-800 sm:p-1.5"
             >
-              Try Again
-            </button>
-          </motion.div>
-        )}
-
-        {/* Loading State */}
-        {false && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <p className="text-gray-300 font-subheading">Loading gallery...</p>
+              {SEASONS.map((sn) => {
+                const active = sn.season === activeSeason
+                const count = seasonCounts[sn.season] ?? 0
+                const sub = count > 0 ? `${count} photos` : sn.status === 'upcoming' ? 'Coming soon' : 'Photos soon'
+                return (
+                  <button
+                    key={sn.season}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    aria-controls="gallery-panel"
+                    onClick={() => selectSeason(sn.season)}
+                    className={`relative flex shrink-0 flex-col items-center rounded-xl border px-5 py-2.5 transition-colors sm:border-0 sm:px-7 ${
+                      active ? 'border-gold text-ink-900' : 'border-white/10 bg-ink-800 text-white/70 hover:text-white sm:bg-transparent'
+                    }`}
+                  >
+                    {active && (
+                      <motion.span
+                        layoutId="gallery-tab"
+                        className="absolute inset-0 rounded-xl bg-gold"
+                        transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                      />
+                    )}
+                    <span className="relative font-display text-2xl leading-none">Season {sn.season}</span>
+                    <span className={`relative mt-1 whitespace-nowrap text-[11px] font-bold uppercase tracking-wider ${active ? 'text-ink-900/70' : 'text-white/40'}`}>
+                      {sn.edition} · {sub}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            {images.length > 0 && (
+              <p className="text-sm text-muted">
+                Showing <strong className="text-white">{images.length}</strong> photos from {season.edition}
+              </p>
+            )}
           </div>
-        )}
 
-        {/* Empty State */}
-        {images.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <p className="text-gray-400 font-subheading text-lg mb-4">No images found in gallery folder</p>
-            <p className="text-gray-500 text-sm mb-4">Add images to /public/gallery/ folder</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-accent hover:bg-yellow-500 text-black rounded-lg transition-colors font-semibold"
+          <div id="gallery-panel" role="tabpanel">
+          {/* Season summary — only shows details that have been verified (see src/data/seasons.ts) */}
+          {(season.champion || season.runnerUp || season.highlights.length > 0) && (
+            <motion.div
+              key={`summary-${activeSeason}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 grid gap-3 rounded-2xl border border-white/10 bg-ink-800 p-4 sm:grid-cols-2 lg:grid-cols-[1fr,1fr,1.4fr] md:p-5"
             >
-              Refresh Gallery
-            </button>
-          </div>
-        )}
+              {season.champion && (
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold text-ink-900">
+                    <Crown className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-gold">Champions · {season.year}</p>
+                    <p className="truncate font-display text-xl leading-tight text-white">{season.champion.team}</p>
+                    {season.champion.place && <p className="truncate text-xs text-muted">{season.champion.place}</p>}
+                  </div>
+                </div>
+              )}
+              {season.runnerUp && (
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white/80">
+                    <Medal className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Runners-up</p>
+                    <p className="truncate font-display text-xl leading-tight text-white">{season.runnerUp.team}</p>
+                    {season.runnerUp.place && <p className="truncate text-xs text-muted">{season.runnerUp.place}</p>}
+                  </div>
+                </div>
+              )}
+              {season.highlights.length > 0 && (
+                <ul className="space-y-1.5 text-sm text-white/80 sm:col-span-2 lg:col-span-1">
+                  {season.highlights.map((h) => (
+                    <li key={h} className="flex gap-2">
+                      <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-gold" /> {h}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </motion.div>
+          )}
 
-        {/* Image Grid */}
-        {images.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-max"
-          >
-            {images.map((image, index) => {
+          {images.length === 0 ? (
+            <motion.div
+              key={`soon-${activeSeason}`}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative mx-auto max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-ink-800 px-6 py-12 text-center md:px-12 md:py-16"
+            >
+              <div className="pointer-events-none absolute inset-0 bg-stripes opacity-70" />
+              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gold/10 blur-3xl" />
+              <div className="relative">
+                <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gold text-ink-900">
+                  {season.status === 'upcoming' ? <Clock className="h-8 w-8" /> : <Camera className="h-8 w-8" />}
+                </span>
+                <p className="mt-6 text-eyebrow uppercase text-flame-light">{seasonLabel} · {season.edition}</p>
+                {season.status === 'upcoming' ? (
+                  <>
+                    <h2 className="mt-2 text-4xl text-white md:text-5xl">Coming soon</h2>
+                    <p className="mx-auto mt-3 max-w-md text-sm text-muted md:text-base">
+                      Photos from {season.edition} will appear here after the tournament. Follow us on Instagram for the first look.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="mt-2 text-4xl text-white md:text-5xl">Photos being collected</h2>
+                    <p className="mx-auto mt-3 max-w-md text-sm text-muted md:text-base">
+                      {seasonLabel} photographs will be added here as soon as they are received by the organising team.
+                    </p>
+                  </>
+                )}
+                {DEFAULT_SEASON !== activeSeason && (seasonCounts[DEFAULT_SEASON] ?? 0) > 0 && (
+                  <button type="button" onClick={() => selectSeason(DEFAULT_SEASON)} className="btn-outline mt-8">
+                    Browse Season {DEFAULT_SEASON} photos
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            // Masonry: CSS columns keep each photo's real aspect ratio
+            <div key={activeSeason} className="columns-2 gap-3 md:columns-3 md:gap-4 lg:columns-4">
+              {images.map((image, index) => {
                 const isLoaded = loadedImages.has(image.filename)
-
                 return (
                   <motion.div
                     key={image.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.03 }}
-                    className="relative overflow-hidden rounded-lg cursor-pointer group"
-                    onClick={() => setCurrentImageIndex(index)}
+                    initial={{ opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-20px' }}
+                    transition={{ duration: 0.35 }}
+                    className="group relative mb-3 break-inside-avoid md:mb-4"
                   >
-                    <div className="w-full bg-gradient-to-br from-gray-800 to-gray-900">
-                      <div className="aspect-video w-full flex items-center justify-center overflow-hidden relative">
-                        {!isLoaded && (
-                          <div className="absolute inset-0 bg-gray-700 animate-pulse flex items-center justify-center">
-                            <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
-                          </div>
-                        )}
-                        <img
-                          src={image.src}
-                          alt={`Gallery image ${index + 1}`}
-                          className={`max-w-full max-h-full object-contain transition-all duration-300 ${
-                            isLoaded ? 'opacity-100' : 'opacity-0'
-                          }`}
-                          loading="lazy"
-                          onLoad={() => markImageLoaded(image.filename)}
-                        />
-                      </div>
-                    </div>
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        Click to view
-                      </div>
-                    </div>
-                    {/* Image counter badge */}
-                    <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      {index + 1}
-                    </div>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentImageIndex(index)}
+                    className="relative block w-full overflow-hidden rounded-xl bg-ink-800"
+                    style={{ aspectRatio: `${image.width} / ${image.height}` }}
+                    aria-label={`Open photo ${index + 1}`}
+                  >
+                    {!isLoaded && <div className="absolute inset-0 animate-pulse bg-ink-700" />}
+                    <img
+                      src={image.src}
+                      alt={`${season.edition} photo ${index + 1}`}
+                      loading="lazy"
+                      onLoad={() => markImageLoaded(image.filename)}
+                      className={`h-full w-full object-cover transition duration-500 group-hover:scale-[1.03] ${
+                        isLoaded ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                    <span className="absolute inset-0 bg-gradient-to-t from-ink-950/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                    <span className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink opacity-0 transition-opacity group-hover:opacity-100">
+                      <Maximize2 className="h-4 w-4" />
+                    </span>
+                  </button>
+                  <a
+                    href={downloadUrl(image.src)}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-2 left-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink opacity-0 transition-opacity hover:bg-gold focus-visible:opacity-100 group-hover:opacity-100"
+                    aria-label={`Download photo ${index + 1}`}
+                    title="Download photo"
+                  >
+                    <Download className="h-4 w-4" />
+                  </a>
                   </motion.div>
                 )
               })}
-          </motion.div>
-        )}
-      </div>
+            </div>
+          )}
+          </div>
+        </div>
+      </section>
 
-      {/* Fullscreen Image Viewer */}
+      {/* Full-screen viewer */}
+      <Portal>
       <AnimatePresence>
         {currentImageIndex !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/95"
             onClick={() => setCurrentImageIndex(null)}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Photo viewer"
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setCurrentImageIndex(null)}
-              className="absolute top-4 right-4 z-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-              aria-label="Close gallery"
-            >
-              <X className="w-6 h-6 text-white" />
-            </button>
-
-            {/* Image Counter */}
-            <div className="absolute top-4 left-4 z-10 px-4 py-2 bg-white/10 rounded-lg">
-              <p className="text-white font-semibold">
+            <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between p-4">
+              <span className="rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white tabular-nums">
                 {currentImageIndex + 1} / {images.length}
-              </p>
+              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={downloadUrl(images[currentImageIndex].src)}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex h-11 items-center gap-2 rounded-full bg-gold px-4 text-sm font-bold text-ink-900 transition-colors hover:bg-gold-light"
+                  aria-label="Download this photo"
+                >
+                  <Download className="h-4 w-4" /> <span className="hidden sm:inline">Download</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setCurrentImageIndex(null)}
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                  aria-label="Close"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
             </div>
 
-            {/* Navigation Buttons */}
             {currentImageIndex > 0 && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation()
                   prevImage()
                 }}
-                className="absolute left-4 z-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-                aria-label="Previous image"
+                className="absolute left-3 z-10 hidden h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:flex"
+                aria-label="Previous photo"
               >
-                <ChevronLeft className="w-8 h-8 text-white" />
+                <ChevronLeft className="h-7 w-7" />
               </button>
             )}
-
             {currentImageIndex < images.length - 1 && (
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation()
                   nextImage()
                 }}
-                className="absolute right-4 z-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-                aria-label="Next image"
+                className="absolute right-3 z-10 hidden h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:flex"
+                aria-label="Next photo"
               >
-                <ChevronRight className="w-8 h-8 text-white" />
+                <ChevronRight className="h-7 w-7" />
               </button>
             )}
 
-            {/* Main Image */}
-            <motion.div
-              className="relative p-6 flex items-center justify-center"
+            <motion.img
+              key={currentImageIndex}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2 }}
+              src={images[currentImageIndex].src}
+              alt={`${season.edition} photo ${currentImageIndex + 1}`}
+              draggable={false}
               onClick={(e) => e.stopPropagation()}
-            >
-              <motion.div className="bg-black/0 rounded-md flex items-center justify-center">
-                <motion.img
-                  key={currentImageIndex}
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  src={images[currentImageIndex].src}
-                  alt={`Gallery image ${currentImageIndex + 1}`}
-                  draggable={false}
-                  className="w-auto h-auto object-contain"
-                  style={{
-                    maxWidth: 'calc(100vw - 160px)',
-                    maxHeight: 'calc(100vh - 160px)'
-                  }}
-                />
-              </motion.div>
-            </motion.div>
+              className="max-h-[calc(100svh-140px)] max-w-[calc(100vw-32px)] rounded-lg object-contain sm:max-w-[calc(100vw-160px)]"
+            />
+
+            <p className="absolute bottom-4 left-0 right-0 text-center text-xs text-white/50 sm:hidden">Swipe to browse</p>
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
     </motion.div>
   )
 }

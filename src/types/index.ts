@@ -56,7 +56,7 @@ export interface Organizer {
   name: string
   phone: string
   whatsapp: string
-  email: string
+  email?: string
 }
 
 /**
@@ -90,9 +90,6 @@ export interface FormData {
 export interface Player {
   playerId: string
   name: string
-  role: string
-  aadharFile?: string
-  subscriptionFile?: string
 }
 
 /**

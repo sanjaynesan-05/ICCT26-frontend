@@ -45,9 +45,7 @@ export {
 
 // Home Data
 export {
-  ANNOUNCEMENTS,
   HERO_SECTION,
   TOURNAMENT_HIGHLIGHTS,
-  getAnnouncementById,
-  getRandomAnnouncement,
+  TOURNAMENT,
 } from './home'

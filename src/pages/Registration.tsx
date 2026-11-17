@@ -6,14 +6,32 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Plus, CheckCircle, ChevronRight, ChevronLeft, Copy, AlertTriangle, Sparkles, Lock } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import {
+  Plus,
+  Check,
+  ChevronRight,
+  ChevronLeft,
+  ChevronDown,
+  AlertTriangle,
+  ArrowRight,
+  Copy,
+  Clock,
+  Mail,
+  QrCode,
+  Send,
+  ShieldCheck,
+} from 'lucide-react'
 import confetti from 'canvas-confetti'
-import PlayerFormCard from '../components/PlayerFormCard'
 import FileUpload from '../components/FileUpload'
-import { DetailedProgressBar } from '../components/ProgressBar'
+import PlayerFormCard from '../components/PlayerFormCard'
+import { PageHero } from '../components/ui'
 import { SearchableSelect } from '../components/SearchableSelect'
-import { fetchChurchAvailability, isChurchLocked, getChurchCapacityText, type ChurchAvailability } from '../utils/churchAvailability'
+import { fetchChurchAvailability, isChurchLocked, type ChurchAvailability } from '../utils/churchAvailability'
 import SEO from '../components/SEO'
+import { REGISTRATION_CONFIG } from '../data/registration'
+import { KEY_RULES } from '../data/rules'
+import { warmUpBackend, ensureBackendAwake, useBackendStatus } from '../utils/backendWarmup'
 
 // Import production utilities
 import {
@@ -40,10 +58,13 @@ import {
 import {
   uploadMultipartWithRetry,
   extractErrorMessage,
+  extractErrorCode,
   isSuccessResponse,
   handleAxiosError,
   BackendResponse
 } from '../utils/apiClient'
+import Portal from '../components/Portal'
+import TearTicket from '../components/TearTicket'
 
 // ============================================================================
 // TYPES
@@ -58,16 +79,11 @@ interface CaptainInfo {
 
 interface PlayerData {
   name: string
-  role: string
-  aadharFile: File | null
-  subscriptionFile: File | null
 }
 
 interface FormData {
   churchName: string
   teamName: string
-  pastorLetter: File | null
-  groupPhoto: File | null
   captain: CaptainInfo
   viceCaptain: CaptainInfo
   players: PlayerData[]
@@ -75,10 +91,9 @@ interface FormData {
 }
 
 interface RegistrationResponse {
+  registration_status: 'pending' | 'confirmed' | 'rejected'
   team_id: string
   team_name: string
-  email_sent: boolean
-  message: string
 }
 
 // ============================================================================
@@ -86,7 +101,13 @@ interface RegistrationResponse {
 // ============================================================================
 
 // Set to true to close/lock registration
-const REGISTRATION_CLOSED = true  
+const REGISTRATION_CLOSED = true
+
+const MIN_PLAYERS = REGISTRATION_CONFIG.minPlayers
+const MAX_PLAYERS = REGISTRATION_CONFIG.maxPlayers
+
+// Backend error_code when the church already has its one team
+const CHURCH_ALREADY_REGISTERED = 'CHURCH_ALREADY_REGISTERED'
 
 
 const CHURCH_NAMES = [
@@ -189,29 +210,36 @@ const Registration = () => {
   const [showProgress, setShowProgress] = useState(false)
   const [currentIdempotencyKey, setCurrentIdempotencyKey] = useState<string>('')
   const [registeredTeamId, setRegisteredTeamId] = useState<string>('')
+  const [registeredStatus, setRegisteredStatus] = useState<string>('pending')
+  const [ticketTorn, setTicketTorn] = useState(false)
+  const [idCopied, setIdCopied] = useState(false)
   
   // ========== CHURCH AVAILABILITY STATE ==========
   const [churchAvailability, setChurchAvailability] = useState<ChurchAvailability[] | undefined>()
   const [loadingChurches, setLoadingChurches] = useState(true)
-  const [churchLimitError, setChurchLimitError] = useState('')
+  const [, setChurchLimitError] = useState('')
 
   const emptyPlayer = (): PlayerData => ({
     name: '',
-    role: '',
-    aadharFile: null, 
-    subscriptionFile: null,
   })
 
   const [formData, setFormData] = useState<FormData>({
     churchName: '',
     teamName: '',
-    pastorLetter: null,
-    groupPhoto: null,
     captain: { name: '', phone: '', whatsapp: '', email: '' },
     viceCaptain: { name: '', phone: '', whatsapp: '', email: '' },
-    players: Array.from({ length: 11 }).map(() => emptyPlayer()),
+    players: Array.from({ length: MIN_PLAYERS }).map(() => emptyPlayer()),
     paymentReceipt: null,
   })
+
+  // ========== BACKEND WARM-UP ==========
+  const backendStatus = useBackendStatus()
+  const [waitingForServer, setWaitingForServer] = useState(false)
+
+  // Re-ping on open: the user may have sat on another page long enough for it to sleep again
+  useEffect(() => {
+    void warmUpBackend()
+  }, [])
 
   // ========== INITIALIZATION ==========
   useEffect(() => {
@@ -238,16 +266,22 @@ const Registration = () => {
     loadChurchAvailability()
   }, [])
 
+  // ========== SCROLL TO TOP ON STEP CHANGE ==========
+  // Without this, moving from the long Players step lands the user mid-page
+  // (e.g. straight on the payment QR) instead of the top of the new step.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [currentStep])
+
   // ========== UTILITIES ==========
-  const totalSteps = 6
+  const totalSteps = 4
   const progress = ((currentStep + 1) / totalSteps) * 100
 
   const steps = [
-    { number: 1, title: 'Team Details' },
+    { number: 1, title: 'Team' },
     { number: 2, title: 'Captain & Vice-Captain' },
     { number: 3, title: 'Players' },
-    { number: 4, title: 'Review' },
-    { number: 5, title: 'Payment Upload' },
+    { number: 4, title: 'Review, Payment & Submit' },
   ]
 
   const clearValidationErrors = () => setValidationErrors([])
@@ -261,8 +295,13 @@ const Registration = () => {
     clearValidationErrors()
 
     switch (currentStep) {
-      case 1: { // Team Details
+      case 0: { // Team Details
         let hasErrors = false
+
+        if (!acceptTerms) {
+          addValidationError('terms', 'Please accept the tournament rules and regulations to proceed.')
+          hasErrors = true
+        }
 
         if (!formData.churchName.trim()) {
           addValidationError('churchName', VALIDATION_MESSAGES.CHURCH_NAME_REQUIRED)
@@ -270,8 +309,8 @@ const Registration = () => {
         } else {
           // Check if selected church is locked (at capacity)
           if (isChurchLocked(formData.churchName, churchAvailability)) {
-            addValidationError('churchName', 'This church has reached its team limit (2/2). Please select a different church.')
-            setChurchLimitError(`${formData.churchName} has reached its team limit (2/2 teams). Please select a different church.`)
+            addValidationError('churchName', 'This church already has its one allowed entry. Please select a different church.')
+            setChurchLimitError(`${formData.churchName} already has its one allowed entry. Please select a different church.`)
             hasErrors = true
           }
         }
@@ -282,32 +321,10 @@ const Registration = () => {
           hasErrors = true
         }
 
-        if (!formData.pastorLetter) {
-          addValidationError('pastorLetter', 'Pastor letter is required')
-          hasErrors = true
-        } else {
-          const fileValidation = isValidFile(formData.pastorLetter)
-          if (!fileValidation.isValid) {
-            addValidationError('pastorLetter', fileValidation.error!)
-            hasErrors = true
-          }
-        }
-
-        if (!formData.groupPhoto) {
-          addValidationError('groupPhoto', 'Group photo is required')
-          hasErrors = true
-        } else {
-          const fileValidation = isValidFile(formData.groupPhoto)
-          if (!fileValidation.isValid) {
-            addValidationError('groupPhoto', fileValidation.error!)
-            hasErrors = true
-          }
-        }
-
         return !hasErrors
       }
 
-      case 2: { // Captain & Vice-Captain
+      case 1: { // Captain & Vice-Captain
         let hasErrors = false
 
         // Captain validation
@@ -367,16 +384,16 @@ const Registration = () => {
         return !hasErrors
       }
 
-      case 3: { // Players
+      case 2: { // Players
         let hasErrors = false
 
-        if (formData.players.length < 11) {
-          addValidationError('players', 'At least 11 players are required')
+        if (formData.players.length < MIN_PLAYERS) {
+          addValidationError('players', `At least ${MIN_PLAYERS} players are required`)
           hasErrors = true
         }
 
-        if (formData.players.length > 15) {
-          addValidationError('players', 'Maximum 15 players allowed')
+        if (formData.players.length > MAX_PLAYERS) {
+          addValidationError('players', `Maximum ${MAX_PLAYERS} players allowed`)
           hasErrors = true
         }
 
@@ -387,36 +404,12 @@ const Registration = () => {
             hasErrors = true
           }
 
-          if (!player.aadharFile) {
-            addValidationError(`player_${index}_aadhar`, `Player ${index + 1}: Aadhar card is required`)
-            hasErrors = true
-          } else {
-            const fileValidation = isValidFile(player.aadharFile)
-            if (!fileValidation.isValid) {
-              addValidationError(`player_${index}_aadhar`, `Player ${index + 1} Aadhar: ${fileValidation.error}`)
-              hasErrors = true
-            }
-          }
-
-          if (!player.subscriptionFile) {
-            addValidationError(`player_${index}_subscription`, `Player ${index + 1}: Subscription file is required`)
-            hasErrors = true
-          } else {
-            const fileValidation = isValidFile(player.subscriptionFile)
-            if (!fileValidation.isValid) {
-              addValidationError(`player_${index}_subscription`, `Player ${index + 1} Subscription: ${fileValidation.error}`)
-              hasErrors = true
-            }
-          }
         })
 
         return !hasErrors
       }
 
-      case 4: // Review step - no validation needed
-        return true
-
-      case 5: { // Payment
+      case 3: { // Review and payment
         let hasErrors = false
 
         if (!formData.paymentReceipt) {
@@ -442,18 +435,8 @@ const Registration = () => {
   const handleNext = () => {
     clearValidationErrors()
 
-    if (currentStep === 0) {
-      if (!acceptTerms) {
-        addValidationError('terms', 'Please accept the terms and conditions to proceed.')
-        return
-      }
-      // Move to step 1
-      setCurrentStep(1)
+    if (!validateCurrentStep()) {
       return
-    } else {
-      if (!validateCurrentStep()) {
-        return
-      }
     }
 
     if (currentStep < totalSteps - 1) {
@@ -479,13 +462,13 @@ const Registration = () => {
   }
 
   const addPlayer = () => {
-    if (formData.players.length < 15) {
+    if (formData.players.length < MAX_PLAYERS) {
       setFormData({ ...formData, players: [...formData.players, emptyPlayer()] })
     }
   }
 
   const removeLastPlayer = () => {
-    if (formData.players.length > 11) {
+    if (formData.players.length > MIN_PLAYERS) {
       setFormData({ ...formData, players: formData.players.slice(0, -1) })
     }
   }
@@ -494,16 +477,6 @@ const Registration = () => {
   const handleFileChange = (file: File | null) => {
     clearValidationErrors()
     setFormData({ ...formData, paymentReceipt: file })
-  }
-
-  const handlePastorLetterChange = (file: File | null) => {
-    clearValidationErrors()
-    setFormData({ ...formData, pastorLetter: file })
-  }
-
-  const handleGroupPhotoChange = (file: File | null) => {
-    clearValidationErrors()
-    setFormData({ ...formData, groupPhoto: file })
   }
 
   // ========== FORM SUBMISSION WITH PRODUCTION FEATURES ==========
@@ -522,15 +495,34 @@ const Registration = () => {
       vicePhone: formData.viceCaptain.phone,
       viceEmail: formData.viceCaptain.email,
       viceWhatsapp: formData.viceCaptain.whatsapp,
-      pastorLetter: formData.pastorLetter,
       paymentReceipt: formData.paymentReceipt,
-      groupPhoto: formData.groupPhoto,
       players: formData.players
     })
 
     if (validationResult.length > 0) {
       setValidationErrors(validationResult)
-      setCurrentStep(1) // Go back to first step with errors
+      // Jump to the earliest step that contains an error (was hard-coded to step 2)
+      const stepForField = (field: string): number => {
+        if (field === 'churchName' || field === 'teamName' || field === 'terms') return 0
+        if (field.startsWith('captain') || field.startsWith('vice')) return 1
+        if (field === 'players' || field.startsWith('player_')) return 2
+        return 3 // paymentReceipt and anything else on the review step
+      }
+      setCurrentStep(Math.min(...validationResult.map((e) => stepForField(e.field))))
+      return
+    }
+
+    // Make sure the backend is awake before sending (it may still be booting)
+    setIsSubmitting(true)
+    setWaitingForServer(true)
+    const serverReady = await ensureBackendAwake()
+    setWaitingForServer(false)
+    if (!serverReady) {
+      setIsSubmitting(false)
+      addValidationError(
+        'submit',
+        'The registration server is not responding right now. Your details are still here — please wait a minute and press Submit again.'
+      )
       return
     }
 
@@ -564,14 +556,6 @@ const Registration = () => {
       multipartData.append('vice_email', formData.viceCaptain.email.trim())
       multipartData.append('vice_whatsapp', formData.viceCaptain.whatsapp?.trim() || '')
 
-      // Team files with sanitized filenames
-      const sanitizedPastorLetter = new File(
-        [formData.pastorLetter!],
-        sanitizeFilename(formData.pastorLetter!.name),
-        { type: formData.pastorLetter!.type }
-      )
-      multipartData.append('pastor_letter', sanitizedPastorLetter)
-
       const sanitizedPaymentReceipt = new File(
         [formData.paymentReceipt!],
         sanitizeFilename(formData.paymentReceipt!.name),
@@ -579,40 +563,17 @@ const Registration = () => {
       )
       multipartData.append('payment_receipt', sanitizedPaymentReceipt)
 
-      const sanitizedGroupPhoto = new File(
-        [formData.groupPhoto!],
-        sanitizeFilename(formData.groupPhoto!.name),
-        { type: formData.groupPhoto!.type }
-      )
-      multipartData.append('group_photo', sanitizedGroupPhoto)
-
       // Players (FLATTENED)
       formData.players.forEach((p: PlayerData, index: number) => {
         multipartData.append(`player_${index}_name`, p.name.trim())
-        multipartData.append(`player_${index}_role`, p.role?.trim() || '')
-
-        // Sanitize player file names
-        const sanitizedAadhar = new File(
-          [p.aadharFile!],
-          sanitizeFilename(p.aadharFile!.name),
-          { type: p.aadharFile!.type }
-        )
-        multipartData.append(`player_${index}_aadhar_file`, sanitizedAadhar)
-
-        const sanitizedSubscription = new File(
-          [p.subscriptionFile!],
-          sanitizeFilename(p.subscriptionFile!.name),
-          { type: p.subscriptionFile!.type }
-        )
-        multipartData.append(`player_${index}_subscription_file`, sanitizedSubscription)
       })
 
       console.log('📤 Submitting with idempotency key:', idempotencyKey)
-      console.log('📦 Total files:', 3 + (formData.players.length * 2))
+      console.log('📦 Total files: 1')
 
       // 🔍 DEBUG: Log all FormData entries
       console.log('🔍 === COMPLETE FORMDATA DEBUG ===')
-      for (let [key, value] of multipartData.entries()) {
+      for (const [key, value] of multipartData.entries()) {
         if (value instanceof File) {
           console.log(`✅ ${key}: File(name: ${value.name}, size: ${value.size} bytes, type: ${value.type})`)
         } else {
@@ -638,14 +599,18 @@ const Registration = () => {
       if (!isSuccessResponse(response)) {
         // Backend error
         const errorMessage = extractErrorMessage(response)
+        const errorCode = extractErrorCode(response)
 
-        console.error('Backend error:', errorMessage)
+        console.error('Backend error:', errorCode, errorMessage)
         saveIdempotencyRecord(idempotencyKey, 'failed')
 
-        // Check for church limit error
-        if (errorMessage.includes('Maximum 2 teams')) {
+        // Church already has its team (error_code first; message check kept for older backends)
+        if (
+          errorCode === CHURCH_ALREADY_REGISTERED ||
+          errorMessage.toLowerCase().includes('one allowed entry')
+        ) {
           setChurchLimitError(
-            `${formData.churchName} has reached its team limit (2/2 teams). Please select a different church.`
+            `${formData.churchName} already has its one allowed entry. Please select a different church.`
           )
           // Refresh church availability
           const data = await fetchChurchAvailability()
@@ -661,7 +626,7 @@ const Registration = () => {
       }
 
       // Handle backend success response safely
-      const data = response?.data ?? response ?? null
+      const data = response.data ?? null
 
       if (!data) {
         console.error('Invalid backend response:', response)
@@ -671,14 +636,12 @@ const Registration = () => {
         return
       }
 
-      // NEW FLOW: Backend returns pending status (no team_id shown to user)
-      // Team ID will be sent via email after admin approval
-      const registrationStatus = data.registration_status || data.status || 'pending'
-      
-      // For backward compatibility, handle if team_id is returned
-      const teamId = data.team_id || 'PENDING'
-      
+      const raw = data as RegistrationResponse & { teamId?: string; status?: string }
+      const registrationStatus = raw.registration_status || raw.status || 'pending'
+      const teamId = raw.team_id || raw.teamId || 'PENDING'
+
       setRegisteredTeamId(teamId)
+      setRegisteredStatus(registrationStatus)
 
       // Save to localStorage
       saveIdempotencyRecord(idempotencyKey, 'success', teamId)
@@ -721,30 +684,25 @@ const Registration = () => {
       const errorMessage = handleAxiosError(error)
       addValidationError('submit', errorMessage)
 
-      saveIdempotencyRecord(currentIdempotencyKey, 'failed')
+      saveIdempotencyRecord(idempotencyKey, 'failed')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   // ========== SUCCESS HANDLERS ==========
-  const copyTeamId = () => {
-    navigator.clipboard.writeText(registeredTeamId)
-    alert('Team ID copied to clipboard!')
-  }
-
   const closeSuccess = () => {
     setShowSuccess(false)
+    setTicketTorn(false)
+    setIdCopied(false)
     setCurrentStep(0)
     // Reset form
     setFormData({
       churchName: '',
       teamName: '',
-      pastorLetter: null,
-      groupPhoto: null,
       captain: { name: '', phone: '', whatsapp: '', email: '' },
       viceCaptain: { name: '', phone: '', whatsapp: '', email: '' },
-      players: Array.from({ length: 11 }).map(() => emptyPlayer()),
+      players: Array.from({ length: MIN_PLAYERS }).map(() => emptyPlayer()),
       paymentReceipt: null,
     })
     setAcceptTerms(false)
@@ -752,276 +710,258 @@ const Registration = () => {
   }
 
   // ========== RENDER ==========
-  
-  // Show coming soon message if flag is true
+
+  const inputClass =
+    'w-full rounded-xl border border-surface-line bg-white px-4 py-3 text-ink placeholder:text-muted-dark/70 input-focus disabled:bg-surface disabled:opacity-70'
+  const labelClass = 'mb-1.5 block text-sm font-semibold text-ink'
+
+  // Captain / vice-captain contact block (same fields, same rules)
+  const renderContactFields = (role: 'captain' | 'viceCaptain') => {
+    const person = formData[role]
+    const update = (patch: Partial<CaptainInfo>) => {
+      clearValidationErrors()
+      setFormData({ ...formData, [role]: { ...person, ...patch } })
+    }
+    const id = (field: string) => `${role}-${field}`
+    const who = role === 'captain' ? "Captain's" : "Vice-Captain's"
+
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <label htmlFor={id('name')} className={labelClass}>Full name *</label>
+          <input
+            id={id('name')}
+            type="text"
+            className={inputClass}
+            placeholder={`${who} name`}
+            value={person.name}
+            onChange={(e) => update({ name: e.target.value })}
+            disabled={isSubmitting}
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor={id('phone')} className={labelClass}>Phone number *</label>
+          <input
+            id={id('phone')}
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
+            className={inputClass}
+            placeholder="10-digit number"
+            value={person.phone}
+            onChange={(e) => update({ phone: e.target.value.replace(/[^0-9]/g, '') })}
+            disabled={isSubmitting}
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor={id('whatsapp')} className={labelClass}>WhatsApp number *</label>
+          <input
+            id={id('whatsapp')}
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
+            className={inputClass}
+            placeholder="10-digit number"
+            value={person.whatsapp}
+            onChange={(e) => update({ whatsapp: e.target.value.replace(/[^0-9]/g, '') })}
+            disabled={isSubmitting}
+            required
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label htmlFor={id('email')} className={labelClass}>Email *</label>
+          <input
+            id={id('email')}
+            type="email"
+            className={inputClass}
+            placeholder="email@example.com"
+            value={person.email}
+            onChange={(e) => update({ email: e.target.value })}
+            disabled={isSubmitting}
+            required
+          />
+        </div>
+      </div>
+    )
+  }
+
+  const stepMotion = {
+    initial: { opacity: 0, x: 24 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -24 },
+    transition: { duration: 0.25 },
+  }
+
+  // Registration not yet open view (shown while REGISTRATION_CLOSED is true)
   if (REGISTRATION_CLOSED) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
-      >
-        <SEO title="Team Registration" description="Register your team for ICCT'27." />
-        <div className="container mx-auto max-w-6xl">
-          {/* Header */}
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="text-center mb-12"
-          >
-            <h1 className="font-heading text-6xl md:text-7xl text-accent mb-4">
-              Team Registration
-            </h1>
-            <p className="font-subheading text-xl text-gray-300">
-              Closed
-            </p>
-          </motion.div>
-
-          {/* Coming Soon Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-2xl p-12 md:p-16 text-center border-2 border-accent/40 shadow-2xl shadow-accent/30 bg-gradient-to-br from-accent/20 via-accent/10 to-transparent backdrop-blur-xl glass-effect"
-          >
-            {/* Animated Icon */}
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="mb-8"
-            >
-              <div className="inline-block">
-                <div className="text-6xl md:text-8xl font-heading text-accent mb-6">🔒</div>
-              </div>
-            </motion.div>
-
-            {/* Main Message */}
-            <h2 className="font-heading text-4xl md:text-5xl text-accent mb-6">
-              Registration Closed
-            </h2>
-            
-            <p className="font-body text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl mx-auto">
-              Team registrations for the ICCT ’27 Inter Church Cricket Tournament are now officially closed. Please stay tuned for further updates and announcements.
-            </p>
-
-            {/* Follow Updates */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="font-body text-gray-400 text-sm md:text-base mt-12"
-            >
-              Follow us on social media for latest announcements and updates
-            </motion.p>
-          </motion.div>
-        </div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <SEO title="Team Registration" description="Registration for ICCT'27 opens soon." />
+        <PageHero eyebrow="Registration" title="Opening soon" />
+        <section className="bg-surface py-16 text-ink">
+          <div className="page-container max-w-2xl">
+            <div className="card-light flex flex-col items-center p-10 text-center">
+              <span className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-ink text-gold">
+                <Clock className="h-8 w-8" />
+                <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-gold animate-live-dot" aria-hidden />
+              </span>
+              <p className="mt-6 text-eyebrow uppercase text-flame">ICCT'27 · Season 4</p>
+              <h2 className="mt-2 text-4xl text-ink">Registration opens soon</h2>
+              <p className="mt-3 max-w-md text-muted-dark">
+                Team registration for ICCT'27 is getting ready. Please wait — we'll announce the opening on our social channels,
+                and this page will open for entries right here.
+              </p>
+              <Link to="/rules" className="mt-8 inline-flex items-center gap-1.5 text-sm font-bold text-ink hover:text-flame">
+                Meanwhile, read the rules <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
       </motion.div>
     )
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 1 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
-      className="min-h-screen pt-32 pb-20 px-4 lg:px-8"
-    >
+    <motion.div initial={{ opacity: 1 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <SEO title="Team Registration" description="Register your team for ICCT'27." />
-      <div className="container mx-auto max-w-6xl">
-        {/* Header */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-center mb-12"
-        >
-          <h1 className="font-heading text-6xl md:text-7xl text-accent mb-4">
-            Team Registration
-          </h1>
-          <p className="font-subheading text-xl text-gray-300">
-            Complete all steps to register your team
-          </p>
-        </motion.div>
 
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="h-3 bg-secondary/50 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-primary via-accent to-accent"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.5 }}
-            />
+      <PageHero
+        eyebrow={`Season 4 · Entry ₹2,027 per team`}
+        title="Register your team"
+        description="Four short steps — team, leaders, players, then review & pay. Takes about 5 minutes."
+      >
+        {/* Server connection status (backend may be waking from sleep) */}
+        {backendStatus !== 'awake' && backendStatus !== 'idle' && (
+          <div
+            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-left text-sm font-semibold sm:rounded-full ${
+              backendStatus === 'waking'
+                ? 'border-gold/40 bg-gold/10 text-gold'
+                : 'border-flame/40 bg-flame/10 text-flame-light'
+            }`}
+            role="status"
+          >
+            {backendStatus === 'waking' ? (
+              <>
+                <span className="h-2 w-2 rounded-full bg-gold animate-live-dot" />
+                Connecting to server… you can keep filling the form
+              </>
+            ) : (
+              <>
+                <span className="h-2 w-2 rounded-full bg-flame-light" />
+                Server not reachable yet.
+                <button type="button" onClick={() => void warmUpBackend()} className="underline hover:text-white">
+                  Retry
+                </button>
+              </>
+            )}
           </div>
-          <div className="flex justify-between mt-4">
-            {steps.map((step) => (
-              <div
-                key={step.number}
-                className={`flex flex-col items-center transition-all duration-300 ${
-                  currentStep >= step.number ? 'opacity-100' : 'opacity-40'
-                }`}
-              >
-                <div
-                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold mb-2 transition-all duration-300 ${
-                    currentStep >= step.number
-                      ? 'bg-gradient-gold text-primary shadow-[0_0_20px_rgba(255,204,41,0.5)]'
-                      : 'bg-secondary text-gray-500'
-                  }`}
-                >
-                  {currentStep > step.number ? <CheckCircle className="w-6 h-6" /> : step.number}
-                </div>
-                <span className="text-xs md:text-sm font-subheading font-semibold text-white text-center hidden md:block">
-                  {step.title}
+        )}
+      </PageHero>
+
+      <section className="bg-surface py-10 text-ink md:py-14">
+        <div className="page-container max-w-3xl">
+          {/* ===== Stepper ===== */}
+          <div className="mb-6">
+            <ol className="hidden items-center sm:flex">
+              {steps.map((step, i) => {
+                const done = currentStep > i
+                const active = currentStep === i
+                return (
+                  <li key={step.number} className={`flex items-center ${i < steps.length - 1 ? 'flex-1' : ''}`}>
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors ${
+                          done
+                            ? 'bg-pitch text-white'
+                            : active
+                              ? 'bg-ink text-gold ring-4 ring-gold/30'
+                              : 'border-2 border-surface-line bg-white text-muted-dark'
+                        }`}
+                      >
+                        {done ? <Check className="h-4 w-4" strokeWidth={3} /> : step.number}
+                      </span>
+                      <span className={`text-sm font-semibold ${active ? 'text-ink' : 'text-muted-dark'}`}>{step.title}</span>
+                    </div>
+                    {i < steps.length - 1 && (
+                      <span className={`mx-3 h-0.5 flex-1 rounded-full ${done ? 'bg-pitch' : 'bg-surface-line'}`} />
+                    )}
+                  </li>
+                )
+              })}
+            </ol>
+
+            {/* Mobile: compact label + bar */}
+            <div className="sm:hidden">
+              <div className="mb-2 flex items-baseline justify-between">
+                <span className="text-sm font-bold text-ink">{steps[currentStep].title}</span>
+                <span className="text-xs font-semibold text-muted-dark">
+                  Step {currentStep + 1} of {totalSteps}
                 </span>
               </div>
-            ))}
+              <div className="h-1.5 overflow-hidden rounded-full bg-surface-line">
+                <motion.div className="h-full rounded-full bg-gold" animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} />
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Form Container */}
-        <div className="max-w-3xl mx-auto">
-          <motion.div
-            initial={{ x: 30, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="glass-card rounded-2xl p-6 md:p-8"
-          >
-            {/* Upload Progress Bar */}
+          {/* ===== Form card ===== */}
+          <div className="card-light p-5 md:p-8">
+            {/* Upload progress */}
             {showProgress && (
-              <DetailedProgressBar
-                progress={uploadProgress}
-                isVisible={showProgress}
-                className="mb-6"
-              />
+              <div className="mb-6 rounded-xl border border-surface-line bg-surface p-4">
+                <div className="mb-2 flex justify-between text-sm font-semibold">
+                  <span>{uploadProgress >= 100 ? 'Upload complete — finishing up…' : 'Uploading your registration…'}</span>
+                  <span className="text-ink">{uploadProgress}%</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-surface-line">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${uploadProgress >= 100 ? 'bg-pitch' : 'bg-gold'}`}
+                    style={{ width: `${Math.min(100, uploadProgress)}%` }}
+                  />
+                </div>
+              </div>
             )}
 
             <AnimatePresence mode="wait">
-              {/* Step 0: Introduction & Terms */}
+              {/* ---------- Step 1: Team ---------- */}
               {currentStep === 0 && (
-                <motion.div
-                  key="step0"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                  className="glass-card rounded-2xl p-8 mb-8"
-                >
-                  <div className="text-center mb-8">
-                    <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4">
-                      Welcome to ICCT27
-                    </h2>
-                    <p className="text-gray-600 font-subheading">
-                      Register your team for the cricket tournament
-                    </p>
-                  </div>
+                <motion.div key="step1" {...stepMotion}>
+                  <h2 className="text-3xl text-ink md:text-4xl">Team information</h2>
+                  <p className="mt-1 text-sm text-muted-dark">One team per church. Pick your church and name your team.</p>
 
-                  <div className="space-y-6 text-gray-800 max-h-96 overflow-y-auto mb-8">
-                    {/* Registration Info */}
-                    <div className="bg-blue-50 border-2 border-blue-400 rounded-lg p-4">
-                      <p className="text-blue-800 font-semibold text-sm mb-2">📋 Registration Overview</p>
-                      <p className="text-blue-700 text-sm mb-3">
-                        You will proceed through the following steps:
-                      </p>
-                      <ul className="list-disc list-inside space-y-1 text-blue-700 text-sm">
-                        <li>Team Details (Church, Team Name, Documents)</li>
-                        <li>Captain & Vice-Captain Information</li>
-                        <li>Player Details (11-15 players)</li>
-                        <li>Review Information</li>
-                        <li>Payment Upload</li>
-                      </ul>
-                    </div>
-
-                    {/* Requirements */}
-                    <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4">
-                      <p className="text-green-800 font-semibold text-sm mb-3">✓ Rules and Regulations</p>
-                      <ul className="list-disc list-inside space-y-2 text-green-700 text-sm">
-                        <li>Matches will be played using a <strong>Red Tennis Ball</strong> format</li>
-                        <li>Each team can have a <strong>maximum of 15 players</strong></li>
-                        <li>There is <strong>no age limit</strong> for participation</li>
-                        <li>Each team will play <strong>10 overs per side</strong></li>
-                        <li><strong>Powerplay (Overs 1–2):</strong> Only <strong>2 fielders</strong> are allowed outside the <strong>30-yard circle</strong></li>
-                        <li><strong>Second Powerplay:</strong> Can be taken in any one over between <strong>Overs 6, 7, or 8</strong>; only <strong>5 fielders</strong> are allowed outside the <strong>30-yard circle</strong></li>
-                        <li>A bowler can bowl a <strong>maximum of 3 overs</strong> in a match</li>
-                        <li>If a match ends in a tie, a <strong>Super Over</strong> will be played to decide the winner</li>
-                        <li>The <strong>Umpire’s decision</strong> is final</li>
-                      </ul>
-                    </div>
-
-                    {/* Terms */}
-                    <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
-                      <p className="text-yellow-800 font-semibold text-sm mb-2">⚡ Important</p>
-                      <p className="text-yellow-700 text-sm">
-                        By proceeding with registration, you agree to comply with all tournament rules and regulations. All submitted information must be accurate and authentic.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-200 pt-6">
-                    <div className="flex items-start gap-3 mb-6 p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
-                      <input
-                        type="checkbox"
-                        id="acceptTerms"
-                        checked={acceptTerms}
-                        onChange={(e) => setAcceptTerms(e.target.checked)}
-                        className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-600"
-                      />
-                      <label htmlFor="acceptTerms" className="text-gray-800 font-medium text-sm">
-                        I agree to the tournament rules and regulations and confirm that all information I provide will be <span className="text-blue-600 font-bold">accurate and authentic</span>.
-                      </label>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              
-
-              {/* Step 2: Team Details */}
-              {currentStep === 1 && (
-                <motion.div
-                  key="step1"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">Team Information</h3>
-                  <div className="space-y-6">
-                    <div className="space-y-3">
-                      <SearchableSelect
-                        options={CHURCH_NAMES}
-                        value={formData.churchName}
-                        onChange={(value) => {
-                          clearValidationErrors()
-                          setChurchLimitError('')
-                          setFormData({ ...formData, churchName: value })
-                        }}
-                        label="Church Name"
-                        placeholder="Search and select your church..."
-                        disabled={isSubmitting || loadingChurches}
-                        disabledOptions={
-                          churchAvailability
-                            ?.filter(c => c.locked)
-                            .map(c => c.church_name) || []
-                        }
-                        optionCapacities={
-                          churchAvailability?.reduce((acc, church) => {
-                            acc[church.church_name] = `${church.team_count}/2`
-                            return acc
-                          }, {} as Record<string, string>) || {}
-                        }
-                        required
-                      />
-                    </div>
+                  <div className="mt-6 space-y-5">
+                    <SearchableSelect
+                      options={CHURCH_NAMES}
+                      value={formData.churchName}
+                      onChange={(value) => {
+                        clearValidationErrors()
+                        setChurchLimitError('')
+                        setFormData({ ...formData, churchName: value })
+                      }}
+                      label="Church name"
+                      placeholder="Search and select your church..."
+                      disabled={isSubmitting || loadingChurches}
+                      disabledOptions={churchAvailability?.filter((c) => c.locked).map((c) => c.church_name) || []}
+                      optionCapacities={
+                        churchAvailability?.reduce((acc, church) => {
+                          acc[church.church_name] = `${church.team_count}/1`
+                          return acc
+                        }, {} as Record<string, string>) || {}
+                      }
+                      required
+                    />
 
                     <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Team Name *
-                      </label>
+                      <label htmlFor="teamName" className={labelClass}>Team name *</label>
                       <input
+                        id="teamName"
                         type="text"
-                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                        placeholder="Enter team name (3-80 characters)"
+                        className={inputClass}
+                        placeholder="3–80 characters"
                         value={formData.teamName}
                         onChange={(e) => {
                           clearValidationErrors()
@@ -1031,644 +971,425 @@ const Registration = () => {
                         required
                       />
                     </div>
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Church Letter * (PDF/Image, max 5MB)
-                      </label>
-                      <div>
-                        <FileUpload
-                          file={formData.pastorLetter}
-                          onFileChange={handlePastorLetterChange}
-                          accept=".jpg,.jpeg,.png,.pdf"
-                          placeholder="Upload Church Letter"
-                        />
-                      </div>
+                  {/* Key rules */}
+                  <details className="group mt-8 rounded-xl border border-surface-line bg-surface" open>
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
+                      <span className="flex items-center gap-2 font-semibold text-ink">
+                        <ShieldCheck className="h-5 w-5 text-pitch" /> Key rules
+                      </span>
+                      <ChevronDown className="h-5 w-5 text-muted-dark transition-transform group-open:rotate-180" />
+                    </summary>
+                    <ul className="space-y-2.5 border-t border-surface-line px-4 py-4 text-sm text-ink/80">
+                      {KEY_RULES.map((rule, i) => (
+                        <li key={i} className="flex gap-3">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
+                          <span>{rule}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="border-t border-surface-line px-4 py-3">
+                      <Link to="/rules" className="inline-flex items-center gap-1 text-sm font-semibold text-ink hover:underline">
+                        Read the full rules <ArrowRight className="h-4 w-4" />
+                      </Link>
                     </div>
+                  </details>
 
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Team Group Photo * (Image only, max 5MB)
-                      </label>
-                      <p className="text-xs text-gray-500 mb-2">
-                        Upload a group photo of your team (JPEG or PNG)
-                      </p>
-                      <div>
-                        <FileUpload
-                          file={formData.groupPhoto}
-                          onFileChange={handleGroupPhotoChange}
-                          accept=".jpg,.jpeg,.png"
-                          placeholder="Upload Team Photo"
-                        />
+                  <label
+                    htmlFor="acceptTerms"
+                    className={`mt-5 flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${
+                      acceptTerms ? 'border-pitch/50 bg-pitch/5' : 'border-surface-line bg-white hover:border-ink/30'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      id="acceptTerms"
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-surface-line accent-[#0A1F44]"
+                    />
+                    <span className="text-sm font-medium text-ink">
+                      I agree to the tournament rules and confirm that all information I provide is accurate and authentic.
+                    </span>
+                  </label>
+                </motion.div>
+              )}
+
+              {/* ---------- Step 2: Captain & Vice-Captain ---------- */}
+              {currentStep === 1 && (
+                <motion.div key="step2" {...stepMotion}>
+                  <h2 className="text-3xl text-ink md:text-4xl">Captain &amp; vice-captain</h2>
+                  <p className="mt-1 text-sm text-muted-dark">We'll send the confirmation and Team ID to the captain's email.</p>
+
+                  <div className="mt-6 space-y-6">
+                    {(['captain', 'viceCaptain'] as const).map((role) => (
+                      <div key={role} className="rounded-xl border border-surface-line p-5">
+                        <div className="mb-4 flex items-center gap-3">
+                          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink font-display text-lg text-gold">
+                            {role === 'captain' ? 'C' : 'VC'}
+                          </span>
+                          <h3 className="text-2xl text-ink">{role === 'captain' ? 'Captain' : 'Vice-Captain'}</h3>
+                        </div>
+                        {renderContactFields(role)}
                       </div>
-                    </div>
+                    ))}
                   </div>
                 </motion.div>
               )}
 
-              {/* Step 3: Captain & Vice-Captain */}
+              {/* ---------- Step 3: Players ---------- */}
               {currentStep === 2 && (
-                <motion.div
-                  key="step2"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">
-                    Captain & Vice-Captain
-                  </h3>
-                  <div className="space-y-8">
-                    <div className="bg-blue-50 rounded-xl p-6">
-                      <h4 className="font-subheading font-bold text-primary text-xl mb-4">
-                        Captain Details
-                      </h4>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                            placeholder="Captain's name"
-                            value={formData.captain.name}
-                            onChange={(e) => {
-                              clearValidationErrors()
-                              setFormData({
-                                ...formData,
-                                captain: { ...formData.captain, name: e.target.value }
-                              })
-                            }}
-                            disabled={isSubmitting}
-                            required
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Phone Number (10 digits) *
-                            </label>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              maxLength={10}
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                              placeholder="Enter 10-digit number"
-                              value={formData.captain.phone}
-                              onChange={(e) => {
-                                clearValidationErrors()
-                                const value = e.target.value.replace(/[^0-9]/g, '')
-                                setFormData({
-                                  ...formData,
-                                  captain: { ...formData.captain, phone: value }
-                                })
-                              }}
-                              disabled={isSubmitting}
-                              required
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              WhatsApp Number (10 digits) *
-                            </label>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              maxLength={10}
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                              placeholder="Enter 10-digit number"
-                              value={formData.captain.whatsapp}
-                              onChange={(e) => {
-                                clearValidationErrors()
-                                const value = e.target.value.replace(/[^0-9]/g, '')
-                                setFormData({
-                                  ...formData,
-                                  captain: { ...formData.captain, whatsapp: value }
-                                })
-                              }}
-                              disabled={isSubmitting}
-                              required
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Email *
-                          </label>
-                          <input
-                            type="email"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                            placeholder="email@example.com"
-                            value={formData.captain.email}
-                            onChange={(e) => {
-                              clearValidationErrors()
-                              setFormData({
-                                ...formData,
-                                captain: { ...formData.captain, email: e.target.value }
-                              })
-                            }}
-                            disabled={isSubmitting}
-                            required
-                          />
-                        </div>
-                      </div>
+                <motion.div key="step3" {...stepMotion}>
+                  <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                      <h2 className="text-3xl text-ink md:text-4xl">Players</h2>
+                      <p className="mt-1 text-sm text-muted-dark">
+                        {MIN_PLAYERS}–{MAX_PLAYERS} players, including captain &amp; vice-captain.
+                      </p>
                     </div>
-
-                    <div className="bg-green-50 rounded-xl p-6">
-                      <h4 className="font-subheading font-bold text-green-700 text-xl mb-4">
-                        Vice-Captain Details
-                      </h4>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                            placeholder="Vice-Captain's name"
-                            value={formData.viceCaptain.name}
-                            onChange={(e) => {
-                              clearValidationErrors()
-                              setFormData({
-                                ...formData,
-                                viceCaptain: { ...formData.viceCaptain, name: e.target.value }
-                              })
-                            }}
-                            disabled={isSubmitting}
-                            required
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              Phone Number (10 digits) *
-                            </label>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              maxLength={10}
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                              placeholder="Enter 10-digit number"
-                              value={formData.viceCaptain.phone}
-                              onChange={(e) => {
-                                clearValidationErrors()
-                                const value = e.target.value.replace(/[^0-9]/g, '')
-                                setFormData({
-                                  ...formData,
-                                  viceCaptain: { ...formData.viceCaptain, phone: value }
-                                })
-                              }}
-                              disabled={isSubmitting}
-                              required
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                              WhatsApp Number (10 digits) *
-                            </label>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              maxLength={10}
-                              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                              placeholder="Enter 10-digit number"
-                              value={formData.viceCaptain.whatsapp}
-                              onChange={(e) => {
-                                clearValidationErrors()
-                                const value = e.target.value.replace(/[^0-9]/g, '')
-                                setFormData({
-                                  ...formData,
-                                  viceCaptain: { ...formData.viceCaptain, whatsapp: value }
-                                })
-                              }}
-                              disabled={isSubmitting}
-                              required
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                            Email *
-                          </label>
-                          <input
-                            type="email"
-                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 input-focus text-gray-900 bg-white"
-                            placeholder="email@example.com"
-                            value={formData.viceCaptain.email}
-                            onChange={(e) => {
-                              clearValidationErrors()
-                              setFormData({
-                                ...formData,
-                                viceCaptain: { ...formData.viceCaptain, email: e.target.value }
-                              })
-                            }}
-                            disabled={isSubmitting}
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Step 4: Player Details */}
-              {currentStep === 3 && (
-                <motion.div
-                  key="step3"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                  className="max-h-[600px] overflow-y-auto overflow-x-hidden"
-                >
-                  <div className="sticky top-0 bg-white pb-4 mb-4 z-10">
-                    <h3 className="font-heading text-3xl text-primary mb-2">Player Details</h3>
-                    <p className="text-sm text-gray-600">
-                      Add 11-15 players (Captain & Vice-Captain included)
-                    </p>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                        formData.players.length >= MAX_PLAYERS ? 'bg-gold/20 text-ink' : 'bg-surface text-muted-dark'
+                      }`}
+                    >
+                      {formData.players.length} / {MAX_PLAYERS} players
+                    </span>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
                     {formData.players.map((player, index) => (
                       <PlayerFormCard
                         key={index}
                         playerNumber={index + 1}
                         player={player}
                         onChange={(data) => updatePlayer(index, data)}
-                        onRemove={
-                          index === formData.players.length - 1 && formData.players.length > 11
-                            ? removeLastPlayer
-                            : undefined
-                        }
-                        canRemove={
-                          index === formData.players.length - 1 && formData.players.length > 11
-                        }
+                        onRemove={removeLastPlayer}
+                        canRemove={index === formData.players.length - 1 && formData.players.length > MIN_PLAYERS}
+                        disabled={isSubmitting}
                       />
                     ))}
                   </div>
 
-                  {formData.players.length < 15 && (
+                  {formData.players.length < MAX_PLAYERS && (
                     <button
+                      type="button"
                       onClick={addPlayer}
                       disabled={isSubmitting}
-                      className="w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary hover:shadow-lg hover:shadow-primary/50 text-white font-subheading font-semibold rounded-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink/20 py-3 text-sm font-bold uppercase tracking-wider text-ink transition-colors hover:border-ink hover:bg-ink hover:text-white disabled:opacity-50"
                     >
-                      <Plus className="w-5 h-5" />
-                      Add Player
+                      <Plus className="h-4 w-4" /> Add player
                     </button>
                   )}
                 </motion.div>
               )}
 
-              {/* Step 5: Review Information */}
-              {currentStep === 4 && (
-                <motion.div
-                  key="step4"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">Review Information</h3>
-                  <div className="space-y-6">
-                    <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                      <p className="font-subheading text-green-700 font-semibold">
-                        ✓ Please review all information before final submission
-                      </p>
-                    </div>
+              {/* ---------- Step 4: Review (top) → Payment & Submit (below) ---------- */}
+              {currentStep === 3 && (
+                <motion.div key="step4" {...stepMotion} className="space-y-10">
+                  {/* A. Review — styled as a team sheet */}
+                  <section>
+                    <p className="text-eyebrow uppercase text-flame">Part A</p>
+                    <h2 className="mt-1 text-3xl text-ink md:text-4xl">Review your team sheet</h2>
+                    <p className="mt-1 text-sm text-muted-dark">
+                      Check everything carefully. Use <strong>Previous</strong> to make changes. Payment is below.
+                    </p>
 
-                    <div className="space-y-3 text-gray-700">
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Church Name:</span>
-                        <span>{formData.churchName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Team Name:</span>
-                        <span>{formData.teamName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Captain:</span>
-                        <span>{formData.captain.name || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Captain Phone:</span>
-                        <span>{formData.captain.phone || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Captain Email:</span>
-                        <span>{formData.captain.email || 'N/A'}</span>
+                    <div className="mt-6 overflow-hidden rounded-2xl border border-surface-line">
+                      {/* Sheet header */}
+                      <div className="bg-ink px-5 py-5 text-white">
+                        <p className="text-eyebrow uppercase text-gold">{formData.churchName || 'Church not selected'}</p>
+                        <p className="mt-1 break-words font-display text-4xl leading-tight">{formData.teamName || 'Team name'}</p>
                       </div>
 
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Vice-Captain:</span>
-                        <span>{formData.viceCaptain.name || 'N/A'}</span>
+                      {/* Leaders */}
+                      <div className="grid divide-y divide-surface-line md:grid-cols-2 md:divide-x md:divide-y-0">
+                        {(['captain', 'viceCaptain'] as const).map((role) => {
+                          const p = formData[role]
+                          return (
+                            <div key={role} className="p-5">
+                              <p className="text-eyebrow uppercase text-muted-dark">{role === 'captain' ? 'Captain' : 'Vice-Captain'}</p>
+                              <p className="mt-1 break-words text-lg font-bold text-ink">{p.name || 'N/A'}</p>
+                              <dl className="mt-2 space-y-1 text-sm text-ink/80">
+                                <div className="flex gap-2"><dt className="w-20 shrink-0 text-muted-dark">Phone</dt><dd className="break-all">{p.phone || 'N/A'}</dd></div>
+                                <div className="flex gap-2"><dt className="w-20 shrink-0 text-muted-dark">WhatsApp</dt><dd className="break-all">{p.whatsapp || 'N/A'}</dd></div>
+                                <div className="flex gap-2"><dt className="w-20 shrink-0 text-muted-dark">Email</dt><dd className="break-all">{p.email || 'N/A'}</dd></div>
+                              </dl>
+                            </div>
+                          )
+                        })}
                       </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Vice-Captain Phone:</span>
-                        <span>{formData.viceCaptain.phone || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Vice-Captain Email:</span>
-                        <span>{formData.viceCaptain.email || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Total Players:</span>
-                        <span>{formData.players.length}</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-subheading font-semibold">Registration Fee:</span>
-                        <span className="text-green-600 font-bold">₹2,027</span>
+
+                      {/* Squad */}
+                      <div className="border-t border-surface-line bg-surface p-5">
+                        <div className="mb-3 flex items-center justify-between">
+                          <p className="text-eyebrow uppercase text-muted-dark">Squad</p>
+                          <span className="rounded-full bg-ink px-3 py-1 text-xs font-bold text-white">
+                            {formData.players.length} players
+                          </span>
+                        </div>
+                        <ol className="grid gap-2 sm:grid-cols-2">
+                          {formData.players.map((player, index) => (
+                            <li key={index} className="flex items-center gap-3 rounded-lg bg-white px-3 py-2">
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gold font-display text-sm text-ink">
+                                {index + 1}
+                              </span>
+                              <span className="break-words font-medium text-ink">{player.name || 'N/A'}</span>
+                            </li>
+                          ))}
+                        </ol>
                       </div>
                     </div>
+                  </section>
 
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-                      <p className="text-sm text-yellow-800">
-                        <strong>Note:</strong> By submitting this form, you agree to the tournament
-                        rules and regulations. All information provided must be accurate.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+                  {/* B. Payment & Submit */}
+                  <section className="border-t-2 border-dashed border-surface-line pt-10">
+                    <p className="text-eyebrow uppercase text-flame">Part B</p>
+                    <h2 className="mt-1 text-3xl text-ink md:text-4xl">Payment &amp; submit</h2>
+                    <p className="mt-1 text-sm text-muted-dark">
+                      Pay the entry fee, upload the receipt, then press <strong>Submit</strong>.
+                    </p>
 
-              {/* Step 6: Payment Upload */}
-              {currentStep === 5 && (
-                <motion.div
-                  key="step5"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-heading text-3xl text-primary mb-6">Payment Upload</h3>
-                  <div className="space-y-6">
-                    <div className="bg-blue-50 border-l-4 border-primary p-4 rounded">
-                      <p className="font-subheading text-primary font-semibold mb-2">
-                        Registration Fee: ₹2027 per team
-                      </p>
-                      <p className="text-sm text-gray-700">Scan the QR code below to make payment</p>
-                    </div>
-
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="bg-white p-4 rounded-xl shadow-lg mb-4 border-2 border-primary">
+                    <div className="mt-6 grid items-center gap-6 rounded-2xl border border-surface-line p-5 md:grid-cols-[auto,1fr]">
+                      <div className="mx-auto rounded-xl border-2 border-ink p-3">
                         <img
                           src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=9944257713@kotak811%26pn=ICCT27%26am=2027%26cu=INR%26tn=ICCT%2727%20Team%20Registration"
-                          alt="Payment QR Code"
-                          className="w-64 h-64 object-cover rounded-lg"
+                          alt="UPI payment QR code for ₹2,027"
+                          className="h-52 w-52 md:h-56 md:w-56"
                         />
                       </div>
-                      <p className="text-center font-subheading text-gray-600 mb-4">
-                        Scan with any UPI app
-                      </p>
+                      <div className="text-center md:text-left">
+                        <p className="text-eyebrow uppercase text-muted-dark">Entry fee</p>
+                        <p className="font-display text-6xl leading-none text-ink">₹2,027</p>
+                        <p className="mt-2 flex items-center justify-center gap-2 text-sm text-muted-dark md:justify-start">
+                          <QrCode className="h-4 w-4" /> Scan with any UPI app (GPay, PhonePe, Paytm…)
+                        </p>
+                        <p className="mt-1 text-sm text-muted-dark">Take a screenshot of the successful payment.</p>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-subheading font-semibold text-gray-700 mb-2">
-                        Upload Payment Receipt * (Required)
-                      </label>
-                      <div>
-                        <FileUpload
-                          file={formData.paymentReceipt}
-                          onFileChange={handleFileChange}
-                          accept=".jpg,.jpeg,.png,.pdf"
-                          placeholder="Upload Receipt"
-                        />
-                      </div>
+                    <div className="mt-6">
+                      <label className={labelClass}>Upload payment receipt *</label>
+                      <FileUpload
+                        file={formData.paymentReceipt}
+                        onFileChange={handleFileChange}
+                        accept=".jpg,.jpeg,.png,.pdf"
+                        placeholder="Tap to upload or drag the receipt here"
+                      />
                     </div>
-                  </div>
+
+                    <p className="mt-6 rounded-xl bg-gold/15 px-4 py-3 text-sm text-ink">
+                      By submitting, you agree to the tournament rules. All information provided must be accurate.
+                    </p>
+                  </section>
                 </motion.div>
               )}
-
             </AnimatePresence>
 
-            {/* Validation Errors Display */}
+            {/* Validation errors */}
             {validationErrors.length > 0 && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg max-h-64 overflow-y-auto"
+                className="mt-6 max-h-64 overflow-y-auto rounded-xl border border-flame/30 bg-flame/5 p-4"
+                role="alert"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <h4 className="text-red-700 font-semibold">Please fix the following errors:</h4>
+                <div className="mb-2 flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-flame" />
+                  <h4 className="font-body text-base font-bold text-flame-dark">Please fix the following:</h4>
                 </div>
-                <ul className="space-y-1">
+                <ul className="space-y-1 pl-7 text-sm text-flame-dark">
                   {validationErrors.map((error, index) => (
-                    <li key={index} className="text-red-600 text-sm">
-                      • {error.error}
-                    </li>
+                    <li key={index} className="list-disc">{error.error}</li>
                   ))}
                 </ul>
               </motion.div>
             )}
 
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+            {/* Navigation */}
+            <div className="mt-8 flex items-center justify-between gap-3 border-t border-surface-line pt-6">
               <button
+                type="button"
                 onClick={handlePrevious}
                 disabled={currentStep === 0 || isSubmitting}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-subheading font-semibold transition-all ${
-                  currentStep === 0 || isSubmitting
-                    ? 'opacity-50 cursor-not-allowed bg-gray-200 text-gray-500'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                className="btn flex-1 border-2 border-surface-line !px-4 text-ink hover:border-ink disabled:hover:border-surface-line sm:flex-none sm:!px-6"
               >
-                <ChevronLeft className="w-5 h-5" />
-                Previous
+                <ChevronLeft className="h-5 w-5" /> <span>Previous</span>
               </button>
 
-              <button
-                onClick={handleNext}
-                disabled={isSubmitting}
-                className={`flex items-center gap-2 btn-gold ${
-                  isSubmitting
-                    ? 'opacity-60 cursor-not-allowed' 
-                    : ''
-                }`}
-                title={''}
-              >
+              <button type="button" onClick={handleNext} disabled={isSubmitting} className="btn-gold flex-1 !px-4 sm:min-w-[9rem] sm:flex-none sm:!px-6">
                 {isSubmitting ? (
-                  <span className="inline-flex items-center gap-2 text-black">
-                    <svg
-                      className="w-4 h-4 animate-spin text-black"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                      ></path>
-                    </svg>
-                    Submitting...
-                  </span>
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink border-t-transparent" />
+                    {waitingForServer ? (<><span className="sm:hidden">Connecting…</span><span className="hidden sm:inline">Connecting to server…</span></>) : 'Submitting…'}
+                  </>
+                ) : currentStep === totalSteps - 1 ? (
+                  <>
+                    Submit <Send className="h-4 w-4" />
+                  </>
                 ) : (
                   <>
-                    {currentStep === 4 ? 'Submit' : 'Next'}
-                    {currentStep < 5 && <ChevronRight className="w-5 h-5" />}
+                    Next <ChevronRight className="h-5 w-5" />
                   </>
                 )}
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Success Modal */}
+      {/* ===== Success: tear-off team pass ===== */}
+      <Portal>
       <AnimatePresence>
         {showSuccess && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4"
+            className="fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-ink-950/85 backdrop-blur-sm"
           >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0, rotate: -5 }}
-              animate={{ scale: 1, opacity: 1, rotate: 0 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: 'spring', duration: 0.6 }}
-              className="glass-card rounded-2xl p-8 max-w-lg w-full text-center relative overflow-hidden"
-            >
-              {/* Animated background elements */}
+            <div className="flex min-h-full items-center justify-center px-4 py-10">
               <motion.div
-                className="absolute top-0 left-0 w-full h-full"
-                animate={{
-                  background: [
-                    'radial-gradient(circle at 20% 30%, rgba(255, 204, 41, 0.15) 0%, transparent 50%)',
-                    'radial-gradient(circle at 80% 70%, rgba(255, 204, 41, 0.15) 0%, transparent 50%)',
-                    'radial-gradient(circle at 20% 30%, rgba(255, 204, 41, 0.15) 0%, transparent 50%)'
-                  ]
-                }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              
-              {/* Success icon with animation */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                className="w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl relative"
-              >
-                <CheckCircle className="w-14 h-14 text-white" />
-                <motion.div
-                  className="absolute inset-0 rounded-full border-4 border-green-400"
-                  animate={{ scale: [1, 1.3, 1], opacity: [1, 0, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              </motion.div>
-              
-              {/* Sparkles decoration */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="flex items-center justify-center gap-2 mb-4"
-              >
-                <Sparkles className="w-5 h-5 text-accent" />
-                <Sparkles className="w-4 h-4 text-accent" />
-                <Sparkles className="w-5 h-5 text-accent" />
-              </motion.div>
-              
-              <motion.h2
-                initial={{ y: 20, opacity: 0 }}
+                initial={{ y: 24, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="font-heading text-4xl text-primary mb-3 tracking-wide"
+                exit={{ y: 24, opacity: 0 }}
+                transition={{ type: 'spring', duration: 0.5 }}
+                className="w-full max-w-xl"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Registration submitted"
               >
-                Registration Submitted!
-              </motion.h2>
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="font-heading text-5xl bg-gradient-to-r from-accent via-yellow-500 to-accent bg-clip-text text-transparent mb-6 tracking-wider"
-                style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-              >
-                {formData.teamName}
-              </motion.div>
-              <motion.p
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="font-subheading text-lg text-gray-700 mb-8"
-              >
-                🎉 Your registration has been received! 🏏
-              </motion.p>
-
-              {/* Pending Status Notice */}
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 rounded-xl p-6 mb-6 border-2 border-blue-300 shadow-lg"
-              >
-                <div className="flex items-center justify-center gap-3 mb-3">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                  <p className="text-sm font-bold text-blue-800 uppercase tracking-wider">Status: Pending Admin Approval</p>
-                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                {/* Headline */}
+                <div className="mb-7 text-center text-white">
+                  <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-pitch shadow-[0_0_40px_rgba(31,164,99,0.45)]">
+                    <Check className="h-8 w-8" strokeWidth={3} />
+                  </span>
+                  <p className="mt-4 text-eyebrow uppercase text-gold">Registration submitted</p>
+                  <h2 className="mt-1 text-4xl text-white md:text-5xl">You're on the team sheet!</h2>
                 </div>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  Your registration is currently under review by our admin team.
-                  You will receive a confirmation email with your <strong>Team ID</strong> once approved.
-                </p>
-              </motion.div>
 
-              {/* Email Confirmation Notice */}
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.8 }}
-                className="mb-6 p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-300"
-              >
-                <p className="text-sm text-gray-700 font-medium mb-2">
-                  📧 <strong>Check Your Email</strong>
-                </p>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Confirmation will be sent to: <strong className="text-primary">{formData.captain.email}</strong>
-                  <br/>
-                  <span className="text-blue-600 mt-1 inline-block">Please wait for admin approval. This may take 24-48 hours.</span>
-                </p>
-              </motion.div>
+                {/* Tear-off ticket */}
+                <div className="flex justify-center">
+                  <TearTicket
+                    width={540}
+                    height={230}
+                    stubSize={150}
+                    radius={18}
+                    holes={10}
+                    rotate={-2}
+                    tiltMax={7}
+                    background="linear-gradient(135deg, #0A1F44 0%, #12305F 100%)"
+                    stubBackground="#FFC21A"
+                    color="#FFFFFF"
+                    borderColor="rgba(255, 194, 26, 0.45)"
+                    ariaLabel="Tear off the ICCT'27 entry stub"
+                    onTear={() => setTicketTorn(true)}
+                    stub={
+                      <div className="flex h-full flex-col items-center justify-center px-3 text-center text-ink-900">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-ink-900/70">Admit</span>
+                        <span className="font-display text-4xl leading-none">Team</span>
+                        <span className="mt-2 rounded-md border border-ink-900/30 px-2 py-0.5 font-display text-lg leading-tight">
+                          ICCT'27
+                        </span>
+                        <span className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-ink-900/60">Tear ›</span>
+                      </div>
+                    }
+                  >
+                    <div className="flex h-full flex-col justify-between p-6">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-gold">ICCT'27 · Team pass</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Season 4</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-display text-4xl leading-tight text-white">{formData.teamName}</p>
+                        <p className="truncate text-sm text-white/70">{formData.churchName}</p>
+                      </div>
+                      <div className="flex items-end justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">Team ID</p>
+                          {registeredTeamId && registeredTeamId !== 'PENDING' ? (
+                            <p className="truncate font-display text-3xl leading-none tracking-wider text-gold">{registeredTeamId}</p>
+                          ) : (
+                            <p className="text-sm font-semibold text-white/85">Emailed after approval</p>
+                          )}
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                            registeredStatus === 'confirmed' ? 'bg-pitch text-white' : 'bg-gold/20 text-gold'
+                          }`}
+                        >
+                          {registeredStatus === 'confirmed' ? 'Confirmed' : 'Pending'}
+                        </span>
+                      </div>
+                    </div>
+                  </TearTicket>
+                </div>
 
-              <motion.button
-                type="button"
-                onClick={closeSuccess}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.9 }}
-                className="btn-gold w-full text-lg py-4 shadow-lg"
-              >
-                Close
-              </motion.button>
-            </motion.div>
+                <p className={`mt-4 text-center text-xs ${ticketTorn ? 'font-semibold text-gold' : 'text-white/50'}`} aria-live="polite">
+                  {ticketTorn ? 'Stub torn — welcome to ICCT\'27!' : 'Drag the gold stub to tear it off'}
+                </p>
+
+                {/* Details */}
+                <div className="mt-6 rounded-2xl bg-white p-5 text-ink shadow-2xl md:p-6">
+                  {registeredTeamId && registeredTeamId !== 'PENDING' && (
+                    <div className="mb-4 flex items-center justify-between gap-3 rounded-xl bg-surface px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-dark">Your Team ID</p>
+                        <p className="truncate font-display text-2xl tracking-wider text-ink">{registeredTeamId}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void navigator.clipboard?.writeText(registeredTeamId).then(() => {
+                            setIdCopied(true)
+                            window.setTimeout(() => setIdCopied(false), 2000)
+                          })
+                        }}
+                        className="btn shrink-0 border border-surface-line !px-3 !py-2 text-ink hover:bg-ink hover:text-white"
+                        aria-label="Copy Team ID"
+                      >
+                        {idCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {idCopied ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                  )}
+
+                  <dl className="space-y-2 text-sm">
+                    <div className="flex justify-between gap-4"><dt className="text-muted-dark">Captain</dt><dd className="break-words text-right font-semibold">{formData.captain.name}</dd></div>
+                    <div className="flex justify-between gap-4"><dt className="text-muted-dark">Vice-Captain</dt><dd className="break-words text-right font-semibold">{formData.viceCaptain.name}</dd></div>
+                    <div className="flex justify-between gap-4"><dt className="text-muted-dark">Players</dt><dd className="font-semibold">{formData.players.length}</dd></div>
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="text-muted-dark">Status</dt>
+                      <dd>
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
+                            registeredStatus === 'confirmed' ? 'bg-pitch/15 text-pitch-dark' : 'bg-gold/20 text-ink'
+                          }`}
+                        >
+                          {registeredStatus === 'confirmed' ? 'Confirmed' : 'Pending approval'}
+                        </span>
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <div className="mt-5 flex gap-3 rounded-xl border border-surface-line p-4 text-sm">
+                    <Mail className="mt-0.5 h-5 w-5 shrink-0 text-ink" />
+                    <p className="text-muted-dark">
+                      Confirmation goes to <strong className="break-all text-ink">{formData.captain.email}</strong> once our team
+                      verifies the payment (usually within 24–48 hours). Keep your Team ID for all communication.
+                    </p>
+                  </div>
+
+                  <button type="button" onClick={closeSuccess} className="btn-gold mt-5 w-full !py-4">
+                    Done
+                  </button>
+                </div>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
     </motion.div>
   )
 }

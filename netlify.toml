@@ -4,11 +4,10 @@
 [build]
   command = "npm run build"
   publish = "dist"
-  functions = "netlify/functions"
 
 # Environment variables for build
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   NODE_ENV = "production"
 
 # SPA Routing - Redirect all requests to index.html for client-side routing

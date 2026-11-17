@@ -233,7 +233,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                               ? 'bg-accent/20 text-primary border-l-4 border-accent'
                               : 'text-gray-700 hover:bg-gray-50 border-l-4 border-transparent'
                       }`}
-                      title={isOptionDisabled ? 'This church has reached its team limit (2/2)' : ''}
+                      title={isOptionDisabled ? 'This church already has its single team entry' : ''}
                     >
                       <span>{option}</span>
                       <span className="flex items-center gap-2">
@@ -241,7 +241,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                           <span className="text-xs font-semibold">{optionCapacities[option]}</span>
                         )}
                         {isOptionDisabled && (
-                          <span className="text-red-500 font-bold text-xs">FULL (2/2)</span>
+                          <span className="text-red-500 font-bold text-xs">FULL (1/1)</span>
                         )}
                         {!isOptionDisabled && value === option && (
                           <span className="text-primary font-bold">✓</span>

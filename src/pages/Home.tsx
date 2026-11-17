@@ -1,400 +1,647 @@
-import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import Countdown from '../components/Countdown'
-import RegistrationCountdown from '../components/RegistrationCountdown'
-import ImageCarousel from '../components/ImageCarousel'
-import { HERO_SECTION, TOURNAMENT_HIGHLIGHTS } from '../data/home'
-import { SOCIAL_LINKS } from '../data/contact'
-import titleSponsorLogo from '../assets/coming soon.png'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { motion, animate, useInView } from 'framer-motion'
+import {
+  ArrowRight,
+  ClipboardList,
+  QrCode,
+  BadgeCheck,
+  CalendarDays,
+  MapPin,
+  Clock,
+  Users,
+  Trophy,
+} from 'lucide-react'
 import SEO from '../components/SEO'
+import { apiService } from '../services/api'
+import { TOURNAMENT } from '../data/home'
+import { TITLE_SPONSOR } from '../data/sponsors'
+import { VENUE } from '../data/contact'
+import ImageCarousel from '../components/ImageCarousel'
+import ChampionsCarousel from '../components/ChampionsCarousel'
+import Counter from '../components/Counter'
+import RulebookButton from '../components/RulebookButton'
+import { useCountdown } from '../hooks/useCountdown'
+import { Badge, ButtonLink, SectionHeader } from '../components/ui'
+import { cn } from '../lib/utils'
 
-const Home = () => {
-  // Set this to true to show the Trophy Sponsor memorial section
-  const SHOW_TROPHY_SPONSOR = false
+// Set to true to show the Trophy Sponsor memorial in the Sponsors section
+const SHOW_TROPHY_SPONSOR = false
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://icct26-backend.onrender.com'
+
+const formatDateTime = (iso: string) =>
+  new Date(iso).toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+
+const fadeUp = {
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-60px' },
+  transition: { duration: 0.45 },
+}
+
+/* ================================================================== */
+/* Hero                                                                */
+/* ================================================================== */
+
+interface CountdownCardProps {
+  title: string
+  target: string
+  dateLabel: string
+  badge: ReactNode
+  doneText: string
+  accent: 'gold' | 'flame'
+}
+
+const CountdownCard = ({ title, target, dateLabel, badge, doneText, accent }: CountdownCardProps) => {
+  const parts = useCountdown(target)
+  const units = [
+    { label: 'Days', value: parts.days },
+    { label: 'Hrs', value: parts.hours },
+    { label: 'Min', value: parts.minutes },
+    { label: 'Sec', value: parts.seconds },
+  ]
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="min-h-screen"
+    <div
+      className={cn(
+        'flex h-full w-full flex-col items-center rounded-2xl border bg-ink-900/75 px-4 py-6 backdrop-blur-sm',
+        accent === 'flame' ? 'border-flame/40' : 'border-gold/40'
+      )}
     >
-      <SEO title="Home" description="Welcome to ICCT'27, the ultimate Inter Church Cricket Tournament." />
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-bg-start via-primary to-bg-end">
-          <div className="absolute inset-0 bg-[url('/stadium.jpg')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
-        </div>
-
-        {/* Floating Cricket Ball */}
-        <motion.div
-          className="absolute top-20 right-10 w-32 h-32 rounded-full bg-red-600 opacity-30 blur-xl"
-          animate={{
-            y: [0, -30, 0],
-            x: [0, 20, 0],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-
-        <motion.div
-          className="absolute bottom-20 left-10 w-24 h-24 rounded-full bg-accent opacity-20 blur-xl"
-          animate={{
-            y: [0, 20, 0],
-            x: [0, -15, 0],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-
-        {/* Hero Content */}
-        <div className="relative z-10 container mx-auto px-4 lg:px-8 pt-20 pb-16 text-center">
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <motion.h2
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="font-heading text-2xl md:text-3xl lg:text-4xl text-white mb-4 tracking-wider"
-            >
-              CSI St. Peter's Church,Youth Fellowship
-            </motion.h2>
-            <div className="flex items-center justify-center mb-6">
-              <motion.img
-                src="/churchlogo.png"
-                alt="Church Logo"
-                className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 mr-4 md:mr-6"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              />
-              <h1 className="font-heading text-6xl md:text-8xl lg:text-9xl text-accent tracking-wider">
-                {HERO_SECTION.mainTitle}
-              </h1>
-              <motion.img
-                src="/adonailogo.png"
-                alt="Adonai Logo"
-                className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 ml-4 md:ml-6"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              />
-            </div>
-            <h2 className="font-heading text-3xl md:text-5xl lg:text-6xl text-white mb-4">
-              {HERO_SECTION.subTitle}
-            </h2>
-            <p className="font-subheading text-xl md:text-2xl lg:text-3xl text-gray-300 mb-12">
-              {HERO_SECTION.tagline}
-            </p>
-            <p className="font-body text-lg md:text-xl text-gray-300 mb-8">
-              {HERO_SECTION.description}
-            </p>
-          </motion.div>
-
-          {/* Register Now Button - Mobile Only */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="md:hidden mb-8"
-          >
-            <Link
-              to="/registration"
-              className="inline-block btn-gold text-sm transition-shadow"
-              style={{ boxShadow: '0 0 18px rgba(255,214,92,0.32)' }}
-            >
-              Register Now
-            </Link>
-          </motion.div>
-
-          {/* Countdowns with Title Sponsor - Reorganized for Mobile */}
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="mb-12"
-          >
-            {/* Trophy Sponsor Memorial - Appears first on all devices */}
-            {SHOW_TROPHY_SPONSOR && (
-            <motion.div
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.35 }}
-              className="mb-8"
-            >
-              <motion.h2
-                className="font-heading text-2xl md:text-3xl lg:text-4xl text-accent mb-2 tracking-wider"
-              >
-                Trophy Sponsor
-              </motion.h2>
-              <motion.h2
-                className="font-heading text-2xl md:text-3xl lg:text-4xl text-white mb-4 tracking-wider"
-              >
-                In Memory of
-              </motion.h2>
-              <motion.h2
-                className="font-heading text-3xl md:text-4xl lg:text-5xl text-white mb-8 tracking-wider"
-              >
-                Mrs.R. Gnanajothi Anandaraj
-              </motion.h2>
-            </motion.div>
-            )}
-
-            {/* Title Sponsor - Appears after Trophy Sponsor on mobile */}
-            <div className="lg:hidden mb-8">
-              <div className="flex flex-col items-center justify-center">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.6 }}
-                  className="flex flex-col items-center"
+      <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+        {badge}
+        <span className="text-eyebrow uppercase text-white">{title}</span>
+      </div>
+      {parts.done ? (
+        <p className="py-3 font-display text-4xl text-white">{doneText}</p>
+      ) : (
+        <div className="flex items-start gap-1.5 sm:gap-3">
+          {units.map((u, i) => (
+            <div key={u.label} className="flex items-start gap-1.5 sm:gap-3">
+              <div className="flex w-12 flex-col items-center sm:w-14">
+                <span
+                  className={cn(
+                    'font-display text-5xl leading-none tabular-nums',
+                    accent === 'flame' ? 'text-flame-light' : 'text-gold'
+                  )}
                 >
-                  <motion.h3 
-                    className="font-heading text-4xl md:text-5xl text-accent mb-4 tracking-wider uppercase font-bold"
-                    animate={{ 
-                      textShadow: [
-                        '0 0 10px rgba(255, 204, 41, 0.5)',
-                        '0 0 20px rgba(255, 204, 41, 0.8)',
-                        '0 0 30px rgba(255, 204, 41, 0.6)',
-                        '0 0 10px rgba(255, 204, 41, 0.5)',
-                      ]
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    Title Sponsor
-                  </motion.h3>
-                  <div className="bg-white/10 border-2 border-accent/30 rounded-xl p-4 max-w-xs hover:border-accent/60 transition-all duration-300 scale-90">
-                    <img
-                      src={titleSponsorLogo}
-                      alt="Title Sponsors"
-                      className="w-full h-auto object-contain"
-                    />
-                  </div>
-                </motion.div>
+                  <Counter
+                    value={u.value}
+                    minDigits={2}
+                    direction="down"
+                    fontSize="1em"
+                    duration={0.55}
+                    bounce={0.25}
+                    stagger={0.05}
+                    fade={0.25}
+                  />
+                </span>
+                <span className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{u.label}</span>
               </div>
+              {i < units.length - 1 && <span className="font-display text-4xl leading-none text-white/25">:</span>}
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 items-center">
-              {/* Match Countdown - Left */}
-              <div className="flex flex-col items-center">
-                <h3 className="font-subheading text-lg md:text-xl text-blue-400 mb-6 uppercase tracking-wider">
-                  Match Countdown
-                </h3>
-                <Countdown />
-              </div>
-              
-              {/* Title Sponsor - Middle (Desktop only) */}
-              <div className="hidden lg:flex flex-col items-center justify-center">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.6 }}
-                  className="flex flex-col items-center"
-                >
-                  <motion.h3 
-                    className="font-heading text-4xl md:text-5xl text-accent mb-4 tracking-wider uppercase font-bold"
-                    animate={{ 
-                      textShadow: [
-                        '0 0 10px rgba(255, 204, 41, 0.5)',
-                        '0 0 20px rgba(255, 204, 41, 0.8)',
-                        '0 0 30px rgba(255, 204, 41, 0.6)',
-                        '0 0 10px rgba(255, 204, 41, 0.5)',
-                      ]
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    Title Sponsor
-                  </motion.h3>
-                  <div className="bg-white/10 border-2 border-accent/30 rounded-xl p-4 max-w-xs hover:border-accent/60 transition-all duration-300 scale-90">
-                    <img
-                      src={titleSponsorLogo}
-                      alt="Title Sponsors"
-                      className="w-full h-auto object-contain"
-                    />
-                  </div>
-                </motion.div>
-              </div>
-              
-              {/* Registration Countdown - Right */}
-              <div className="flex flex-col items-center">
-                <h3 className="font-subheading text-lg md:text-xl text-blue-400 mb-6 uppercase tracking-wider">
-                  Registration Countdown
-                </h3>
-                <RegistrationCountdown />
-              </div>
-            </div>
-          </motion.div>
+          ))}
         </div>
-      </section>
-
-      {/* Image Carousel - Sponsor Logos */}
-      <ImageCarousel />
-
-      {/* Highlights Section */}
-      <section className="py-20 px-4 lg:px-8">
-        <div className="container mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="font-heading text-5xl md:text-6xl text-center text-accent mb-16"
-          >
-            Tournament Highlights
-          </motion.h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {TOURNAMENT_HIGHLIGHTS.map((highlight, index) => {
-              const Icon = highlight.icon;
-              const displayValue = highlight.value;
-              
-              return (
-                <motion.div
-                  key={highlight.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  className="glass-effect glow-border rounded-2xl p-8 text-center group cursor-pointer"
-                >
-                  <Icon className={`mb-6 block w-12 h-12 mx-auto ${highlight.color}`} />
-                  <h3 className="font-subheading text-lg text-gray-300 mb-3">
-                    {highlight.title}
-                  </h3>
-                  <p className="font-body text-xl text-white font-bold whitespace-pre-wrap">
-                    {displayValue}
-                  </p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section className="relative py-20 px-4 lg:px-8 overflow-hidden">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-fixed"
-            style={{
-              backgroundImage: "url('/about.jpg')",
-            }}
-          />
-          <div className="absolute inset-0 bg-black/65" />
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 container mx-auto max-w-4xl text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="font-heading text-5xl md:text-6xl text-accent mb-8"
-          >
-            About ICCT27
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="font-body text-lg md:text-xl text-gray-300 leading-relaxed mb-6"
-          >
-            <strong className="text-accent">ICCT '27</strong> – Inter Church Cricket Tournament is more than a sporting event; it is a celebration of unity, faith, and fellowships among our youths. 
-            Organized by CSI St. Peter's Church, Coimbatore – Youth Fellowship, ICCT has grown into a powerful platform that brings together 
-            churches and young hearts through the spirit of cricket, fostering brotherhood, sportsmanship, and shared values.
-          </motion.p>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
-            className="font-body text-lg md:text-xl text-gray-300 leading-relaxed"
-          >
-            After the successful editions of <strong className="text-accent">ICCT '17</strong> ,<strong className="text-accent">ICCT '25</strong> and 
-            <strong className="text-accent">ICCT '26</strong>, we proudly return with <strong className="text-accent">ICCT '27</strong> 
-            — our <strong className="text-accent">4<sup>th</sup> Season</strong>, bigger and more impactful 
-            than ever. Played in the electrifying Red Tennis Ball cricket format, <strong className="text-accent">ICCT '27</strong> 
-            goes beyond matches and prizes, nurturing leadership, 
-            discipline, and lasting connections—making it not just a tournament, but a proud continuation of a growing legacy.
-          </motion.p>
-        </div>
-      </section>
-
-      {/* Follow Us Section */}
-      <section className="py-20 px-4 lg:px-8 bg-gradient-to-b from-bg-start via-primary to-secondary">
-        <div className="container mx-auto max-w-4xl">
-          {/* Glass effect card container */}
-          <div className="glass-effect rounded-2xl p-12 glow-border relative overflow-hidden">
-            {/* Animated background effect */}
-            <div className="absolute inset-0 pointer-events-none z-0">
-              <div className="w-full h-full bg-gradient-to-br from-pink-500/10 via-blue-500/10 to-purple-500/10 animate-pulse"></div>
-            </div>
-            
-            {/* Content */}
-            <motion.h2
-              className="font-heading text-4xl md:text-5xl mb-12 text-center relative z-10"
-              initial={{ scale: 0.9, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ type: 'spring', stiffness: 120 }}
-            >
-              <span className="inline-block bg-gradient-to-r from-pink-500 via-blue-500 to-purple-500 bg-clip-text text-transparent drop-shadow-lg animate-gradient-x">
-                Follow Us
-              </span>
-            </motion.h2>
-            
-            <div className="flex justify-center gap-8 md:gap-12 mb-12 flex-wrap relative z-10">
-              {SOCIAL_LINKS.map((social) => {
-                const IconComponent = social.icon
-                return (
-                  <motion.a
-                    key={social.name}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.2, rotate: 8, y: -8 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`w-20 h-20 rounded-full bg-gradient-to-br ${social.color} flex items-center justify-center shadow-lg hover:shadow-2xl transition-all group border-4 border-accent/30 animate-bounce-slow`}
-                    aria-label={social.name}
-                    style={{ boxShadow: '0 0 24px 4px rgba(236,72,153,0.15)' }}
-                  >
-                    <motion.div
-                      whileHover={{ y: -6, scale: 1.25 }}
-                      transition={{ type: 'spring', stiffness: 300 }}
-                    >
-                      <IconComponent className="w-10 h-10 text-white group-hover:scale-125 transition-transform" />
-                    </motion.div>
-                  </motion.a>
-                )
-              })}
-            </div>
-            
-            <motion.p
-              className="text-center text-gray-300 font-subheading relative z-10"
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-            >
-              Connect with us on social media for updates and announcements
-            </motion.p>
-          </div>
-        </div>
-      </section>
-    </motion.div>
+      )}
+      <p className="mt-4 flex items-center gap-1.5 text-xs text-muted">
+        <CalendarDays className="h-3.5 w-3.5" /> {dateLabel}
+      </p>
+    </div>
   )
 }
+
+const RegistrationCountdownCard = () => {
+  const reg = useCountdown(TOURNAMENT.registrationCloses)
+  return (
+    <CountdownCard
+      title="Registration closes in"
+      target={TOURNAMENT.registrationCloses}
+      dateLabel={formatDateTime(TOURNAMENT.registrationCloses)}
+      badge={reg.done ? <Badge tone="neutral">Closed</Badge> : <Badge tone="live">Open</Badge>}
+      doneText="Registration closed"
+      accent="flame"
+    />
+  )
+}
+
+const MatchCountdownCard = () => (
+  <CountdownCard
+    title="First ball in"
+    target={TOURNAMENT.firstBall}
+    dateLabel={formatDate(TOURNAMENT.firstBall)}
+    badge={<Badge tone="gold">Match</Badge>}
+    doneText="Tournament underway"
+    accent="gold"
+  />
+)
+
+const TitleSponsorCard = () => (
+  <div className="flex h-full w-full flex-col items-center justify-center rounded-2xl border border-white/15 bg-white/[0.06] px-4 py-5 backdrop-blur-sm">
+    <p className="text-eyebrow uppercase text-gold">Title Sponsor</p>
+    <div className="mt-3 flex h-40 w-full max-w-[20rem] items-center justify-center rounded-xl bg-white p-2.5 md:h-44">
+      {TITLE_SPONSOR.url ? (
+        <a href={TITLE_SPONSOR.url} target="_blank" rel="noopener noreferrer" className="h-full w-full">
+          <img src={TITLE_SPONSOR.logo} alt={TITLE_SPONSOR.name} className="h-full w-full object-contain" />
+        </a>
+      ) : (
+        <img src={TITLE_SPONSOR.logo} alt={TITLE_SPONSOR.name} className="h-full w-full object-contain" />
+      )}
+    </div>
+  </div>
+)
+
+const Hero = () => (
+  <section className="relative flex min-h-[100svh] items-center overflow-hidden">
+    <div className="absolute inset-0 bg-[url('/stadium.jpg')] bg-cover bg-center" aria-hidden />
+    <div className="absolute inset-0 bg-hero-fade" aria-hidden />
+    <div className="absolute inset-0 bg-stripes" aria-hidden />
+
+    <div className="page-container relative z-10 pb-28 pt-28 text-center md:pb-36">
+      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        {/* Organiser lockup: logo · name · logo in one pill */}
+        <div className="inline-flex max-w-full items-center gap-2.5 rounded-2xl border border-white/10 bg-ink-900/60 p-1.5 backdrop-blur-sm sm:gap-3 sm:rounded-full sm:pr-1.5">
+          <img src="/churchlogo.png" alt="CSI St. Peter's Church, Rathinapuri" className="h-11 w-11 shrink-0 rounded-full object-contain sm:h-12 sm:w-12" />
+          <p className="eyebrow min-w-0 leading-snug text-white/85 sm:whitespace-nowrap">
+            CSI St. Peter's Church, Rathinapuri
+            <span className="hidden sm:inline"> · </span>
+            <br className="sm:hidden" />
+            Youth Fellowship
+          </p>
+          <img src="/adonailogo.png" alt="Adonai Youth Fellowship" className="h-11 w-11 shrink-0 object-contain sm:h-12 sm:w-12" />
+        </div>
+
+        {/* Organiser → tournament connector */}
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <span className="h-px w-10 bg-gradient-to-r from-transparent to-gold/70" />
+          <span className="text-[11px] font-bold uppercase tracking-[0.35em] text-gold">Conducts</span>
+          <span className="h-px w-10 bg-gradient-to-l from-transparent to-gold/70" />
+        </div>
+
+        <h1 className="mt-2 text-[4.75rem] leading-[0.85] text-white xs:text-[5.5rem] sm:text-[7.5rem] md:text-[9.5rem]">
+          ICCT<span className="text-gold">'27</span>
+        </h1>
+        <p className="mt-3 font-display text-2xl tracking-wide text-white/90 md:text-3xl">Inter Church Cricket Tournament</p>
+
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <Badge tone="gold">Season {TOURNAMENT.season}</Badge>
+          <Badge tone="neutral">{TOURNAMENT.format}</Badge>
+          <Badge tone="neutral">{TOURNAMENT.city}</Badge>
+        </div>
+
+        <div className="mx-auto mt-7 flex max-w-xs flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
+          <ButtonLink to="/registration" className="!px-7 !py-3.5">
+            Register Your Team <ArrowRight className="h-4 w-4" />
+          </ButtonLink>
+          <ButtonLink to="/rules" variant="outline" className="!px-7 !py-3.5">
+            View Rules
+          </ButtonLink>
+        </div>
+      </motion.div>
+
+      {/* Registration countdown · Title sponsor · Match countdown (sponsor first on mobile) */}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+        className="mx-auto mt-12 grid max-w-5xl gap-4 lg:grid-cols-3 lg:items-stretch"
+      >
+        <div className="order-2 lg:order-1">
+          <RegistrationCountdownCard />
+        </div>
+        <div className="order-1 lg:order-2">
+          <TitleSponsorCard />
+        </div>
+        <div className="order-3">
+          <MatchCountdownCard />
+        </div>
+      </motion.div>
+    </div>
+  </section>
+)
+
+/* ================================================================== */
+/* Stats strip                                                         */
+/* ================================================================== */
+
+const CountUp = ({ to }: { to: number }) => {
+  const ref = useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true })
+  const [value, setValue] = useState(0)
+
+  useEffect(() => {
+    if (!inView) return
+    const controls = animate(0, to, { duration: 1.2, ease: 'easeOut', onUpdate: (v) => setValue(Math.round(v)) })
+    return () => controls.stop()
+  }, [inView, to])
+
+  return <span ref={ref}>{value}</span>
+}
+
+const useTeamsRegistered = () => {
+  const [count, setCount] = useState<number | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    apiService
+      .getAllTeams()
+      .then((res: { total_teams?: number; teams?: unknown[]; data?: unknown[] }) => {
+        const n =
+          typeof res?.total_teams === 'number'
+            ? res.total_teams
+            : Array.isArray(res?.teams)
+              ? res.teams.length
+              : Array.isArray(res?.data)
+                ? res.data.length
+                : null
+        if (cancelled) return
+        if (n === null) setFailed(true)
+        else setCount(n)
+      })
+      .catch((err) => {
+        console.warn('Could not load registered team count:', err)
+        if (!cancelled) setFailed(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return { count, failed }
+}
+
+const StatsStrip = () => {
+  const { count, failed } = useTeamsRegistered()
+
+  const start = new Date(TOURNAMENT.firstBall)
+  const end = new Date(TOURNAMENT.lastDay)
+  const weekday = (d: Date) => d.toLocaleDateString('en-IN', { weekday: 'short' })
+  const venueName = VENUE.name.replace(/\s*\(.*\)\s*$/, '') // drop "(Cricket ground)"
+
+  // Order: Trophies · Venue · Dates · Teams registered
+  const highlights = [
+    {
+      icon: Trophy,
+      label: 'Trophies',
+      value: 'Trophies',
+      sub: '& special prizes',
+      tile: 'bg-gold/15 text-gold',
+    },
+    {
+      icon: MapPin,
+      label: 'Venue',
+      value: venueName,
+      sub: VENUE.city,
+      tile: 'bg-flame/15 text-flame-light',
+    },
+    {
+      icon: CalendarDays,
+      label: 'Dates',
+      value: `${start.getDate()} – ${end.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`,
+      sub: `${weekday(start)} – ${weekday(end)}, ${end.getFullYear()}`,
+      tile: 'bg-pitch/15 text-pitch-light',
+    },
+    {
+      icon: Users,
+      label: 'Teams registered',
+      value: count !== null ? <CountUp to={count} /> : failed ? '—' : <span className="text-white/30">··</span>,
+      sub: 'Live count',
+      tile: 'bg-gold/15 text-gold',
+    },
+  ]
+
+  return (
+    <section className="relative z-20 -mt-10 pb-3 md:-mt-12 md:pb-4">
+      <div className="page-container">
+        <motion.div
+          {...fadeUp}
+          className="mx-auto grid max-w-6xl grid-cols-2 overflow-hidden rounded-2xl border border-white/10 bg-ink-800 shadow-card-dark lg:grid-cols-4"
+          aria-label="Tournament highlights"
+        >
+          {highlights.map((h, i) => (
+            <div
+              key={h.label}
+              className={cn(
+                'flex flex-col items-center px-3 py-5 text-center sm:px-5 md:py-6',
+                i % 2 === 0 && 'border-r border-white/10',
+                i < 2 && 'border-b border-white/10 lg:border-b-0',
+                i === 1 && 'lg:border-r'
+              )}
+            >
+              <span className={cn('flex h-10 w-10 items-center justify-center rounded-xl', h.tile)}>
+                <h.icon className="h-5 w-5" />
+              </span>
+              <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.14em] text-muted">{h.label}</p>
+              <p className="mt-1 font-display text-2xl leading-tight text-white tabular-nums md:text-3xl">{h.value}</p>
+              <p className="mt-0.5 text-xs text-white/50">{h.sub}</p>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+/* ================================================================== */
+/* How to register                                                     */
+/* ================================================================== */
+
+const HowToRegister = () => {
+  const steps = [
+    {
+      icon: ClipboardList,
+      title: 'Fill your team details',
+      body: `Church, team name, captain & vice-captain, and ${TOURNAMENT.minPlayers}–${TOURNAMENT.maxPlayers} players. One team per church.`,
+    },
+    {
+      icon: QrCode,
+      title: `Pay ₹${TOURNAMENT.entryFee.toLocaleString('en-IN')} by UPI`,
+      body: 'Scan the QR on the last step with any UPI app and upload the payment screenshot.',
+    },
+    {
+      icon: BadgeCheck,
+      title: 'Get your Team ID',
+      body: 'Our team verifies the payment and emails the captain a confirmation with your Team ID.',
+    },
+  ]
+
+  return (
+    <section className="bg-surface py-10 text-ink md:py-12">
+      <div className="page-container">
+        <SectionHeader tone="light" eyebrow="How to register" title="Three steps to the pitch" className="!mb-6 md:!mb-8" />
+
+        <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
+          {steps.map((step, i) => (
+            <motion.div
+              key={step.title}
+              {...fadeUp}
+              transition={{ duration: 0.4, delay: i * 0.06 }}
+              className="card-light flex gap-4 p-5"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink text-gold">
+                <step.icon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-flame">Step {i + 1}</p>
+                <h3 className="mt-0.5 text-xl leading-tight text-ink">{step.title}</h3>
+                <p className="mt-1 text-sm leading-snug text-muted-dark">{step.body}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <div className="flex flex-wrap justify-center gap-3">
+            <ButtonLink to="/registration" className="!px-7 !py-3.5">
+              Start Registration <ArrowRight className="h-4 w-4" />
+            </ButtonLink>
+            <RulebookButton className="btn border-2 border-ink/80 !px-7 !py-3 text-ink hover:bg-ink hover:text-white">
+              Rulebook
+            </RulebookButton>
+          </div>
+          <p className="text-xs text-muted-dark">Registration closes {formatDateTime(TOURNAMENT.registrationCloses)}</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ================================================================== */
+/* Fixtures preview                                                    */
+/* ================================================================== */
+
+interface FixtureMatch {
+  id: number
+  round?: string
+  match_number?: number
+  team1: string
+  team2: string
+  status: 'scheduled' | 'live' | 'completed'
+  scheduled_start_time?: string | null
+  result?: { winner: string; margin: number; marginType: 'runs' | 'wickets' }
+}
+
+const FixturesPreview = () => {
+  const [matches, setMatches] = useState<FixtureMatch[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`${API_URL}/api/schedule/matches`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return
+        const raw: Array<Omit<FixtureMatch, 'status'> & { status?: string }> = Array.isArray(data) ? data : data?.data || []
+        const list: FixtureMatch[] = raw.map((m) => ({
+          ...m,
+          status: m.status === 'done' ? 'completed' : ((m.status || 'scheduled') as FixtureMatch['status']),
+        }))
+        // Live first, then upcoming, then latest results
+        const ordered = [
+          ...list.filter((m) => m.status === 'live'),
+          ...list.filter((m) => m.status === 'scheduled'),
+          ...list.filter((m) => m.status === 'completed').reverse(),
+        ]
+        setMatches(ordered.slice(0, 3))
+      })
+      .catch(() => {
+        if (!cancelled) setMatches([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return (
+    <section className="py-10 md:py-12">
+      <div className="page-container">
+        <SectionHeader eyebrow="Fixtures" title="Matchday" className="!mb-6 md:!mb-8" />
+
+        {matches === null ? (
+          <div className="grid gap-5 md:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="card-dark h-44 animate-pulse" />
+            ))}
+          </div>
+        ) : matches.length === 0 ? (
+          <motion.div {...fadeUp} className="card-dark mx-auto flex max-w-2xl flex-col items-center px-6 py-7 text-center">
+            <CalendarDays className="h-8 w-8 text-gold" />
+            <h3 className="mt-3 text-2xl text-white md:text-3xl">Fixtures announced soon</h3>
+            <p className="mt-2 max-w-md text-sm text-muted">
+              The draw is published after registration closes on {formatDate(TOURNAMENT.registrationCloses)}. First ball{' '}
+              {formatDate(TOURNAMENT.firstBall)}.
+            </p>
+          </motion.div>
+        ) : (
+          <div className="grid gap-5 md:grid-cols-3">
+            {matches.map((m, i) => (
+              <motion.div key={m.id} {...fadeUp} transition={{ duration: 0.45, delay: i * 0.08 }} className="card-dark p-6">
+                <div className="mb-5 flex items-center justify-between">
+                  <span className="text-eyebrow uppercase text-muted">
+                    {m.round || 'Match'}
+                    {m.match_number ? ` · M${m.match_number}` : ''}
+                  </span>
+                  {m.status === 'live' ? (
+                    <Badge tone="live">Live</Badge>
+                  ) : m.status === 'completed' ? (
+                    <Badge tone="success">Result</Badge>
+                  ) : (
+                    <Badge tone="neutral">Upcoming</Badge>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <p className="font-display text-3xl leading-tight text-white">{m.team1}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-flame-light">vs</p>
+                  <p className="font-display text-3xl leading-tight text-white">{m.team2}</p>
+                </div>
+                <div className="mt-5 flex items-center gap-2 border-t border-white/10 pt-4 text-sm text-muted">
+                  {m.status === 'completed' && m.result ? (
+                    <>
+                      <Trophy className="h-4 w-4 text-gold" />
+                      {m.result.winner} won by {m.result.margin} {m.result.marginType}
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-4 w-4" />
+                      {m.scheduled_start_time ? formatDateTime(m.scheduled_start_time) : 'Time TBA'}
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-6 text-center">
+          <Link to="/fixtures" className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/80 transition-colors hover:text-gold">
+            Full schedule <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ================================================================== */
+/* About / legacy                                                      */
+/* ================================================================== */
+
+const About = () => {
+  const seasons = [...TOURNAMENT.pastSeasons, "'27"]
+
+  return (
+    <section className="border-y border-white/10 bg-ink-950 py-20 md:py-28">
+      <div className="page-container grid items-center gap-12 lg:grid-cols-2">
+        <motion.div {...fadeUp}>
+          <p className="eyebrow mb-3">About ICCT</p>
+          <h2 className="text-4xl text-white md:text-6xl">
+            More than cricket.
+            <br />
+            <span className="text-gold">A fellowship.</span>
+          </h2>
+          <p className="mt-6 leading-relaxed text-muted">
+            ICCT – the Inter Church Cricket Tournament – is a celebration of unity, faith and fellowship among our youth.
+            Organised by the CSI St. Peter's Church, Rathinapuri Youth Fellowship, Coimbatore, it brings churches together through the
+            spirit of cricket, building brotherhood, sportsmanship and shared values.
+          </p>
+          <p className="mt-4 leading-relaxed text-muted">
+            Season {TOURNAMENT.season} returns in the {TOURNAMENT.format.toLowerCase()} format — nurturing leadership,
+            discipline and connections that last well beyond the boundary rope.
+          </p>
+
+          {/* Season timeline */}
+          <div className="mt-10 flex items-center">
+            {seasons.map((season, i) => {
+              const current = i === seasons.length - 1
+              return (
+                <div key={season} className={cn('flex items-center', !current && 'flex-1')}>
+                  <div className="flex flex-col items-center">
+                    <span
+                      className={cn(
+                        'flex h-14 w-14 items-center justify-center rounded-full border-2 font-display text-xl',
+                        current ? 'border-gold bg-gold text-ink-900' : 'border-white/20 text-white/70'
+                      )}
+                    >
+                      {season}
+                    </span>
+                    <span
+                      className={cn(
+                        'mt-2 text-[11px] font-bold uppercase tracking-[0.14em]',
+                        current ? 'text-gold' : 'text-white/40'
+                      )}
+                    >
+                      {current ? 'Now' : `S${i + 1}`}
+                    </span>
+                  </div>
+                  {!current && <span className="mx-2 mb-6 h-0.5 flex-1 bg-white/15" />}
+                </div>
+              )
+            })}
+          </div>
+        </motion.div>
+
+        <motion.div {...fadeUp} transition={{ duration: 0.45, delay: 0.1 }} className="relative mx-3 lg:mx-0">
+          <div className="absolute -inset-3 rotate-2 rounded-3xl bg-gold/90" aria-hidden />
+          <img
+            src="/about.jpg"
+            alt="Players at a previous ICCT season"
+            className="relative aspect-[4/3] w-full rounded-3xl object-cover shadow-card-dark"
+            loading="lazy"
+          />
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+/* ================================================================== */
+/* Sponsors                                                            */
+/* ================================================================== */
+
+const Sponsors = () => (
+  <section className="bg-surface py-10 text-ink md:py-12">
+    <div className="page-container">
+      <SectionHeader tone="light" eyebrow="Partners" title="Co-sponsors" className="!mb-6 md:!mb-8" />
+
+      {SHOW_TROPHY_SPONSOR && (
+        <motion.div {...fadeUp} className="card-light mx-auto mb-8 max-w-xl p-6 text-center">
+          <p className="text-eyebrow uppercase text-muted-dark">Trophy Sponsor · In memory of</p>
+          <p className="mt-2 font-display text-3xl text-ink">Mrs. R. Gnanajothi Anandaraj</p>
+        </motion.div>
+      )}
+
+      {/* Co-sponsor carousel (title sponsor is shown in the hero) */}
+      <motion.div {...fadeUp}>
+        <ImageCarousel />
+      </motion.div>
+    </div>
+  </section>
+)
+
+/* ================================================================== */
+/* Page                                                                */
+/* ================================================================== */
+
+const Home = () => (
+  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <SEO title="Home" description="ICCT'27 – Inter Church Cricket Tournament, Coimbatore. Register your church team now." />
+    <Hero />
+    <StatsStrip />
+    <ChampionsCarousel />
+    <Sponsors />
+    <About />
+    <FixturesPreview />
+    <HowToRegister />
+  </motion.div>
+)
 
 export default Home

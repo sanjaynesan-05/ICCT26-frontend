@@ -1,7 +1,32 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Trash2, Edit2, Play, CheckCircle, Plus, X, Save, AlertCircle, RefreshCw, Home, Clock, Link as LinkIcon } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import {
+  Trash2,
+  Edit2,
+  Play,
+  CheckCircle,
+  Plus,
+  X,
+  Save,
+  AlertCircle,
+  RefreshCw,
+  Clock,
+  Link as LinkIcon,
+  Radio,
+  ClipboardList,
+  Trophy,
+  Target,
+  CircleDot,
+  Loader2,
+  Check,
+  Zap,
+  Coins,
+  BarChart3,
+  TrendingUp,
+  Ruler,
+} from 'lucide-react'
+import { AdminButton, AdminHeader } from '../../components/admin/AdminShell'
+
 import { apiService } from '../../services/api'
 
 interface MatchResult {
@@ -26,6 +51,10 @@ interface Match {
   match_end_time?: string | null
   team1_first_innings_score?: number | null
   team2_first_innings_score?: number | null
+  team1_first_innings_runs?: number | null
+  team1_first_innings_wickets?: number | null
+  team2_first_innings_runs?: number | null
+  team2_first_innings_wickets?: number | null
   team1_runs?: number | null
   team1_wickets?: number | null
   team2_runs?: number | null
@@ -53,6 +82,8 @@ interface ResultFormData {
 }
 
 interface Team {
+  id?: string | number
+  name?: string
   teamId?: string
   team_id?: string
   teamName?: string
@@ -60,7 +91,6 @@ interface Team {
 }
 
 const ScheduleManager = () => {
-  const navigate = useNavigate()
   const [matches, setMatches] = useState<Match[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
@@ -205,10 +235,6 @@ const ScheduleManager = () => {
   const handleRefresh = () => {
     fetchMatches()
     fetchTeams()
-  }
-
-  const handleGoToDashboard = () => {
-    navigate('/admin/dashboard')
   }
 
   const handleCreateMatch = async () => {
@@ -705,7 +731,7 @@ const ScheduleManager = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-gradient-primary pt-32 pb-20 px-4 lg:px-8"
+      className="min-h-screen bg-ink-900 pb-20"
     >
       <style>{`
         /* Global styles for all modals - White text for inputs */
@@ -732,47 +758,17 @@ const ScheduleManager = () => {
           background-color: rgb(30, 41, 59) !important;
         }
       `}</style>
-      <div className="container mx-auto max-w-7xl">
-        {/* Header with Navigation */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12"
-        >
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="font-heading text-5xl md:text-7xl text-accent mb-4 tracking-wider">
-              SCHEDULE MANAGER
-            </h1>
-            <p className="font-body text-lg text-gray-300 mb-4">
-              Manage tournament matches, results, and status
-            </p>
-            <div className="w-20 h-1 bg-gradient-gold rounded-full"></div>
-          </div>
-
-          {/* Navigation Buttons */}
-          <div className="flex gap-3 flex-wrap justify-center md:justify-end">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleRefresh}
-              className="flex items-center gap-2 px-4 py-3 bg-blue-500/30 hover:bg-blue-500/50 text-blue-200 border border-blue-400/50 rounded-xl font-bold transition-all"
-            >
-              <RefreshCw className="w-5 h-5" />
-              <span className="hidden sm:inline">Refresh</span>
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleGoToDashboard}
-              className="flex items-center gap-2 px-4 py-3 bg-purple-500/30 hover:bg-purple-500/50 text-purple-200 border border-purple-400/50 rounded-xl font-bold transition-all"
-            >
-              <Home className="w-5 h-5" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </motion.button>
-          </div>
-        </motion.div>
-
+      <AdminHeader
+        backTo="/admin/dashboard"
+        title="Schedule manager"
+        subtitle="Matches, toss, scores and results"
+        actions={
+          <AdminButton onClick={handleRefresh}>
+            <RefreshCw className="h-4 w-4" /> Refresh
+          </AdminButton>
+        }
+      />
+      <div className="page-container max-w-7xl pt-8">
         {/* Alerts */}
         <AnimatePresence>
           {error && (
@@ -826,11 +822,11 @@ const ScheduleManager = () => {
                     : 'text-gray-400 hover:text-accent border border-gray-600/30'
                 }`}
               >
-                <span className="hidden sm:inline">
-                  {status === 'live' ? '🔴 Live' : status === 'completed' ? '✅ Completed' : status === 'scheduled' ? '⏳ Upcoming' : 'All'}
-                </span>
-                <span className="sm:hidden">
-                  {status === 'live' ? '🔴' : status === 'completed' ? '✅' : status === 'scheduled' ? '⏳' : 'All'}
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  {status === 'live' ? <Radio className="h-4 w-4" /> : status === 'completed' ? <CheckCircle className="h-4 w-4" /> : status === 'scheduled' ? <Clock className="h-4 w-4" /> : null}
+                  <span className={status === 'all' ? '' : 'hidden sm:inline'}>
+                    {status === 'live' ? 'Live' : status === 'completed' ? 'Completed' : status === 'scheduled' ? 'Upcoming' : 'All'}
+                  </span>
                 </span>
               </button>
             ))}
@@ -842,7 +838,7 @@ const ScheduleManager = () => {
           <div className="text-center py-12 text-gray-400">Loading matches...</div>
         ) : filteredMatches.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">📋</div>
+            <ClipboardList className="mx-auto mb-4 h-12 w-12 text-white/30" />
             <p className="text-gray-400">No matches found</p>
           </div>
         ) : (
@@ -853,7 +849,7 @@ const ScheduleManager = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="backdrop-blur-xl rounded-2xl p-6 border-2 border-accent/20 bg-secondary/80 hover:border-accent/50 transition-all"
+                className="backdrop-blur-xl rounded-2xl p-4 sm:p-6 border-2 border-accent/20 bg-secondary/80 hover:border-accent/50 transition-all"
               >
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                   {/* Match Info with Timing */}
@@ -876,7 +872,7 @@ const ScheduleManager = () => {
                         className="mt-3 p-3 bg-gradient-to-r from-purple-500/30 to-blue-500/20 border-2 border-purple-400/60 rounded-xl"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">⏰</span>
+                          <Clock className="h-5 w-5 shrink-0 text-purple-200" />
                           <div>
                             <p className="text-xs text-purple-300/70 uppercase tracking-widest font-bold">Scheduled</p>
                             <p className="text-sm font-bold text-purple-100">
@@ -904,7 +900,7 @@ const ScheduleManager = () => {
                     </div>
                     {match.result && (
                       <p className="text-xs text-green-300 text-center mt-2 font-bold">
-                        🏆 {match.result.winner} won by {match.result.margin} {match.result.marginType}
+                        <Trophy className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />{match.result.winner} won by {match.result.margin} {match.result.marginType}
                       </p>
                     )}
                   </div>
@@ -1009,7 +1005,7 @@ const ScheduleManager = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-gradient-to-br from-secondary via-secondary to-primary/30 border-2 border-accent/60 rounded-3xl p-10 max-w-2xl w-full shadow-2xl shadow-accent/30 max-h-[90vh] overflow-y-auto"
+              className="bg-gradient-to-br from-secondary via-secondary to-primary/30 border-2 border-accent/60 rounded-3xl p-5 sm:p-10 max-w-2xl w-full shadow-2xl shadow-accent/30 max-h-[90svh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
               style={{
                 colorScheme: 'dark'
@@ -1089,7 +1085,7 @@ const ScheduleManager = () => {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-accent mb-3 flex items-center gap-2">
-                      <span className="text-lg">🏆</span>
+                      <Trophy className="h-4 w-4" />
                       Round
                     </label>
                     <input
@@ -1103,7 +1099,7 @@ const ScheduleManager = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-accent mb-3 flex items-center gap-2">
-                      <span className="text-lg">🎯</span>
+                      <Target className="h-4 w-4" />
                       Match Number
                     </label>
                     <input
@@ -1121,7 +1117,7 @@ const ScheduleManager = () => {
                 {/* Teams Section */}
                 <div className="bg-primary/40 border-2 border-accent/30 rounded-2xl p-6">
                   <h3 className="text-lg font-bold text-accent mb-4 flex items-center gap-2">
-                    <span className="text-xl">🏏</span>
+                    <CircleDot className="h-5 w-5" />
                     Select Teams
                   </h3>
 
@@ -1148,7 +1144,7 @@ const ScheduleManager = () => {
                         </select>
                       ) : teamsLoading ? (
                         <div className="w-full bg-blue-500/20 border-2 border-blue-400/60 rounded-xl px-4 py-3 text-gray-400 flex items-center justify-center">
-                          <span className="animate-spin mr-2">⏳</span> Loading teams...
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading teams...
                         </div>
                       ) : (
                         <input
@@ -1184,7 +1180,7 @@ const ScheduleManager = () => {
                         </select>
                       ) : teamsLoading ? (
                         <div className="w-full bg-red-500/20 border-2 border-red-400/60 rounded-xl px-4 py-3 text-gray-400 flex items-center justify-center">
-                          <span className="animate-spin mr-2">⏳</span> Loading teams...
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading teams...
                         </div>
                       ) : (
                         <input
@@ -1203,7 +1199,7 @@ const ScheduleManager = () => {
                 {/* Scheduled Start Time */}
                 <div>
                   <label className="block text-sm font-bold text-purple-300 mb-3 flex items-center gap-2">
-                    <span className="text-lg">⏰</span>
+                    <Clock className="h-5 w-5 shrink-0 text-purple-200" />
                     Scheduled Start Time (Optional)
                   </label>
                   <input
@@ -1235,7 +1231,7 @@ const ScheduleManager = () => {
                         <p className="font-bold text-red-200">{formData.team2}</p>
                       </div>
                     </div>
-                    {formData.round && <p className="text-accent text-xs font-bold mt-3">🏆 {formData.round} - Match {formData.match_number}</p>}
+                    {formData.round && <p className="text-accent text-xs font-bold mt-3"><Trophy className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />{formData.round} - Match {formData.match_number}</p>}
                   </motion.div>
                 )}
 
@@ -1248,13 +1244,13 @@ const ScheduleManager = () => {
                     }}
                     className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95"
                   >
-                    ✕ Cancel
+                    <X className="inline-block h-4 w-4 -mt-0.5 mr-1" /> Cancel
                   </button>
                   <button
                     onClick={showEditModal ? handleUpdateMatch : handleCreateMatch}
                     className="flex-1 px-6 py-3 bg-gradient-to-r from-accent to-yellow-500 hover:from-accent hover:to-yellow-400 text-primary rounded-xl font-bold shadow-lg shadow-accent/50 transition-all transform hover:scale-105 active:scale-95"
                   >
-                    {showEditModal ? '✓ Update Match' : '✓ Create Match'}
+                    <Check className="inline-block h-4 w-4 -mt-0.5 mr-1" />{showEditModal ? 'Update Match' : 'Create Match'}
                   </button>
                 </div>
               </div>
@@ -1277,7 +1273,7 @@ const ScheduleManager = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-secondary border-2 border-green-400/40 rounded-2xl p-8 max-w-2xl w-full"
+              className="bg-secondary border-2 border-green-400/40 rounded-2xl p-5 sm:p-8 max-w-2xl w-full max-h-[90svh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
@@ -1293,7 +1289,7 @@ const ScheduleManager = () => {
               <div className="space-y-5">
                 {/* Cricket Rules Guide */}
                 <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4 text-xs text-blue-200">
-                  <p className="font-bold mb-2">📋 Cricket Result Rules:</p>
+                  <p className="font-bold mb-2"><ClipboardList className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Cricket Result Rules:</p>
                   <ul className="space-y-1 text-blue-100">
                     <li>• <span className="font-semibold">Batting First (Defense):</span> Team sets target, wins if opposition doesn't reach their score</li>
                     <li>• <span className="font-semibold">Chasing (Offense):</span> Team chases opposition's score, wins by reaching or exceeding it</li>
@@ -1304,7 +1300,7 @@ const ScheduleManager = () => {
 
                 {/* Winning Team */}
                 <div>
-                  <label className="block text-sm font-bold text-green-300 mb-2">🏆 Which Team Won?</label>
+                  <label className="block text-sm font-bold text-green-300 mb-2"><Trophy className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Which Team Won?</label>
                   <select
                     value={resultForm.winner}
                     onChange={(e) => setResultForm({ ...resultForm, winner: e.target.value })}
@@ -1322,7 +1318,7 @@ const ScheduleManager = () => {
 
                 {/* How They Won */}
                 <div>
-                  <label className="block text-sm font-bold text-green-300 mb-2">⚡ How They Won?</label>
+                  <label className="block text-sm font-bold text-green-300 mb-2"><Zap className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />How They Won?</label>
                   <select
                     value={resultForm.wonByBattingFirst ? 'batting' : 'chasing'}
                     onChange={(e) => {
@@ -1349,8 +1345,8 @@ const ScheduleManager = () => {
                 <div>
                   <label className="block text-sm font-bold text-green-300 mb-2">
                     {resultForm.wonByBattingFirst 
-                      ? '🏃 Runs Difference' 
-                      : '🎯 Wickets Remaining'}
+                      ? 'Runs Difference' 
+                      : 'Wickets Remaining'}
                   </label>
                   <div className="flex gap-3">
                     <input
@@ -1376,7 +1372,7 @@ const ScheduleManager = () => {
                 {/* Result Preview */}
                 {resultForm.winner && resultForm.margin > 0 && (
                   <div className="bg-green-500/10 border border-green-400/40 rounded-lg p-4">
-                    <p className="text-sm font-bold text-green-300 mb-2">✅ Result Preview:</p>
+                    <p className="text-sm font-bold text-green-300 mb-2"><CheckCircle className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Result Preview:</p>
                     <div className="text-green-200 space-y-1 text-sm">
                       <p>
                         <span className="font-bold">{resultForm.winner}</span>
@@ -1422,11 +1418,11 @@ const ScheduleManager = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-secondary border-2 border-blue-400/40 rounded-2xl p-8 max-w-md w-full"
+              className="bg-secondary border-2 border-blue-400/40 rounded-2xl p-5 sm:p-8 max-w-md w-full max-h-[90svh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="font-heading text-2xl text-blue-300">🪙 Toss Details</h2>
+                <h2 className="font-heading text-2xl text-blue-300"><Coins className="inline-block h-6 w-6 -mt-1 mr-2" />Toss Details</h2>
                 <button
                   onClick={() => setShowTossModal(false)}
                   className="p-2 hover:bg-gray-700 rounded-lg transition-all"
@@ -1495,11 +1491,11 @@ const ScheduleManager = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-secondary border-2 border-orange-400/40 rounded-2xl p-8 max-w-md w-full"
+              className="bg-secondary border-2 border-orange-400/40 rounded-2xl p-5 sm:p-8 max-w-md w-full max-h-[90svh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="font-heading text-2xl text-orange-300">🏏 Innings Scores</h2>
+                <h2 className="font-heading text-2xl text-orange-300"><CircleDot className="inline-block h-6 w-6 -mt-1 mr-2" />Innings Scores</h2>
                 <button
                   onClick={() => setShowScoresModal(false)}
                   className="p-2 hover:bg-gray-700 rounded-lg transition-all"
@@ -1613,7 +1609,7 @@ const ScheduleManager = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-secondary border-2 border-purple-400/40 rounded-2xl p-8 max-w-md w-full"
+              className="bg-secondary border-2 border-purple-400/40 rounded-2xl p-5 sm:p-8 max-w-md w-full max-h-[90svh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
@@ -1694,7 +1690,7 @@ const ScheduleManager = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-secondary border-2 border-cyan-400/40 rounded-2xl p-8 max-w-md w-full"
+              className="bg-secondary border-2 border-cyan-400/40 rounded-2xl p-5 sm:p-8 max-w-md w-full max-h-[90svh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
@@ -1773,7 +1769,7 @@ const ScheduleManager = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-gradient-to-br from-secondary via-secondary to-primary/30 border-2 border-red-400/60 rounded-3xl p-10 max-w-2xl w-full shadow-2xl shadow-red-500/30"
+              className="bg-gradient-to-br from-secondary via-secondary to-primary/30 border-2 border-red-400/60 rounded-3xl p-5 sm:p-10 max-w-2xl w-full shadow-2xl shadow-red-500/30 max-h-[90svh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
               style={{ colorScheme: 'dark' }}
             >
@@ -1784,8 +1780,8 @@ const ScheduleManager = () => {
 
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="font-heading text-3xl font-bold bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
-                    🔴 Start Match
+                  <h2 className="font-heading text-3xl text-white">
+                    <Radio className="inline-block h-6 w-6 -mt-1 mr-2 text-flame-light" />Start Match
                   </h2>
                   <p className="text-gray-400 text-sm mt-1">Match {editingMatch.match_number}: {editingMatch.team1} vs {editingMatch.team2}</p>
                 </div>
@@ -1826,7 +1822,7 @@ const ScheduleManager = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-red-300 mb-3">📊 Scorecard URL</label>
+                  <label className="block text-sm font-bold text-red-300 mb-3"><BarChart3 className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Scorecard URL</label>
                   <input
                     type="url"
                     value={startMatchForm.match_score_url}
@@ -1838,7 +1834,7 @@ const ScheduleManager = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-red-300 mb-3">⏰ Actual Start Time</label>
+                  <label className="block text-sm font-bold text-red-300 mb-3"><Clock className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Actual Start Time</label>
                   <input
                     type="datetime-local"
                     value={startMatchForm.actual_start_time}
@@ -1882,7 +1878,7 @@ const ScheduleManager = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-gradient-to-br from-secondary via-secondary to-primary/30 border-2 border-blue-400/60 rounded-3xl p-10 max-w-2xl w-full shadow-2xl shadow-blue-500/30"
+              className="bg-gradient-to-br from-secondary via-secondary to-primary/30 border-2 border-blue-400/60 rounded-3xl p-5 sm:p-10 max-w-2xl w-full shadow-2xl shadow-blue-500/30 max-h-[90svh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
               style={{ colorScheme: 'dark' }}
             >
@@ -1893,8 +1889,8 @@ const ScheduleManager = () => {
 
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="font-heading text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                    🏏 1st Innings Score
+                  <h2 className="font-heading text-3xl text-white">
+                    <CircleDot className="inline-block h-6 w-6 -mt-1 mr-2 text-gold" />1st Innings Score
                   </h2>
                   <p className="text-gray-400 text-sm mt-1">Record first innings score</p>
                 </div>
@@ -1922,7 +1918,7 @@ const ScheduleManager = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-blue-300 mb-3">📈 Runs</label>
+                    <label className="block text-sm font-bold text-blue-300 mb-3"><TrendingUp className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Runs</label>
                     <input
                       type="number"
                       value={firstInningsForm.runs}
@@ -1936,7 +1932,7 @@ const ScheduleManager = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-blue-300 mb-3">🎯 Wickets</label>
+                    <label className="block text-sm font-bold text-blue-300 mb-3"><Target className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Wickets</label>
                     <select
                       value={firstInningsForm.wickets}
                       onChange={(e) => setFirstInningsForm({ ...firstInningsForm, wickets: parseInt(e.target.value) || 0 })}
@@ -1991,7 +1987,7 @@ const ScheduleManager = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-gradient-to-br from-secondary via-secondary to-primary/30 border-2 border-purple-400/60 rounded-3xl p-10 max-w-2xl w-full shadow-2xl shadow-purple-500/30"
+              className="bg-gradient-to-br from-secondary via-secondary to-primary/30 border-2 border-purple-400/60 rounded-3xl p-5 sm:p-10 max-w-2xl w-full shadow-2xl shadow-purple-500/30 max-h-[90svh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
               style={{ colorScheme: 'dark' }}
             >
@@ -2002,8 +1998,8 @@ const ScheduleManager = () => {
 
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="font-heading text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    🏏 2nd Innings Score
+                  <h2 className="font-heading text-3xl text-white">
+                    <CircleDot className="inline-block h-6 w-6 -mt-1 mr-2 text-gold" />2nd Innings Score
                   </h2>
                   <p className="text-gray-400 text-sm mt-1">Record second innings score</p>
                 </div>
@@ -2031,7 +2027,7 @@ const ScheduleManager = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-purple-300 mb-3">📈 Runs</label>
+                    <label className="block text-sm font-bold text-purple-300 mb-3"><TrendingUp className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Runs</label>
                     <input
                       type="number"
                       value={secondInningsForm.runs}
@@ -2045,7 +2041,7 @@ const ScheduleManager = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-purple-300 mb-3">🎯 Wickets</label>
+                    <label className="block text-sm font-bold text-purple-300 mb-3"><Target className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Wickets</label>
                     <select
                       value={secondInningsForm.wickets}
                       onChange={(e) => setSecondInningsForm({ ...secondInningsForm, wickets: parseInt(e.target.value) || 0 })}
@@ -2100,7 +2096,7 @@ const ScheduleManager = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-gradient-to-br from-secondary via-secondary to-primary/30 border-2 border-green-400/60 rounded-3xl p-10 max-w-2xl w-full shadow-2xl shadow-green-500/30"
+              className="bg-gradient-to-br from-secondary via-secondary to-primary/30 border-2 border-green-400/60 rounded-3xl p-5 sm:p-10 max-w-2xl w-full shadow-2xl shadow-green-500/30 max-h-[90svh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
               style={{ colorScheme: 'dark' }}
             >
@@ -2111,8 +2107,8 @@ const ScheduleManager = () => {
 
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="font-heading text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                    ✅ Finish Match
+                  <h2 className="font-heading text-3xl text-white">
+                    <CheckCircle className="inline-block h-6 w-6 -mt-1 mr-2 text-pitch-light" />Finish Match
                   </h2>
                   <p className="text-gray-400 text-sm mt-1">Record match result and winner</p>
                 </div>
@@ -2126,7 +2122,7 @@ const ScheduleManager = () => {
 
               <div className="space-y-6">
                 <div className="bg-green-500/10 border border-green-400/30 rounded-lg p-4">
-                  <p className="text-sm text-green-300 mb-2">📊 Current Scores:</p>
+                  <p className="text-sm text-green-300 mb-2"><BarChart3 className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Current Scores:</p>
                   <div className="flex justify-between text-green-200">
                     <span className="font-bold">{editingMatch.team1}: {editingMatch.team1_first_innings_runs || 0}/{editingMatch.team1_first_innings_wickets || 0}</span>
                     <span className="font-bold">{editingMatch.team2}: {editingMatch.team2_first_innings_runs || 0}/{editingMatch.team2_first_innings_wickets || 0}</span>
@@ -2134,7 +2130,7 @@ const ScheduleManager = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-green-300 mb-3">🏆 Winning Team</label>
+                  <label className="block text-sm font-bold text-green-300 mb-3"><Trophy className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Winning Team</label>
                   <select
                     value={finishMatchForm.winner}
                     onChange={(e) => setFinishMatchForm({ ...finishMatchForm, winner: e.target.value })}
@@ -2148,7 +2144,7 @@ const ScheduleManager = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-green-300 mb-3">📏 Margin</label>
+                    <label className="block text-sm font-bold text-green-300 mb-3"><Ruler className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Margin</label>
                     <input
                       type="number"
                       value={finishMatchForm.margin}
@@ -2174,7 +2170,7 @@ const ScheduleManager = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-green-300 mb-3">⏰ Match End Time</label>
+                  <label className="block text-sm font-bold text-green-300 mb-3"><Clock className="inline-block h-4 w-4 -mt-0.5 mr-1.5" />Match End Time</label>
                   <input
                     type="datetime-local"
                     value={finishMatchForm.match_end_time}
