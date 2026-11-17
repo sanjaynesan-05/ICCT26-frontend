@@ -51,6 +51,10 @@ interface Match {
   match_end_time?: string | null
   team1_first_innings_score?: number | null
   team2_first_innings_score?: number | null
+  team1_first_innings_runs?: number | null
+  team1_first_innings_wickets?: number | null
+  team2_first_innings_runs?: number | null
+  team2_first_innings_wickets?: number | null
   team1_runs?: number | null
   team1_wickets?: number | null
   team2_runs?: number | null
@@ -78,6 +82,8 @@ interface ResultFormData {
 }
 
 interface Team {
+  id?: string | number
+  name?: string
   teamId?: string
   team_id?: string
   teamName?: string

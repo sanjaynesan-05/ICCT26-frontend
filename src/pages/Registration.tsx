@@ -16,7 +16,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Copy,
-  Lock,
+  Clock,
   Mail,
   QrCode,
   Send,
@@ -99,7 +99,7 @@ interface RegistrationResponse {
 // ============================================================================
 
 // Set to true to close/lock registration
-const REGISTRATION_CLOSED = false
+const REGISTRATION_CLOSED = true
 
 const MIN_PLAYERS = REGISTRATION_CONFIG.minPlayers
 const MAX_PLAYERS = REGISTRATION_CONFIG.maxPlayers
@@ -790,22 +790,28 @@ const Registration = () => {
     transition: { duration: 0.25 },
   }
 
-  // Registration closed view
+  // Registration not yet open view (shown while REGISTRATION_CLOSED is true)
   if (REGISTRATION_CLOSED) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-        <SEO title="Team Registration" description="Register your team for ICCT'27." />
-        <PageHero eyebrow="Registration" title="Registration closed" />
+        <SEO title="Team Registration" description="Registration for ICCT'27 opens soon." />
+        <PageHero eyebrow="Registration" title="Opening soon" />
         <section className="bg-surface py-16 text-ink">
           <div className="page-container max-w-2xl">
             <div className="card-light flex flex-col items-center p-10 text-center">
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-ink text-gold">
-                <Lock className="h-8 w-8" />
+              <span className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-ink text-gold">
+                <Clock className="h-8 w-8" />
+                <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-gold animate-live-dot" aria-hidden />
               </span>
-              <h2 className="mt-6 text-4xl text-ink">Entries are closed</h2>
+              <p className="mt-6 text-eyebrow uppercase text-flame">ICCT'27 · Season 4</p>
+              <h2 className="mt-2 text-4xl text-ink">Registration opens soon</h2>
               <p className="mt-3 max-w-md text-muted-dark">
-                Team registrations for ICCT'27 are now closed. Follow us on social media for fixtures and announcements.
+                Team registration for ICCT'27 is getting ready. Please wait — we'll announce the opening on our social channels,
+                and this page will open for entries right here.
               </p>
+              <Link to="/rules" className="mt-8 inline-flex items-center gap-1.5 text-sm font-bold text-ink hover:text-flame">
+                Meanwhile, read the rules <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
         </section>

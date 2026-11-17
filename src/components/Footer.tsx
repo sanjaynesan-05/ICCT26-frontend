@@ -1,37 +1,21 @@
 import { Link } from 'react-router-dom'
-import { Trophy, Phone, MapPin, ArrowRight } from 'lucide-react'
+import { Trophy, Phone, MapPin } from 'lucide-react'
 import { SOCIAL_LINKS, ORGANIZERS } from '../data/contact'
 
 const footerLinks = [
   { name: 'Home', path: '/' },
   { name: 'Registration', path: '/registration' },
+  { name: 'Fixtures', path: '/fixtures' },
   { name: 'Rules', path: '/rules' },
   { name: 'Gallery', path: '/gallery' },
   { name: 'Contact', path: '/contact' },
 ]
 
 const Footer = () => {
-  const year = new Date().getFullYear()
   const keyContacts = ORGANIZERS.slice(0, 2)
 
   return (
-    <footer className="mt-20 border-t border-white/10 bg-ink-950">
-      {/* Call-to-action band */}
-      <div className="bg-gold text-ink-900">
-        <div className="page-container flex flex-col items-center justify-between gap-4 py-8 text-center md:flex-row md:text-left">
-          <div>
-            <p className="font-display text-3xl md:text-4xl leading-none">Ready to take the field?</p>
-            <p className="mt-1 text-sm font-semibold text-ink-900/70">Register your church team for ICCT'27.</p>
-          </div>
-          <Link
-            to="/registration"
-            className="btn bg-ink-900 text-white hover:bg-ink-700 !px-8 !py-4"
-          >
-            Register Now <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-
+    <footer className="border-t-4 border-gold bg-ink-950">
       <div className="page-container py-14">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
           {/* Brand */}
@@ -45,7 +29,7 @@ const Footer = () => {
               </span>
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted">
-              Inter Church Cricket Tournament — organised by CSI St. Peter's Church Youth Fellowship, Coimbatore.
+              Inter Church Cricket Tournament organised by CSI St. Peter's Church, Rathinapuri Youth Fellowship.
               The Spirit. The Skill. The Glory.
             </p>
             <div className="mt-6 flex gap-3">
@@ -103,9 +87,8 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-2 border-t border-white/10 pt-6 text-xs text-white/50 md:flex-row">
-          <p>© {year} ICCT · All rights reserved</p>
-          <p>Organised by CSI St. Peter's Church Youth Fellowship, Coimbatore</p>
+        <div className="mt-12 border-t border-white/10 pt-6 text-center text-xs text-white/50">
+          <p>© CSI St. Peter's Church, Rathinapuri Youth Fellowship. All Rights Reserved.</p>
         </div>
       </div>
     </footer>

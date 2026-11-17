@@ -200,7 +200,7 @@ export function isValidFileMimeType(file: File): ValidationResult {
     return { isValid: false, error: VALIDATION_MESSAGES.FILE_REQUIRED }
   }
 
-  if (!VALIDATION_RULES.FILE.ALLOWED_MIME_TYPES.includes(file.type)) {
+  if (!(VALIDATION_RULES.FILE.ALLOWED_MIME_TYPES as readonly string[]).includes(file.type)) {
     return { 
       isValid: false, 
       error: `${VALIDATION_MESSAGES.FILE_INVALID_MIME}. Got: ${file.type}` 
@@ -249,7 +249,7 @@ export function isValidFileExtension(file: File): ValidationResult {
 
   const extension = file.name.split('.').pop()?.toLowerCase()
   
-  if (!extension || !VALIDATION_RULES.FILE.ALLOWED_EXTENSIONS.includes(extension)) {
+  if (!extension || !(VALIDATION_RULES.FILE.ALLOWED_EXTENSIONS as readonly string[]).includes(extension)) {
     return { isValid: false, error: VALIDATION_MESSAGES.FILE_INVALID_TYPE }
   }
 

@@ -1,93 +1,55 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ChevronLeft, ChevronRight, Maximize2, Camera } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Maximize2, Camera, Crown, Download, Medal, Sparkles, Clock } from 'lucide-react'
 import SEO from '../components/SEO'
 import { PageHero } from '../components/ui'
+import { SEASONS } from '../data/seasons'
 
-/**
- * Seasons shown as tabs. To publish a season's photos, add its Cloudinary
- * links to `urls` — the tab switches from "coming soon" to the photo grid.
- */
-const SEASONS = [
-  { id: 's2', label: 'Season 2', edition: "ICCT '25" },
-  { id: 's3', label: 'Season 3', edition: "ICCT '26" },
-] as const
-
-type SeasonId = (typeof SEASONS)[number]['id']
+type SeasonNo = number
 
 interface GalleryImage {
   id: string
-  season: SeasonId
+  season: SeasonNo
   filename: string
   src: string
   width: number
   height: number
 }
 
-// Load images directly from the Cloudinary links you provided (preserves order).
-const loadGalleryImages = (): GalleryImage[] => {
-  const CLOUDINARY_URLS = [
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257447/FB_IMG_1764004248243_nchaj5.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004301211_iqeh7i.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257452/FB_IMG_1764004308540_daecqo.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257453/FB_IMG_1764004331596_z3sjto.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257453/FB_IMG_1764004336507_gz1gae.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257453/FB_IMG_1764004341831_ymzl9j.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257453/FB_IMG_1764004327055_his2vj.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257452/FB_IMG_1764004314928_rkce2o.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257452/FB_IMG_1764004305889_p4zk7i.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257452/FB_IMG_1764004295841_dzgnbz.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257447/DSC07329-min_eryezp.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257447/DSC05672-min_gccrmp.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257447/DSC05673-min_cc216i.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257448/FB_IMG_1764004209103_i12pou.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004229577_isw4dd.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257448/FB_IMG_1764004253832_bahvx9.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004298138_zdich5.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257448/FB_IMG_1764004213900_h59pxc.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257448/FB_IMG_1764004257657_zsnnvk.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257449/FB_IMG_1764004216534_xjd28r.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257449/FB_IMG_1764004264240_vrjkut.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257449/FB_IMG_1764004260958_ezcb5w.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004225526_sbk2xr.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004269042_pdsy0f.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004272390_mouhft.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004276157_gjigeq.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257450/FB_IMG_1764004280397_ufphwf.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004283980_rktg28.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004236901_mgjyqa.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004293412_os7eql.jpg',
-    'https://res.cloudinary.com/dplaeuuqk/image/upload/v1764257451/FB_IMG_1764004286739_vofuif.jpg',
-  ]
+// Photos per season are managed in src/data/seasons.ts
+const GALLERY_IMAGES: GalleryImage[] = SEASONS.flatMap((season) =>
+  season.photos.map((src, idx) => ({
+    id: `s${season.season}-${idx + 1}`,
+    season: season.season,
+    filename: src.split('/').pop() || `s${season.season}-image-${idx + 1}`,
+    src,
+    width: 800,
+    height: 600,
+  }))
+)
 
-  // Season 3 (ICCT '26) photos go here when they are ready
-  const SEASON_3_URLS: string[] = []
+// Open on the most recent season that has photos
+const DEFAULT_SEASON =
+  [...SEASONS].reverse().find((sn) => sn.photos.length > 0)?.season ?? SEASONS[0]?.season ?? 1
 
-  const toImages = (season: SeasonId, urls: string[]): GalleryImage[] =>
-    urls.map((src, idx) => {
-      const filename = src.split('/').pop() || `${season}-image-${idx + 1}`
-      return { id: `${season}-${idx + 1}`, season, filename, src, width: 800, height: 600 }
-    })
-
-  return [...toImages('s2', CLOUDINARY_URLS), ...toImages('s3', SEASON_3_URLS)]
-}
-
-// Load images using metaglob
-const GALLERY_IMAGES = loadGalleryImages()
+/** Cloudinary: ask the CDN to send the file as a download; other hosts fall back to the plain URL. */
+const downloadUrl = (src: string) =>
+  src.includes('res.cloudinary.com') && src.includes('/upload/') ? src.replace('/upload/', '/upload/fl_attachment/') : src
 
 const Gallery = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null)
   const [allImages, setAllImages] = useState<GalleryImage[]>(GALLERY_IMAGES)
-  const [activeSeason, setActiveSeason] = useState<SeasonId>('s2')
+  const [activeSeason, setActiveSeason] = useState<SeasonNo>(DEFAULT_SEASON)
   // Everything below (grid, viewer, swipe, keys) works on the selected season only
   const images = useMemo(() => allImages.filter((img) => img.season === activeSeason), [allImages, activeSeason])
   const seasonCounts = useMemo(
-    () => Object.fromEntries(SEASONS.map((s) => [s.id, allImages.filter((img) => img.season === s.id).length])) as Record<SeasonId, number>,
+    () => Object.fromEntries(SEASONS.map((sn) => [sn.season, allImages.filter((img) => img.season === sn.season).length])) as Record<SeasonNo, number>,
     [allImages]
   )
-  const season = SEASONS.find((s) => s.id === activeSeason)!
+  const season = SEASONS.find((sn) => sn.season === activeSeason)!
+  const seasonLabel = `Season ${season.season}`
 
-  const selectSeason = (id: SeasonId) => {
+  const selectSeason = (id: SeasonNo) => {
     setCurrentImageIndex(null)
     setActiveSeason(id)
   }
@@ -212,27 +174,32 @@ const Gallery = () => {
       <PageHero
         eyebrow="Gallery"
         title="Moments from the middle"
-        description="Photos from previous ICCT seasons. Pick a season, then tap any photo to view it full screen."
+        description="Season-by-season photos, champions and highlights. Tap any photo to view it full screen or download it."
       />
 
       <section className="py-12 md:py-16">
         <div className="page-container">
           {/* Season tabs */}
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div role="tablist" aria-label="Gallery seasons" className="inline-flex w-full rounded-2xl border border-white/10 bg-ink-800 p-1.5 sm:w-auto">
-              {SEASONS.map((s) => {
-                const active = s.id === activeSeason
-                const count = seasonCounts[s.id]
+            <div
+              role="tablist"
+              aria-label="Gallery seasons"
+              className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:inline-flex sm:rounded-2xl sm:border sm:border-white/10 sm:bg-ink-800 sm:p-1.5"
+            >
+              {SEASONS.map((sn) => {
+                const active = sn.season === activeSeason
+                const count = seasonCounts[sn.season] ?? 0
+                const sub = count > 0 ? `${count} photos` : sn.status === 'upcoming' ? 'Coming soon' : 'Photos soon'
                 return (
                   <button
-                    key={s.id}
+                    key={sn.season}
                     type="button"
                     role="tab"
                     aria-selected={active}
                     aria-controls="gallery-panel"
-                    onClick={() => selectSeason(s.id)}
-                    className={`relative flex flex-1 flex-col items-center rounded-xl px-5 py-2.5 transition-colors sm:flex-none sm:px-8 ${
-                      active ? 'text-ink-900' : 'text-white/70 hover:text-white'
+                    onClick={() => selectSeason(sn.season)}
+                    className={`relative flex shrink-0 flex-col items-center rounded-xl border px-5 py-2.5 transition-colors sm:border-0 sm:px-7 ${
+                      active ? 'border-gold text-ink-900' : 'border-white/10 bg-ink-800 text-white/70 hover:text-white sm:bg-transparent'
                     }`}
                   >
                     {active && (
@@ -242,9 +209,9 @@ const Gallery = () => {
                         transition={{ type: 'spring', stiffness: 420, damping: 34 }}
                       />
                     )}
-                    <span className="relative font-display text-2xl leading-none">{s.label}</span>
-                    <span className={`relative mt-1 text-[11px] font-bold uppercase tracking-wider ${active ? 'text-ink-900/70' : 'text-white/40'}`}>
-                      {s.edition} · {count > 0 ? `${count} photos` : 'Soon'}
+                    <span className="relative font-display text-2xl leading-none">Season {sn.season}</span>
+                    <span className={`relative mt-1 whitespace-nowrap text-[11px] font-bold uppercase tracking-wider ${active ? 'text-ink-900/70' : 'text-white/40'}`}>
+                      {sn.edition} · {sub}
                     </span>
                   </button>
                 )
@@ -258,28 +225,82 @@ const Gallery = () => {
           </div>
 
           <div id="gallery-panel" role="tabpanel">
+          {/* Season summary — only shows details that have been verified (see src/data/seasons.ts) */}
+          {(season.champion || season.runnerUp || season.highlights.length > 0) && (
+            <motion.div
+              key={`summary-${activeSeason}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 grid gap-3 rounded-2xl border border-white/10 bg-ink-800 p-4 sm:grid-cols-2 lg:grid-cols-[1fr,1fr,1.4fr] md:p-5"
+            >
+              {season.champion && (
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold text-ink-900">
+                    <Crown className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-gold">Champions · {season.year}</p>
+                    <p className="truncate font-display text-xl leading-tight text-white">{season.champion.team}</p>
+                    {season.champion.place && <p className="truncate text-xs text-muted">{season.champion.place}</p>}
+                  </div>
+                </div>
+              )}
+              {season.runnerUp && (
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white/80">
+                    <Medal className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Runners-up</p>
+                    <p className="truncate font-display text-xl leading-tight text-white">{season.runnerUp.team}</p>
+                    {season.runnerUp.place && <p className="truncate text-xs text-muted">{season.runnerUp.place}</p>}
+                  </div>
+                </div>
+              )}
+              {season.highlights.length > 0 && (
+                <ul className="space-y-1.5 text-sm text-white/80 sm:col-span-2 lg:col-span-1">
+                  {season.highlights.map((h) => (
+                    <li key={h} className="flex gap-2">
+                      <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-gold" /> {h}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </motion.div>
+          )}
+
           {images.length === 0 ? (
             <motion.div
               key={`soon-${activeSeason}`}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative mx-auto max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-ink-800 px-6 py-14 text-center md:px-12 md:py-20"
+              className="relative mx-auto max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-ink-800 px-6 py-12 text-center md:px-12 md:py-16"
             >
               <div className="pointer-events-none absolute inset-0 bg-stripes opacity-70" />
               <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gold/10 blur-3xl" />
               <div className="relative">
                 <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gold text-ink-900">
-                  <Camera className="h-8 w-8" />
+                  {season.status === 'upcoming' ? <Clock className="h-8 w-8" /> : <Camera className="h-8 w-8" />}
                 </span>
-                <p className="mt-6 text-eyebrow uppercase text-flame-light">{season.edition}</p>
-                <h2 className="mt-2 text-4xl text-white md:text-5xl">{season.label} photos are coming soon</h2>
-                <p className="mx-auto mt-3 max-w-md text-sm text-muted md:text-base">
-                  We're sorting through the best moments from {season.edition}. Check back soon, or follow us on Instagram for
-                  the first look.
-                </p>
-                {seasonCounts.s2 > 0 && activeSeason !== 's2' && (
-                  <button type="button" onClick={() => selectSeason('s2')} className="btn-outline mt-8">
-                    Browse Season 2 photos
+                <p className="mt-6 text-eyebrow uppercase text-flame-light">{seasonLabel} · {season.edition}</p>
+                {season.status === 'upcoming' ? (
+                  <>
+                    <h2 className="mt-2 text-4xl text-white md:text-5xl">Coming soon</h2>
+                    <p className="mx-auto mt-3 max-w-md text-sm text-muted md:text-base">
+                      Photos from {season.edition} will appear here after the tournament. Follow us on Instagram for the first look.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="mt-2 text-4xl text-white md:text-5xl">Photos being collected</h2>
+                    <p className="mx-auto mt-3 max-w-md text-sm text-muted md:text-base">
+                      {seasonLabel} photographs will be added here as soon as they are received by the organising team.
+                    </p>
+                  </>
+                )}
+                {DEFAULT_SEASON !== activeSeason && (seasonCounts[DEFAULT_SEASON] ?? 0) > 0 && (
+                  <button type="button" onClick={() => selectSeason(DEFAULT_SEASON)} className="btn-outline mt-8">
+                    Browse Season {DEFAULT_SEASON} photos
                   </button>
                 )}
               </div>
@@ -290,15 +311,18 @@ const Gallery = () => {
               {images.map((image, index) => {
                 const isLoaded = loadedImages.has(image.filename)
                 return (
-                  <motion.button
-                    type="button"
+                  <motion.div
                     key={image.id}
                     initial={{ opacity: 0, y: 12 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-20px' }}
                     transition={{ duration: 0.35 }}
+                    className="group relative mb-3 break-inside-avoid md:mb-4"
+                  >
+                  <button
+                    type="button"
                     onClick={() => setCurrentImageIndex(index)}
-                    className="group relative mb-3 block w-full overflow-hidden rounded-xl bg-ink-800 break-inside-avoid md:mb-4"
+                    className="relative block w-full overflow-hidden rounded-xl bg-ink-800"
                     style={{ aspectRatio: `${image.width} / ${image.height}` }}
                     aria-label={`Open photo ${index + 1}`}
                   >
@@ -316,7 +340,19 @@ const Gallery = () => {
                     <span className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink opacity-0 transition-opacity group-hover:opacity-100">
                       <Maximize2 className="h-4 w-4" />
                     </span>
-                  </motion.button>
+                  </button>
+                  <a
+                    href={downloadUrl(image.src)}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-2 left-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink opacity-0 transition-opacity hover:bg-gold focus-visible:opacity-100 group-hover:opacity-100"
+                    aria-label={`Download photo ${index + 1}`}
+                    title="Download photo"
+                  >
+                    <Download className="h-4 w-4" />
+                  </a>
+                  </motion.div>
                 )
               })}
             </div>
@@ -345,14 +381,27 @@ const Gallery = () => {
               <span className="rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white tabular-nums">
                 {currentImageIndex + 1} / {images.length}
               </span>
-              <button
-                type="button"
-                onClick={() => setCurrentImageIndex(null)}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
-                aria-label="Close"
-              >
-                <X className="h-6 w-6" />
-              </button>
+              <div className="flex items-center gap-2">
+                <a
+                  href={downloadUrl(images[currentImageIndex].src)}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex h-11 items-center gap-2 rounded-full bg-gold px-4 text-sm font-bold text-ink-900 transition-colors hover:bg-gold-light"
+                  aria-label="Download this photo"
+                >
+                  <Download className="h-4 w-4" /> <span className="hidden sm:inline">Download</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setCurrentImageIndex(null)}
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                  aria-label="Close"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
             </div>
 
             {currentImageIndex > 0 && (
@@ -388,7 +437,7 @@ const Gallery = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2 }}
               src={images[currentImageIndex].src}
-              alt={`ICCT photo ${currentImageIndex + 1}`}
+              alt={`${season.edition} photo ${currentImageIndex + 1}`}
               draggable={false}
               onClick={(e) => e.stopPropagation()}
               className="max-h-[calc(100svh-140px)] max-w-[calc(100vw-32px)] rounded-lg object-contain sm:max-w-[calc(100vw-160px)]"

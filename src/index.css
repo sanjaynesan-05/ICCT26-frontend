@@ -104,6 +104,15 @@
     @apply border border-white/10 transition-colors duration-200 hover:border-gold/50;
   }
 
+  /* Horizontal carousels: keep swipe, hide the scrollbar */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .input-focus {
     @apply focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/40 transition-colors duration-200;
   }

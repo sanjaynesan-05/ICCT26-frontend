@@ -56,7 +56,7 @@ export interface Organizer {
   name: string
   phone: string
   whatsapp: string
-  email: string
+  email?: string
 }
 
 /**

@@ -68,7 +68,7 @@ export async function buildRulebook() {
   doc.setProperties({
     title: "ICCT'27 – Official Rules & Regulations",
     subject: 'Inter Church Cricket Tournament rulebook',
-    author: "ICCT Organising Committee, CSI St. Peter's Church Youth Fellowship",
+    author: "CSI St. Peter's Church, Rathinapuri Youth Fellowship",
   })
 
   const fill = (c: RGB) => doc.setFillColor(c[0], c[1], c[2])
@@ -131,7 +131,7 @@ export async function buildRulebook() {
   font('normal', 9.5)
   color([200, 211, 230])
   doc.text(
-    `Season ${TOURNAMENT.season}  ·  ${TOURNAMENT.city}  ·  CSI St. Peter's Church Youth Fellowship`,
+    `Season ${TOURNAMENT.season}  ·  ${TOURNAMENT.city}  ·  CSI St. Peter's Church, Rathinapuri Youth Fellowship`,
     PAGE_W / 2,
     156,
     { align: 'center' }
@@ -140,7 +140,14 @@ export async function buildRulebook() {
   /* ---------------- Quick facts strip ---------------- */
   let y = HEADER_H + 30
   const facts = [
-    { label: 'FORMAT', value: `${TOURNAMENT.oversPerSide} overs a side` },
+    {
+      label: 'DATES',
+      value: `${new Date(TOURNAMENT.firstBall).getDate()}–${new Date(TOURNAMENT.lastDay).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })}`,
+    },
     { label: 'BALL', value: TOURNAMENT.format },
     { label: 'SQUAD', value: `${TOURNAMENT.minPlayers}–${TOURNAMENT.maxPlayers} players` },
     { label: 'ENTRY', value: `${formatFee(TOURNAMENT.entryFee)} / team` },

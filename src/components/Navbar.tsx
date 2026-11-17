@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, Trophy, ArrowRight } from 'lucide-react'
+import { Menu, X, Trophy } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../lib/utils'
 
@@ -8,6 +8,7 @@ const navLinks = [
   { name: 'Home', path: '/' },
   { name: 'Rules', path: '/rules' },
   { name: 'Registration', path: '/registration' },
+  { name: 'Fixtures', path: '/fixtures' },
   { name: 'Gallery', path: '/gallery' },
   { name: 'Contact', path: '/contact' },
 ]
@@ -55,7 +56,7 @@ const Navbar = () => {
                 ICCT<span className="text-gold">'27</span>
               </span>
               <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
-                Inter Church Cricket
+                Inter Church Cricket Tournament
               </span>
             </span>
           </Link>
@@ -69,14 +70,14 @@ const Navbar = () => {
                   key={link.path}
                   to={link.path}
                   className={cn(
-                    'relative px-4 py-2 text-sm font-semibold transition-colors',
+                    'relative px-2.5 py-2 text-sm font-semibold transition-colors lg:px-4',
                     active ? 'text-white' : 'text-white/70 hover:text-white'
                   )}
                 >
                   {link.name}
                   <span
                     className={cn(
-                      'absolute inset-x-4 -bottom-0.5 h-0.5 rounded-full bg-gold transition-opacity',
+                      'absolute inset-x-2.5 -bottom-0.5 h-0.5 rounded-full bg-gold transition-opacity lg:inset-x-4',
                       active ? 'opacity-100' : 'opacity-0'
                     )}
                   />
@@ -84,10 +85,6 @@ const Navbar = () => {
               )
             })}
           </div>
-
-          <Link to="/registration" className="hidden md:inline-flex btn-gold !px-5 !py-2.5">
-            Register <ArrowRight className="h-4 w-4" />
-          </Link>
 
           {/* Mobile menu button */}
           <button
@@ -126,9 +123,6 @@ const Navbar = () => {
                   </Link>
                 ))}
               </div>
-              <Link to="/registration" className="btn-gold mt-8 w-full !py-4 !text-base">
-                Register Your Team <ArrowRight className="h-5 w-5" />
-              </Link>
             </div>
           </motion.div>
         )}

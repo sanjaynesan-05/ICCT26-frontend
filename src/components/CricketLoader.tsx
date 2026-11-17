@@ -186,7 +186,7 @@ const PresentsCard = () => (
         animate={{ opacity: 1, letterSpacing: '0.18em', filter: 'blur(0px)' }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
       >
-        CSI ST. PETER'S CHURCH
+        CSI ST. PETER'S CHURCH, RATHINAPURI
       </motion.p>
       <motion.p
         className="mt-2 text-[11px] font-bold uppercase tracking-[0.4em] text-gold md:text-xs"

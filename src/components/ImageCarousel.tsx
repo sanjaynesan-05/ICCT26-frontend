@@ -42,32 +42,28 @@ const ImageCarousel = () => {
 
   return (
     <div>
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <p className="text-eyebrow uppercase text-flame">Co-Sponsors</p>
-          <p className="mt-1 text-sm text-muted-dark">Thank you for backing ICCT'27</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowAll(true)}
-          className="inline-flex items-center gap-2 rounded-lg border border-ink/15 px-3 py-2 text-xs font-bold uppercase tracking-wider text-ink transition-colors hover:border-ink hover:bg-ink hover:text-white"
-        >
-          <LayoutGrid className="h-4 w-4" /> View all
-        </button>
-      </div>
-
       <div className="group relative overflow-hidden">
         <div
           className="flex w-max gap-4 py-2 group-hover:[animation-play-state:paused]"
           style={{ animation: `marquee ${duration}s linear infinite` }}
         >
           {strip.map((sponsor, index) => (
-            <LogoTile key={index} sponsor={sponsor} className="h-28 w-40 shrink-0 md:h-32 md:w-48" />
+            <LogoTile key={index} sponsor={sponsor} className="h-28 w-44 shrink-0 !p-3 md:h-36 md:w-56" />
           ))}
         </div>
         {/* Soft edges */}
         <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-surface to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-surface to-transparent" />
+      </div>
+
+      <div className="mt-3 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted-dark transition-colors hover:text-ink"
+        >
+          <LayoutGrid className="h-4 w-4" /> View all sponsors
+        </button>
       </div>
 
       <AnimatePresence>

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, animate, useInView } from 'framer-motion'
 import {
@@ -17,6 +18,7 @@ import { TOURNAMENT } from '../data/home'
 import { TITLE_SPONSOR } from '../data/sponsors'
 import { VENUE } from '../data/contact'
 import ImageCarousel from '../components/ImageCarousel'
+import ChampionsCarousel from '../components/ChampionsCarousel'
 import RulebookButton from '../components/RulebookButton'
 import { useCountdown } from '../hooks/useCountdown'
 import { Badge, ButtonLink, SectionHeader } from '../components/ui'
@@ -134,9 +136,9 @@ const MatchCountdownCard = () => (
 )
 
 const TitleSponsorCard = () => (
-  <div className="flex h-full w-full flex-col items-center justify-center rounded-2xl border border-white/15 bg-white/[0.06] px-6 py-6 backdrop-blur-sm">
+  <div className="flex h-full w-full flex-col items-center justify-center rounded-2xl border border-white/15 bg-white/[0.06] px-4 py-5 backdrop-blur-sm">
     <p className="text-eyebrow uppercase text-gold">Title Sponsor</p>
-    <div className="mt-4 flex h-28 w-full max-w-[16rem] items-center justify-center rounded-xl bg-white p-3">
+    <div className="mt-3 flex h-40 w-full max-w-[20rem] items-center justify-center rounded-xl bg-white p-2.5 md:h-44">
       {TITLE_SPONSOR.url ? (
         <a href={TITLE_SPONSOR.url} target="_blank" rel="noopener noreferrer" className="h-full w-full">
           <img src={TITLE_SPONSOR.logo} alt={TITLE_SPONSOR.name} className="h-full w-full object-contain" />
@@ -156,31 +158,41 @@ const Hero = () => (
 
     <div className="page-container relative z-10 pb-28 pt-28 text-center md:pb-36">
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <div className="mb-7 flex items-center justify-center gap-3 md:gap-6">
-          <img src="/churchlogo.png" alt="CSI St. Peter's Church" className="h-14 w-14 shrink-0 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.45)] sm:h-16 sm:w-16 md:h-24 md:w-24" />
-          <p className="eyebrow max-w-[11rem] text-center leading-snug text-white/80 sm:max-w-none">
-            CSI St. Peter's Church · Youth Fellowship
+        {/* Organiser lockup: logo · name · logo in one pill */}
+        <div className="inline-flex max-w-full items-center gap-2.5 rounded-2xl border border-white/10 bg-ink-900/60 p-1.5 backdrop-blur-sm sm:gap-3 sm:rounded-full sm:pr-1.5">
+          <img src="/churchlogo.png" alt="CSI St. Peter's Church, Rathinapuri" className="h-11 w-11 shrink-0 rounded-full object-contain sm:h-12 sm:w-12" />
+          <p className="eyebrow min-w-0 leading-snug text-white/85 sm:whitespace-nowrap">
+            CSI St. Peter's Church, Rathinapuri
+            <span className="hidden sm:inline"> · </span>
+            <br className="sm:hidden" />
+            Youth Fellowship
           </p>
-          <img src="/adonailogo.png" alt="Adonai Youth Fellowship" className="h-14 w-14 shrink-0 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.45)] sm:h-16 sm:w-16 md:h-24 md:w-24" />
+          <img src="/adonailogo.png" alt="Adonai Youth Fellowship" className="h-11 w-11 shrink-0 object-contain sm:h-12 sm:w-12" />
         </div>
 
-        <h1 className="text-[4.75rem] leading-[0.85] text-white xs:text-[5.5rem] sm:text-[8rem] md:text-[11rem]">
+        {/* Organiser → tournament connector */}
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <span className="h-px w-10 bg-gradient-to-r from-transparent to-gold/70" />
+          <span className="text-[11px] font-bold uppercase tracking-[0.35em] text-gold">Conducts</span>
+          <span className="h-px w-10 bg-gradient-to-l from-transparent to-gold/70" />
+        </div>
+
+        <h1 className="mt-2 text-[4.75rem] leading-[0.85] text-white xs:text-[5.5rem] sm:text-[7.5rem] md:text-[9.5rem]">
           ICCT<span className="text-gold">'27</span>
         </h1>
-        <p className="mt-4 font-display text-2xl tracking-wide text-white/90 md:text-4xl">Inter Church Cricket Tournament</p>
+        <p className="mt-3 font-display text-2xl tracking-wide text-white/90 md:text-3xl">Inter Church Cricket Tournament</p>
 
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           <Badge tone="gold">Season {TOURNAMENT.season}</Badge>
           <Badge tone="neutral">{TOURNAMENT.format}</Badge>
-          <Badge tone="neutral">{TOURNAMENT.oversPerSide} overs a side</Badge>
           <Badge tone="neutral">{TOURNAMENT.city}</Badge>
         </div>
 
-        <div className="mx-auto mt-9 flex max-w-xs flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
-          <ButtonLink to="/registration" size="lg">
-            Register Your Team <ArrowRight className="h-5 w-5" />
+        <div className="mx-auto mt-7 flex max-w-xs flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
+          <ButtonLink to="/registration" className="!px-7 !py-3.5">
+            Register Your Team <ArrowRight className="h-4 w-4" />
           </ButtonLink>
-          <ButtonLink to="/rules" variant="outline" size="lg">
+          <ButtonLink to="/rules" variant="outline" className="!px-7 !py-3.5">
             View Rules
           </ButtonLink>
         </div>
@@ -299,7 +311,7 @@ const StatsStrip = () => {
   ]
 
   return (
-    <section className="relative z-20 -mt-10 pb-12 md:-mt-12 md:pb-16">
+    <section className="relative z-20 -mt-10 pb-3 md:-mt-12 md:pb-4">
       <div className="page-container">
         <motion.div
           {...fadeUp}
@@ -354,40 +366,40 @@ const HowToRegister = () => {
   ]
 
   return (
-    <section className="bg-surface py-20 text-ink md:py-28">
+    <section className="bg-surface py-10 text-ink md:py-12">
       <div className="page-container">
-        <SectionHeader
-          tone="light"
-          eyebrow="How to register"
-          title="Three steps to the pitch"
-          description={`Registration closes ${formatDateTime(TOURNAMENT.registrationCloses)}. It takes about 5 minutes.`}
-        />
+        <SectionHeader tone="light" eyebrow="How to register" title="Three steps to the pitch" className="!mb-6 md:!mb-8" />
 
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
           {steps.map((step, i) => (
             <motion.div
               key={step.title}
               {...fadeUp}
-              transition={{ duration: 0.45, delay: i * 0.08 }}
-              className="card-light relative p-7"
+              transition={{ duration: 0.4, delay: i * 0.06 }}
+              className="card-light flex gap-4 p-5"
             >
-              <span className="absolute right-6 top-4 font-display text-6xl leading-none text-ink/[0.06]">{i + 1}</span>
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-ink text-gold">
-                <step.icon className="h-6 w-6" />
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink text-gold">
+                <step.icon className="h-5 w-5" />
               </span>
-              <h3 className="mt-5 text-2xl text-ink">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-dark">{step.body}</p>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-flame">Step {i + 1}</p>
+                <h3 className="mt-0.5 text-xl leading-tight text-ink">{step.title}</h3>
+                <p className="mt-1 text-sm leading-snug text-muted-dark">{step.body}</p>
+              </div>
             </motion.div>
           ))}
         </div>
 
-        <div className="mt-10 flex flex-wrap justify-center gap-3">
-          <ButtonLink to="/registration" size="lg">
-            Start Registration <ArrowRight className="h-5 w-5" />
-          </ButtonLink>
-          <RulebookButton className="btn border-2 border-ink/80 text-ink hover:bg-ink hover:text-white !px-8 !py-4 !text-base">
-            Download Rulebook
-          </RulebookButton>
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <div className="flex flex-wrap justify-center gap-3">
+            <ButtonLink to="/registration" className="!px-7 !py-3.5">
+              Start Registration <ArrowRight className="h-4 w-4" />
+            </ButtonLink>
+            <RulebookButton className="btn border-2 border-ink/80 !px-7 !py-3 text-ink hover:bg-ink hover:text-white">
+              Rulebook
+            </RulebookButton>
+          </div>
+          <p className="text-xs text-muted-dark">Registration closes {formatDateTime(TOURNAMENT.registrationCloses)}</p>
         </div>
       </div>
     </section>
@@ -440,9 +452,9 @@ const FixturesPreview = () => {
   }, [])
 
   return (
-    <section className="py-20 md:py-28">
+    <section className="py-10 md:py-12">
       <div className="page-container">
-        <SectionHeader eyebrow="Fixtures" title="Matchday" description="Live games, upcoming fixtures and the latest results." />
+        <SectionHeader eyebrow="Fixtures" title="Matchday" className="!mb-6 md:!mb-8" />
 
         {matches === null ? (
           <div className="grid gap-5 md:grid-cols-3">
@@ -451,9 +463,9 @@ const FixturesPreview = () => {
             ))}
           </div>
         ) : matches.length === 0 ? (
-          <motion.div {...fadeUp} className="card-dark mx-auto flex max-w-2xl flex-col items-center p-10 text-center">
-            <CalendarDays className="h-10 w-10 text-gold" />
-            <h3 className="mt-4 text-3xl text-white">Fixtures announced soon</h3>
+          <motion.div {...fadeUp} className="card-dark mx-auto flex max-w-2xl flex-col items-center px-6 py-7 text-center">
+            <CalendarDays className="h-8 w-8 text-gold" />
+            <h3 className="mt-3 text-2xl text-white md:text-3xl">Fixtures announced soon</h3>
             <p className="mt-2 max-w-md text-sm text-muted">
               The draw is published after registration closes on {formatDate(TOURNAMENT.registrationCloses)}. First ball{' '}
               {formatDate(TOURNAMENT.firstBall)}.
@@ -498,6 +510,12 @@ const FixturesPreview = () => {
             ))}
           </div>
         )}
+
+        <div className="mt-6 text-center">
+          <Link to="/fixtures" className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/80 transition-colors hover:text-gold">
+            Full schedule <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
     </section>
   )
@@ -522,7 +540,7 @@ const About = () => {
           </h2>
           <p className="mt-6 leading-relaxed text-muted">
             ICCT – the Inter Church Cricket Tournament – is a celebration of unity, faith and fellowship among our youth.
-            Organised by the CSI St. Peter's Church Youth Fellowship, Coimbatore, it brings churches together through the
+            Organised by the CSI St. Peter's Church, Rathinapuri Youth Fellowship, Coimbatore, it brings churches together through the
             spirit of cricket, building brotherhood, sportsmanship and shared values.
           </p>
           <p className="mt-4 leading-relaxed text-muted">
@@ -580,30 +598,18 @@ const About = () => {
 /* ================================================================== */
 
 const Sponsors = () => (
-  <section className="bg-surface py-20 text-ink md:py-28">
+  <section className="bg-surface py-10 text-ink md:py-12">
     <div className="page-container">
-      <SectionHeader tone="light" eyebrow="Partners" title="Sponsors" />
+      <SectionHeader tone="light" eyebrow="Partners" title="Co-sponsors" className="!mb-6 md:!mb-8" />
 
       {SHOW_TROPHY_SPONSOR && (
-        <motion.div {...fadeUp} className="card-light mx-auto mb-8 max-w-xl p-8 text-center">
+        <motion.div {...fadeUp} className="card-light mx-auto mb-8 max-w-xl p-6 text-center">
           <p className="text-eyebrow uppercase text-muted-dark">Trophy Sponsor · In memory of</p>
-          <p className="mt-2 font-display text-4xl text-ink">Mrs. R. Gnanajothi Anandaraj</p>
+          <p className="mt-2 font-display text-3xl text-ink">Mrs. R. Gnanajothi Anandaraj</p>
         </motion.div>
       )}
 
-      {/* Title sponsor */}
-      <motion.div {...fadeUp} className="card-light mx-auto mb-14 flex max-w-3xl flex-col items-center gap-6 p-8 md:flex-row md:p-10">
-        <div className="flex h-36 w-full shrink-0 items-center justify-center rounded-xl border border-surface-line bg-white p-4 md:w-64">
-          <img src={TITLE_SPONSOR.logo} alt={TITLE_SPONSOR.name} className="h-full w-full object-contain" />
-        </div>
-        <div className="text-center md:text-left">
-          <p className="text-eyebrow uppercase text-flame">Title Sponsor</p>
-          <h3 className="mt-2 text-4xl text-ink">ICCT'27 presented by our title sponsor</h3>
-          <p className="mt-2 text-sm text-muted-dark">Proudly powering Season {TOURNAMENT.season} of the Inter Church Cricket Tournament.</p>
-        </div>
-      </motion.div>
-
-      {/* Co-sponsor carousel */}
+      {/* Co-sponsor carousel (title sponsor is shown in the hero) */}
       <motion.div {...fadeUp}>
         <ImageCarousel />
       </motion.div>
@@ -620,6 +626,7 @@ const Home = () => (
     <SEO title="Home" description="ICCT'27 – Inter Church Cricket Tournament, Coimbatore. Register your church team now." />
     <Hero />
     <StatsStrip />
+    <ChampionsCarousel />
     <Sponsors />
     <About />
     <FixturesPreview />
