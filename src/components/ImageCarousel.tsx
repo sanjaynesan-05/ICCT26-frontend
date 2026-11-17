@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, LayoutGrid } from 'lucide-react'
 import { CO_SPONSORS, type Sponsor } from '../data/sponsors'
+import Portal from './Portal'
 
 const LogoTile = ({ sponsor, className = '' }: { sponsor: Sponsor; className?: string }) => {
   const img = <img src={sponsor.logo} alt={sponsor.name} className="h-full w-full object-contain" loading="lazy" />
@@ -66,6 +67,7 @@ const ImageCarousel = () => {
         </button>
       </div>
 
+      <Portal>
       <AnimatePresence>
         {showAll && (
           <motion.div
@@ -105,6 +107,7 @@ const ImageCarousel = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
     </div>
   )
 }

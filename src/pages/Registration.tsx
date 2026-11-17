@@ -63,6 +63,8 @@ import {
   handleAxiosError,
   BackendResponse
 } from '../utils/apiClient'
+import Portal from '../components/Portal'
+import TearTicket from '../components/TearTicket'
 
 // ============================================================================
 // TYPES
@@ -209,6 +211,8 @@ const Registration = () => {
   const [currentIdempotencyKey, setCurrentIdempotencyKey] = useState<string>('')
   const [registeredTeamId, setRegisteredTeamId] = useState<string>('')
   const [registeredStatus, setRegisteredStatus] = useState<string>('pending')
+  const [ticketTorn, setTicketTorn] = useState(false)
+  const [idCopied, setIdCopied] = useState(false)
   
   // ========== CHURCH AVAILABILITY STATE ==========
   const [churchAvailability, setChurchAvailability] = useState<ChurchAvailability[] | undefined>()
@@ -689,6 +693,8 @@ const Registration = () => {
   // ========== SUCCESS HANDLERS ==========
   const closeSuccess = () => {
     setShowSuccess(false)
+    setTicketTorn(false)
+    setIdCopied(false)
     setCurrentStep(0)
     // Reset form
     setFormData({
@@ -1232,95 +1238,158 @@ const Registration = () => {
         </div>
       </section>
 
-      {/* ===== Success: registration "ticket" ===== */}
+      {/* ===== Success: tear-off team pass ===== */}
+      <Portal>
       <AnimatePresence>
         {showSuccess && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-950/80 px-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-ink-950/85 backdrop-blur-sm"
           >
-            <motion.div
-              initial={{ y: 24, opacity: 0, scale: 0.97 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 24, opacity: 0 }}
-              transition={{ type: 'spring', duration: 0.5 }}
-              className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white text-ink shadow-2xl"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Registration submitted"
-            >
-              {/* Ticket head */}
-              <div className="relative bg-ink px-6 pb-8 pt-7 text-center text-white">
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-pitch">
-                  <Check className="h-8 w-8" strokeWidth={3} />
-                </span>
-                <p className="mt-4 text-eyebrow uppercase text-gold">Registration submitted</p>
-                <p className="mt-1 break-words font-display text-4xl leading-tight">{formData.teamName}</p>
-                <p className="mt-1 text-sm text-muted">{formData.churchName}</p>
-              </div>
+            <div className="flex min-h-full items-center justify-center px-4 py-10">
+              <motion.div
+                initial={{ y: 24, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 24, opacity: 0 }}
+                transition={{ type: 'spring', duration: 0.5 }}
+                className="w-full max-w-xl"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Registration submitted"
+              >
+                {/* Headline */}
+                <div className="mb-7 text-center text-white">
+                  <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-pitch shadow-[0_0_40px_rgba(31,164,99,0.45)]">
+                    <Check className="h-8 w-8" strokeWidth={3} />
+                  </span>
+                  <p className="mt-4 text-eyebrow uppercase text-gold">Registration submitted</p>
+                  <h2 className="mt-1 text-4xl text-white md:text-5xl">You're on the team sheet!</h2>
+                </div>
 
-              <div className="border-t-2 border-dashed border-surface-line px-6 py-6">
-                {/* Team ID */}
-                <div className="rounded-2xl bg-surface p-4 text-center">
-                  <p className="text-eyebrow uppercase text-muted-dark">Team ID</p>
-                  {registeredTeamId && registeredTeamId !== 'PENDING' ? (
-                    <div className="mt-1 flex items-center justify-center gap-3">
-                      <p className="break-all font-display text-4xl tracking-wider text-ink">{registeredTeamId}</p>
+                {/* Tear-off ticket */}
+                <div className="flex justify-center">
+                  <TearTicket
+                    width={540}
+                    height={230}
+                    stubSize={150}
+                    radius={18}
+                    holes={10}
+                    rotate={-2}
+                    tiltMax={7}
+                    background="linear-gradient(135deg, #0A1F44 0%, #12305F 100%)"
+                    stubBackground="#FFC21A"
+                    color="#FFFFFF"
+                    borderColor="rgba(255, 194, 26, 0.45)"
+                    ariaLabel="Tear off the ICCT'27 entry stub"
+                    onTear={() => setTicketTorn(true)}
+                    stub={
+                      <div className="flex h-full flex-col items-center justify-center px-3 text-center text-ink-900">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-ink-900/70">Admit</span>
+                        <span className="font-display text-4xl leading-none">Team</span>
+                        <span className="mt-2 rounded-md border border-ink-900/30 px-2 py-0.5 font-display text-lg leading-tight">
+                          ICCT'27
+                        </span>
+                        <span className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-ink-900/60">Tear ›</span>
+                      </div>
+                    }
+                  >
+                    <div className="flex h-full flex-col justify-between p-6">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-gold">ICCT'27 · Team pass</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-white/60">Season 4</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-display text-4xl leading-tight text-white">{formData.teamName}</p>
+                        <p className="truncate text-sm text-white/70">{formData.churchName}</p>
+                      </div>
+                      <div className="flex items-end justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">Team ID</p>
+                          {registeredTeamId && registeredTeamId !== 'PENDING' ? (
+                            <p className="truncate font-display text-3xl leading-none tracking-wider text-gold">{registeredTeamId}</p>
+                          ) : (
+                            <p className="text-sm font-semibold text-white/85">Emailed after approval</p>
+                          )}
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                            registeredStatus === 'confirmed' ? 'bg-pitch text-white' : 'bg-gold/20 text-gold'
+                          }`}
+                        >
+                          {registeredStatus === 'confirmed' ? 'Confirmed' : 'Pending'}
+                        </span>
+                      </div>
+                    </div>
+                  </TearTicket>
+                </div>
+
+                <p className={`mt-4 text-center text-xs ${ticketTorn ? 'font-semibold text-gold' : 'text-white/50'}`} aria-live="polite">
+                  {ticketTorn ? 'Stub torn — welcome to ICCT\'27!' : 'Drag the gold stub to tear it off'}
+                </p>
+
+                {/* Details */}
+                <div className="mt-6 rounded-2xl bg-white p-5 text-ink shadow-2xl md:p-6">
+                  {registeredTeamId && registeredTeamId !== 'PENDING' && (
+                    <div className="mb-4 flex items-center justify-between gap-3 rounded-xl bg-surface px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-dark">Your Team ID</p>
+                        <p className="truncate font-display text-2xl tracking-wider text-ink">{registeredTeamId}</p>
+                      </div>
                       <button
                         type="button"
                         onClick={() => {
-                          void navigator.clipboard?.writeText(registeredTeamId)
+                          void navigator.clipboard?.writeText(registeredTeamId).then(() => {
+                            setIdCopied(true)
+                            window.setTimeout(() => setIdCopied(false), 2000)
+                          })
                         }}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-surface-line text-ink hover:bg-ink hover:text-white"
-                        title="Copy Team ID"
+                        className="btn shrink-0 border border-surface-line !px-3 !py-2 text-ink hover:bg-ink hover:text-white"
                         aria-label="Copy Team ID"
                       >
-                        <Copy className="h-4 w-4" />
+                        {idCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {idCopied ? 'Copied' : 'Copy'}
                       </button>
                     </div>
-                  ) : (
-                    <p className="mt-1 font-semibold text-ink">Will be emailed after approval</p>
                   )}
-                  <p className="mt-1 text-xs text-muted-dark">Screenshot this and keep the ID for all communication.</p>
-                </div>
 
-                {/* Summary */}
-                <dl className="mt-5 space-y-2 text-sm">
-                  <div className="flex justify-between gap-4"><dt className="text-muted-dark">Captain</dt><dd className="break-words text-right font-semibold">{formData.captain.name}</dd></div>
-                  <div className="flex justify-between gap-4"><dt className="text-muted-dark">Vice-Captain</dt><dd className="break-words text-right font-semibold">{formData.viceCaptain.name}</dd></div>
-                  <div className="flex justify-between gap-4"><dt className="text-muted-dark">Players</dt><dd className="font-semibold">{formData.players.length}</dd></div>
-                  <div className="flex items-center justify-between gap-4">
-                    <dt className="text-muted-dark">Status</dt>
-                    <dd>
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
-                          registeredStatus === 'confirmed' ? 'bg-pitch/15 text-pitch-dark' : 'bg-gold/20 text-ink'
-                        }`}
-                      >
-                        {registeredStatus === 'confirmed' ? 'Confirmed' : 'Pending approval'}
-                      </span>
-                    </dd>
+                  <dl className="space-y-2 text-sm">
+                    <div className="flex justify-between gap-4"><dt className="text-muted-dark">Captain</dt><dd className="break-words text-right font-semibold">{formData.captain.name}</dd></div>
+                    <div className="flex justify-between gap-4"><dt className="text-muted-dark">Vice-Captain</dt><dd className="break-words text-right font-semibold">{formData.viceCaptain.name}</dd></div>
+                    <div className="flex justify-between gap-4"><dt className="text-muted-dark">Players</dt><dd className="font-semibold">{formData.players.length}</dd></div>
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="text-muted-dark">Status</dt>
+                      <dd>
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${
+                            registeredStatus === 'confirmed' ? 'bg-pitch/15 text-pitch-dark' : 'bg-gold/20 text-ink'
+                          }`}
+                        >
+                          {registeredStatus === 'confirmed' ? 'Confirmed' : 'Pending approval'}
+                        </span>
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <div className="mt-5 flex gap-3 rounded-xl border border-surface-line p-4 text-sm">
+                    <Mail className="mt-0.5 h-5 w-5 shrink-0 text-ink" />
+                    <p className="text-muted-dark">
+                      Confirmation goes to <strong className="break-all text-ink">{formData.captain.email}</strong> once our team
+                      verifies the payment (usually within 24–48 hours). Keep your Team ID for all communication.
+                    </p>
                   </div>
-                </dl>
 
-                <div className="mt-5 flex gap-3 rounded-xl border border-surface-line p-4 text-sm">
-                  <Mail className="mt-0.5 h-5 w-5 shrink-0 text-ink" />
-                  <p className="text-muted-dark">
-                    Confirmation goes to <strong className="break-all text-ink">{formData.captain.email}</strong> once our team
-                    verifies the payment (usually within 24–48 hours).
-                  </p>
+                  <button type="button" onClick={closeSuccess} className="btn-gold mt-5 w-full !py-4">
+                    Done
+                  </button>
                 </div>
-
-                <button type="button" onClick={closeSuccess} className="btn-gold mt-6 w-full !py-4">
-                  Done
-                </button>
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
     </motion.div>
   )
 }

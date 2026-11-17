@@ -19,6 +19,7 @@ import { TITLE_SPONSOR } from '../data/sponsors'
 import { VENUE } from '../data/contact'
 import ImageCarousel from '../components/ImageCarousel'
 import ChampionsCarousel from '../components/ChampionsCarousel'
+import Counter from '../components/Counter'
 import RulebookButton from '../components/RulebookButton'
 import { useCountdown } from '../hooks/useCountdown'
 import { Badge, ButtonLink, SectionHeader } from '../components/ui'
@@ -94,7 +95,16 @@ const CountdownCard = ({ title, target, dateLabel, badge, doneText, accent }: Co
                     accent === 'flame' ? 'text-flame-light' : 'text-gold'
                   )}
                 >
-                  {String(u.value).padStart(2, '0')}
+                  <Counter
+                    value={u.value}
+                    minDigits={2}
+                    direction="down"
+                    fontSize="1em"
+                    duration={0.55}
+                    bounce={0.25}
+                    stagger={0.05}
+                    fade={0.25}
+                  />
                 </span>
                 <span className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{u.label}</span>
               </div>

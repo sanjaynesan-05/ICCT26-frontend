@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronRight, Crown, ImageIcon, Medal, Trophy, X } from 'lucide-react'
 import { CHAMPIONS, NEXT_SEASON, type Champion } from '../data/champions'
 import { cn } from '../lib/utils'
+import Portal from './Portal'
 
 /**
  * Hall of Champions — a compact strip under the highlights.
@@ -208,6 +209,7 @@ const ChampionsCarousel = () => {
       </div>
 
       {/* Modal (tap / click) */}
+      <Portal>
       <AnimatePresence>
         {open !== null && (
           <motion.div
@@ -261,6 +263,7 @@ const ChampionsCarousel = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
     </section>
   )
 }

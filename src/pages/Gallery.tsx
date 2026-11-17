@@ -4,6 +4,7 @@ import { X, ChevronLeft, ChevronRight, Maximize2, Camera, Crown, Download, Medal
 import SEO from '../components/SEO'
 import { PageHero } from '../components/ui'
 import { SEASONS } from '../data/seasons'
+import Portal from '../components/Portal'
 
 type SeasonNo = number
 
@@ -362,6 +363,7 @@ const Gallery = () => {
       </section>
 
       {/* Full-screen viewer */}
+      <Portal>
       <AnimatePresence>
         {currentImageIndex !== null && (
           <motion.div
@@ -447,6 +449,7 @@ const Gallery = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      </Portal>
     </motion.div>
   )
 }
